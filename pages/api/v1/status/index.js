@@ -1,4 +1,4 @@
-import database from "../../../../infra/database.js";
+import database from "infra/database.js";
 export default async function status(req, response) {
   const databaseName = process.env.POSTGRES_DB;
   //#region Fetch database status
