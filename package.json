@@ -7,7 +7,8 @@
     "migrations:create": "node-pg-migrate -m infra/migrations create",
     "migrations:up": "node-pg-migrate -m infra/migrations --envPath .env.development up",
     "test": "npm run services:up && concurrently -n next,jest --hide next -k -s command-jest \" next dev \" \"jest -i --verbose\"",
-    "test:watch": "jest --i --verbose"
+    "test:watch": "jest --i --verbose",
+    "posttest": "npm run services:stop"
   },
   "dependencies": {
     "next": "^14.2.11",
