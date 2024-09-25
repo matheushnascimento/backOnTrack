@@ -1,4 +1,8 @@
 {
+  "name": "clone-tabnews",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
   "scripts": {
     "dev": "npm run services:up && next dev",
     "services:up": "docker compose -f infra/docker-compose.yaml up -d",
@@ -11,6 +15,8 @@
     "posttest": "npm run services:stop"
   },
   "dependencies": {
+    "dotenv": "^16.4.5",
+    "dotenv-expand": "^11.0.6",
     "next": "^14.2.11",
     "node-pg-migrate": "^7.6.1",
     "pg": "^8.12.0",
