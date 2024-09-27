@@ -17,7 +17,7 @@ export default async function status(req, response) {
   queriesResponses.updated_at = updatedAt;
   queriesResponses.version = versionQuery.rows[0].server_version;
   queriesResponses.max_connections = parseInt(
-    maxConnectionsQuery.rows[0].max_connections
+    maxConnectionsQuery.rows[0].max_connections,
   );
   queriesResponses.open_connections =
     openConnectionsQuery.rows[0].open_connections;

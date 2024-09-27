@@ -13,14 +13,21 @@
     "migrations:up": "node-pg-migrate -m infra/migrations --envPath .env.development up",
     "test": "npm run services:up && concurrently -n next,jest --hide next -k -s command-jest \" next dev \" \"jest -i --verbose\"",
     "test:watch": "jest --i --verbose",
-    "posttest": "npm run services:stop"
+    "posttest": "npm run services:stop",
+    "lint:prettier:check": "prettier -c .",
+    "lint:prettier:fix": "prettier -w ."
   },
   "dependencies": {
     "dotenv": "^16.4.5",
     "dotenv-expand": "^11.0.6",
+    "eslint": "^8.57.1",
+    "eslint-config-next": "^14.2.13",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-jest": "^28.8.3",
     "next": "^14.2.11",
     "node-pg-migrate": "^7.6.1",
     "pg": "^8.12.0",
+    "prettier": "^3.3.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
