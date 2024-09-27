@@ -15,7 +15,8 @@
     "test:watch": "jest --i --verbose",
     "posttest": "npm run services:stop",
     "lint:prettier:check": "prettier -c .",
-    "lint:prettier:fix": "prettier -w ."
+    "lint:prettier:fix": "prettier -w .",
+    "lint:eslint:check": "next lint --dir ."
   },
   "dependencies": {
     "dotenv": "^16.4.5",
