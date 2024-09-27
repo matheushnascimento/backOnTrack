@@ -16,7 +16,8 @@
     "posttest": "npm run services:stop",
     "lint:prettier:check": "prettier -c .",
     "lint:prettier:fix": "prettier -w .",
-    "lint:eslint:check": "next lint --dir ."
+    "lint:eslint:check": "next lint --dir .",
+    "commit": "cz"
   },
   "dependencies": {
     "dotenv": "^16.4.5",
