@@ -1,3 +1,10 @@
+import orchestrator from "tests/orchestrators";
+
+beforeAll(async () => {
+  await orchestrator.waitForAllServices();
+  await orchestrator.clearDatabase();
+});
+
 describe("POST to /api/migrations", () => {
   describe("Anonymous user", () => {
     describe("Running pending migrations", () => {
