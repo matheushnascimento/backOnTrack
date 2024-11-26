@@ -1,6 +1,8 @@
 import database from "infra/database";
+import orchestrator from "tests/orchestrator";
 
 beforeAll(async () => {
+  await orchestrator.waitForWallServices();
   await database.query("DROP schema public cascade; create schema public;");
 });
 
