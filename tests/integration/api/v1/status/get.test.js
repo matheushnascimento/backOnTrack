@@ -1,3 +1,8 @@
+import orchestrator from "tests/orchestrator";
+beforeAll(async () => {
+  await orchestrator.waitForWallServices();
+  await orchestrator.clearDatabase();
+});
 describe("GET to /api/status", () => {
   describe("Anonymous user", () => {
     test("Retrieving current system status", async () => {
