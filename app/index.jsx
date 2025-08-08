@@ -1,6 +1,5 @@
-import { Text, View } from "react-native";
+import { Text, View, useColorScheme } from "react-native";
 import { Colors } from "../constants/Colors";
-import { useColorScheme } from "react-native";
 
 export default function Home() {
   const colorScheme = useColorScheme();
@@ -8,7 +7,12 @@ export default function Home() {
   return (
     <>
       <View style={{ flex: 1, backgroundColor: theme.background }}>
-        <Text style={{ color: theme.text }}>Hello World!</Text>
+        <Text
+          style={{ color: theme.text }}
+          className="text-[4rem] font-bold text-center"
+        >
+          Esse pedacinho de tecnologia está em construção!
+        </Text>
       </View>
     </>
   );
