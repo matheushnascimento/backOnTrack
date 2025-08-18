@@ -9,7 +9,8 @@
     "web": "expo start --web",
     "vercel-build": "expo export",
     "lint:prettier:check": "prettier --check .",
-    "lint:prettier:fix": "prettier --write ."
+    "lint:prettier:fix": "prettier --write .",
+    "lint:eslint:check": "eslint ."
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",
@@ -21,7 +22,6 @@
     "expo-status-bar": "~2.2.3",
     "jest": "~29.7.0",
     "nativewind": "^4.1.23",
-    "prettier": "^3.6.2",
     "react": "19.0.0",
     "react-dom": "19.0.0",
     "react-native": "0.79.5",
@@ -34,7 +34,17 @@
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
+    "@eslint/css": "^0.10.0",
+    "@eslint/js": "^9.33.0",
+    "@eslint/json": "^0.13.1",
     "@types/react": "~19.0.10",
+    "eslint": "^9.33.0",
+    "eslint-config-expo": "^9.2.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.4",
+    "eslint-plugin-react": "^7.37.5",
+    "globals": "^16.3.0",
+    "prettier": "^3.6.2",
     "typescript": "~5.8.3"
   },
   "private": true
