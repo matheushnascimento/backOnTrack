@@ -5,14 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 export default function MyView({ className, style, safe = true, ...props }) {
   const colorScheme = useColorScheme();
   const themes = Colors[colorScheme] || Colors.light;
-  if (!safe)
-    return (
-      <View
-        className={className}
-        style={[{ backgroundColor: themes.background }, style]}
-        {...props}
-      />
-    );
+  if (!safe) return <View className={className} style={style} {...props} />;
 
   const insets = useSafeAreaInsets();
 
@@ -21,7 +14,6 @@ export default function MyView({ className, style, safe = true, ...props }) {
       className={className}
       style={[
         {
-          backgroundColor: themes.background,
           paddingTop: insets.top,
           paddingBottom: insets.bottom,
         },

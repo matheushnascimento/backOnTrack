@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { MetricsCategories } from "@/constants/MetricsCategories";
 
-import Button from "./Button";
+import Button from "./MyButton";
 import MyView from "./MyView";
 
 export default function MyHeader() {

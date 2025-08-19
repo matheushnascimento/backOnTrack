@@ -1,7 +1,8 @@
-import { View, useColorScheme } from "react-native";
+import { useColorScheme } from "react-native";
 import { Colors } from "@/constants/Colors";
-import Header from "@/components/Header";
+import Header from "@/components/MyHeader";
 import MyView from "@/components/MyView";
+import MyCard from "@/components/MyCard";
 
 export default function Home() {
   const colorScheme = useColorScheme();
@@ -10,10 +11,11 @@ export default function Home() {
   return (
     <>
       <MyView
-        className="flex-1 items-center gap-5 p-10"
+        className="flex-1 gap-5 p-10"
         style={{ backgroundColor: theme.background }}
       >
         <Header />
+        <MyCard title="água" />
       </MyView>
     </>
   );
