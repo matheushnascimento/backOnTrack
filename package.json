@@ -10,7 +10,8 @@
     "vercel-build": "expo export",
     "lint:prettier:check": "prettier --check .",
     "lint:prettier:fix": "prettier --write .",
-    "lint:eslint:check": "eslint ."
+    "lint:eslint:check": "eslint .",
+    "prepare": "husky"
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",
@@ -46,6 +47,7 @@
     "eslint-plugin-prettier": "^5.5.4",
     "eslint-plugin-react": "^7.37.5",
     "globals": "^16.3.0",
+    "husky": "^9.1.7",
     "prettier": "^3.6.2",
     "typescript": "~5.8.3"
   },
