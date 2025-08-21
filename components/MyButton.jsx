@@ -1,8 +1,8 @@
 import { Colors } from "@/constants/Colors";
-import { useColorScheme } from "react-native";
+import { Text, useColorScheme } from "react-native";
 import { Button } from "react-native-paper";
 
-export default function MyButton({ title, isSelected = false, ...props }) {
+export default function MyButton({ isSelected = false, title, ...props }) {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme] ?? Colors.light;
 
@@ -13,7 +13,7 @@ export default function MyButton({ title, isSelected = false, ...props }) {
       mode="elevated"
       {...props}
     >
-      {title}
+      <Text>{title}</Text>
     </Button>
   );
 }
