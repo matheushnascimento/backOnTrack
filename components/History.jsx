@@ -9,12 +9,15 @@ export default function History({ tableName, reload }) {
   const theme = Colors[colorScheme] ?? Colors.light;
   const styles = StyleSheet.create({
     container: {
-      flex: 1,
-      backgroundColor: theme.backgroundCard,
-      borderRadius: 6,
+      display: "flex",
+      alignItems: "center",
+      width: "100%",
+      gap: 10,
     },
     card: {
       display: "flex",
+      width: "100%",
+      maxWidth: "40rem",
       gap: 10,
       backgroundColor: theme.backgroundCard,
       borderRadius: 6,
@@ -68,13 +71,11 @@ export default function History({ tableName, reload }) {
   }, [reload]);
 
   return (
-    <MyView className="flex gap-[1rem]">
+    <MyView style={styles.container}>
       {Object.entries(data).map(([id, row]) => (
         <MyView style={styles.card} key={id}>
           <Text style={styles.title}>
-            <Text style={styles.text}>
-              {getDate(row.date)} {tableName}
-            </Text>
+            <Text style={styles.text}>{getDate(row.date)} água</Text>
             <Text
               style={[
                 styles.score,
