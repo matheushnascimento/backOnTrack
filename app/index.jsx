@@ -12,20 +12,24 @@ import Score from "@/components/Score";
 import MyButton from "@/components/MyButton";
 
 import { add } from "@/infra/database";
+import History from "@/components/History";
 
 //#endregion
 
 export default function Home() {
+  //#region variables
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme] ?? Colors.light;
-
+  //#region states
   const [date, setDate] = useState(getDate());
   const [ideal, setIdeal] = useState();
-  const [score, setScore] = useState(null);
+  const [score, setScore] = useState();
   const [min, setMin] = useState();
   const [max, setMax] = useState();
-  const [observation, setObservation] = useState("");
+  const [observation, setObservation] = useState("2134");
+  const [reloadKey, setReloadKey] = useState(0);
   const [quantity, setQuantity] = useState();
+  //#endregion
 
   const styles = StyleSheet.create({
     title: {
@@ -41,15 +45,16 @@ export default function Home() {
       fontSize: 18,
     },
   });
+  //#endregion
 
   function getDate() {
     const date = new Date();
     const displayDate = `${date.getDay()}/${date.getMonth()}/${date.getFullYear()}`;
-    return { date: date.toISOString(), displayDate };
+    return { ISOdate: date.toISOString(), displayDate };
   }
   function handleSubmit() {
     const data = {
-      date,
+      date: date.ISOdate,
       min,
       max,
       ideal,
@@ -58,8 +63,9 @@ export default function Home() {
       observation,
     };
     add("water", data);
+    setReloadKey((prev) => prev + 1);
+    alert("Atualizado!");
   }
-  useEffect(() => {}, []);
 
   return (
     <MyView
@@ -159,6 +165,7 @@ export default function Home() {
           <MyButton title="Salvar" onPress={() => handleSubmit()} />
         </MyView>
       </MyView>
+      <History tableName="water" reload={reloadKey} />
     </MyView>
   );
 }
