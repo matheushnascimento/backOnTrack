@@ -70,13 +70,13 @@ export default function Home() {
   return (
     <MyView
       safe={true}
-      className="flex-1 gap-3 p-5"
+      className="flex-1 items-center gap-3 p-5"
       style={{ backgroundColor: theme.background }}
     >
       <Header />
       <MyView
         style={{ backgroundColor: theme.backgroundCard, padding: 10 }}
-        className="rounded-md gap-5 shadow-[0_.4rem_.4rem_0_rgba(0,0,0,.25)]"
+        className="flex max-w-[40rem] rounded-md gap-5 shadow-[0_.4rem_.4rem_0_rgba(0,0,0,.25)]"
       >
         <Text style={styles.title} className="flex flex-row gap-1">
           <Droplet color={Colors.primary} />
@@ -84,7 +84,7 @@ export default function Home() {
         </Text>
 
         {/* card Wrapper */}
-        <MyView className="flex-row justify-between">
+        <MyView className="flex-row flex-wrap justify-between">
           {/* Input Wrapper */}
           <MyView className="w-fit gap-[.6rem]">
             <Text style={styles.title}>MIN</Text>
@@ -140,9 +140,9 @@ export default function Home() {
           placeholder:opacity-50"
           placeholder="Observações sobre água..."
         />
-        <MyView className="flex-row gap-[1rem]">
+        <MyView className="flex-row flex-wrap justify-center gap-[1rem]">
           <MyView
-            className="min-w-1/2 w-fit h-fit rounded-md flex-row gap-[1rem] justify-center items-start"
+            className="min-w-1/2 w-full h-fit rounded-md flex-row gap-[1rem] justify-center items-start"
             style={{
               padding: 10,
               backgroundColor: theme.backgroundCard,
@@ -162,7 +162,11 @@ export default function Home() {
             />
             <Text style={styles.title}>ml</Text>
           </MyView>
-          <MyButton title="Salvar" onPress={() => handleSubmit()} />
+          <MyButton
+            style={{ width: "100%" }}
+            title="Salvar"
+            onPress={() => handleSubmit()}
+          />
         </MyView>
       </MyView>
       <History tableName="water" reload={reloadKey} />

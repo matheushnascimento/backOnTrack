@@ -9,7 +9,7 @@ export default function MyHeader() {
 
   return (
     <MyView
-      className="items-start gap-5"
+      className="self-start items-start gap-5"
       style={{ flexDirection: "row", padding: 12 }}
     >
       {MetricsCategories &&
