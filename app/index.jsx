@@ -1,5 +1,5 @@
 //#region imports
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { StyleSheet, Text, TextInput, useColorScheme } from "react-native";
 
 import { Droplet } from "lucide-react-native";
@@ -11,7 +11,7 @@ import MyView from "@/components/MyView";
 import Score from "@/components/Score";
 import MyButton from "@/components/MyButton";
 
-import { add, get } from "@/infra/database";
+import { add } from "@/infra/database";
 
 //#endregion
 
@@ -21,8 +21,10 @@ export default function Home() {
 
   const [date, setDate] = useState(getDate());
   const [ideal, setIdeal] = useState();
+  const [score, setScore] = useState(null);
   const [min, setMin] = useState();
   const [max, setMax] = useState();
+  const [observation, setObservation] = useState("");
   const [quantity, setQuantity] = useState();
 
   const styles = StyleSheet.create({
@@ -43,18 +45,22 @@ export default function Home() {
   function getDate() {
     const date = new Date();
     const displayDate = `${date.getDay()}/${date.getMonth()}/${date.getFullYear()}`;
-    return { date, displayDate };
+    return { date: date.toISOString(), displayDate };
   }
   function handleSubmit() {
     const data = {
+      date,
       min,
       max,
       ideal,
       quantity,
-      date,
+      score,
+      observation,
     };
     add("water", data);
   }
+  useEffect(() => {}, []);
+
   return (
     <MyView
       safe={true}
@@ -115,10 +121,12 @@ export default function Home() {
         </MyView>
 
         <Text style={styles.title}>Nota</Text>
-        <Score />
+        <Score value={score} onPress={setScore} />
 
         <Text style={styles.title}>OBS:</Text>
         <TextInput
+          value={observation}
+          onChangeText={(value) => setObservation(value)}
           style={{
             backgroundColor: theme.backgroundCard,
           }}

@@ -1,7 +1,7 @@
 import MyButton from "./MyButton";
 import MyView from "./MyView";
 
-export default function Score() {
+export default function Score({ onPress, value, ...props }) {
   const scoreRange = 5;
   return (
     <MyView
@@ -9,7 +9,15 @@ export default function Score() {
       style={{ padding: 6 }}
     >
       {Array.from({ length: scoreRange }).map((_, index) => (
-        <MyButton key={index} title={index} className="w-6 h-6 rounded-full" />
+        <MyButton
+          key={index}
+          title={index}
+          value={value}
+          className="w-6 h-6 rounded-full"
+          {...props}
+          onPress={() => onPress(index)}
+          isSelected={value === index}
+        />
       ))}
     </MyView>
   );

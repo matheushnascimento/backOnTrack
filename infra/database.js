@@ -3,9 +3,7 @@ import { createStore } from "tinybase";
 const store = createStore();
 
 function get(tableName) {
-  const data = store.getTable(tableName);
-  // eslint-disable-next-line no-undef
-  console.log(data);
+  return store.getTable(tableName);
 }
 
 function add(tableName, data) {

@@ -14,7 +14,8 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.matheushnascimento.backOnTrack"
     },
     "android": {
       "bundler": "metro",
@@ -22,12 +23,16 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.matheushnascimento.backOnTrack"
     },
     "web": {
       "bundler": "metro",
       "favicon": "./assets/favicon.png"
     },
-    "plugins": ["expo-router", "expo-sqlite"]
+    "plugins": [
+      "expo-router",
+      "expo-sqlite"
+    ]
   }
 }
