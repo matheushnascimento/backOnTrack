@@ -8,7 +8,7 @@ export default function Score({ onPress, value, ...props }) {
       className="h-fit justify-start items-center flex-row gap-[.6rem]"
       style={{ padding: 6 }}
     >
-      {Array.from({ length: scoreRange }).map((_, index) => (
+      {Array.from({ length: scoreRange + 1 }).map((_, index) => (
         <MyButton
           key={index}
           title={index}

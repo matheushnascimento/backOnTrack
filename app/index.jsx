@@ -26,7 +26,7 @@ export default function Home() {
   const [score, setScore] = useState();
   const [min, setMin] = useState();
   const [max, setMax] = useState();
-  const [observation, setObservation] = useState("2134");
+  const [observation, setObservation] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [quantity, setQuantity] = useState();
   //#endregion
