@@ -10,6 +10,5 @@ function get(tableName) {
 function add(tableName, data) {
   const id = Math.random().toString(30).substring(2, 20);
   store.setRow(tableName, id, data);
-  console.log(get(tableName));
 }
 export { get, add };

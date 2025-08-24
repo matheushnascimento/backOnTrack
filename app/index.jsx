@@ -1,27 +1,31 @@
-import { Colors } from "@/constants/Colors";
-
-import { StyleSheet, useColorScheme } from "react-native";
+import { Text } from "react-native";
 
 import { Dot } from "lucide-react-native";
-import { Card, Text } from "react-native-paper";
-import { List } from "react-native-paper";
+
+import { Card, List } from "react-native-paper";
 
 import MyView from "@/components/MyView";
 
+import { useThemedStyles } from "@/hook/useThemedStyle";
+import { Colors } from "@/constants/Colors";
+
 export default function Home() {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme] ?? Colors.light;
-  const styles = StyleSheet.create({
+  const styles = useThemedStyles((theme) => ({
     container: {
       flex: 1,
+      justifyContent: "center",
       alignItems: "center",
       backgroundColor: theme.background,
     },
     card: {
       width: "50%",
       height: "50%",
+      boxShadow: Colors.shadow,
     },
-  });
+    button: {
+      backgroundColor: theme.background,
+    },
+  }));
   return (
     <MyView style={styles.container} safe={true}>
       <Card mode="contained" style={styles.card}>
@@ -36,6 +40,10 @@ export default function Home() {
           <MyView className="flex-row items-center">
             <Dot />
             <List.Item title="Registro diário de ingestão de água" />
+          </MyView>
+          <MyView className="flex-row items-center">
+            <Dot />
+            <List.Item title="Registro diário de ingestão de sono" />
           </MyView>
         </Card.Content>
       </Card>

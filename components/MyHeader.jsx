@@ -1,19 +1,21 @@
 import { useEffect, useState } from "react";
-import { MetricsCategories } from "@/constants/MetricsCategories";
 
 import Button from "./MyButton";
 import MyView from "./MyView";
+import { getCategoryInfo, CATEGORY_MAP } from "./categoryUtils";
 import { router, usePathname } from "expo-router";
 import { useColorScheme } from "react-native";
 import { Colors } from "@/constants/Colors";
 
 export default function MyHeader() {
   const colorScheme = useColorScheme();
+  const pathname = usePathname().substring(1);
+
+  const { key } = getCategoryInfo(pathname);
+
   const theme = Colors[colorScheme] ?? Colors.light;
-  const pathname = usePathname();
-  const [selectedButton, setSelectedButton] = useState(
-    MetricsCategories[pathname],
-  );
+
+  const [selectedButton, setSelectedButton] = useState(key);
 
   function handleButtonSelection(category) {
     if (category === selectedButton) {
@@ -26,14 +28,13 @@ export default function MyHeader() {
   }
 
   useEffect(() => {
-    const matchedCategory = Object.values(MetricsCategories).find(
+    const matchedCategory = Object.values(CATEGORY_MAP).find(
       (category) => pathname === `/${category.name}`,
     );
     if (matchedCategory) {
       setSelectedButton(matchedCategory.name);
     }
   }, [pathname]);
-
   return (
     <MyView
       className="self-start items-start gap-5"
@@ -44,12 +45,12 @@ export default function MyHeader() {
         backgroundColor: theme.background,
       }}
     >
-      {Object.entries(MetricsCategories).map(([index, category]) => (
+      {Object.entries(CATEGORY_MAP).map(([index, category]) => (
         <Button
           key={index}
           title={category.displayName}
-          isSelected={selectedButton === category.name}
-          onPress={() => handleButtonSelection(category.name)}
+          isSelected={selectedButton === index}
+          onPress={() => handleButtonSelection(index)}
         ></Button>
       ))}
     </MyView>

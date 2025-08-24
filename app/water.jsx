@@ -1,25 +1,32 @@
 //#region imports
-import { useEffect, useState } from "react";
-import { StyleSheet, Text, TextInput, useColorScheme } from "react-native";
+import { usePathname } from "expo-router";
+
+import { useState } from "react";
+import { Text, TextInput } from "react-native";
+import { Snackbar } from "react-native-paper";
 
 import { Droplet } from "lucide-react-native";
 
 import { Colors } from "@/constants/Colors";
 
+import History from "@/components/History";
+import MyButton from "@/components/MyButton";
 import MyView from "@/components/MyView";
 import Score from "@/components/Score";
-import MyButton from "@/components/MyButton";
+
+import { getCategoryInfo } from "@/components/categoryUtils";
+import getDate from "@/constants/getDate";
 
 import { add } from "@/infra/database";
-import History from "@/components/History";
-import MyHeader from "@/components/MyHeader";
+import { useThemedStyles } from "@/hook/useThemedStyle";
 
 //#endregion
 
-export default function Home() {
+export default function Water() {
   //#region variables
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme] ?? Colors.light;
+  const pathname = usePathname().substring(1);
+  const { displayName, Icon } = getCategoryInfo(pathname);
+
   //#region states
   const [date, setDate] = useState(getDate());
   const [ideal, setIdeal] = useState();
@@ -29,30 +36,65 @@ export default function Home() {
   const [observation, setObservation] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [quantity, setQuantity] = useState();
+  const [visible, setVisible] = useState(false);
   //#endregion
 
-  const styles = StyleSheet.create({
-    title: {
-      color: theme.text,
-      fontWeight: "bold",
-      fontSize: 18,
-      width: "fit",
+  const styles = useThemedStyles((theme) => ({
+    card: {
+      backgroundColor: theme.backgroundCard,
+      display: "flex",
+      gap: "2rem",
+      maxWidth: "40rem",
+      borderRadius: ".6rem",
+      padding: 10,
+      paddingTop: 10,
+      paddingBottom: 10,
+      boxShadow: Colors.shadow,
     },
-
+    container: {
+      flex: 1,
+      alignItems: "center",
+      gap: "1rem",
+      backgroundColor: theme.background,
+    },
+    input: {
+      padding: ".4rem",
+      fontSize: "1.6rem",
+      fontWeight: "bold",
+      maxWidth: "10rem",
+      color: theme.text,
+      borderRadius: ".6rem",
+      boxShadow: Colors.shadow,
+      backgroundColor: theme.backgroundCard,
+    },
+    textArea: {
+      padding: ".4rem",
+      fontSize: "1.6rem",
+      fontWeight: "bold",
+      color: theme.text,
+      borderRadius: ".6rem",
+      boxShadow: Colors.shadow,
+      backgroundColor: theme.backgroundCard,
+      height: "4rem",
+      fontSize: "1.2rem",
+      fontWeight: "regular",
+    },
     text: {
       color: theme.text,
       fontWeight: "bold",
       fontSize: 18,
     },
-  });
+    title: {
+      width: "fit",
+      color: theme.text,
+      fontWeight: "bold",
+      fontSize: 18,
+    },
+  }));
   //#endregion
 
-  function getDate() {
-    const date = new Date();
-    const displayDate = `${date.getDay()}/${date.getMonth()}/${date.getFullYear()}`;
-    return { ISOdate: date.toISOString(), displayDate };
-  }
   function handleSubmit() {
+    setVisible(true);
     const data = {
       date: date.ISOdate,
       min,
@@ -64,34 +106,36 @@ export default function Home() {
     };
     add("water", data);
     setReloadKey((prev) => prev + 1);
-    alert("Atualizado!");
+  }
+  function onDismissSnackBar() {
+    setVisible(false);
   }
 
   return (
-    <MyView
-      safe={true}
-      className="flex-1 items-center gap-3 p-5"
-      style={{ backgroundColor: theme.background }}
-    >
-      <MyView
-        style={{ backgroundColor: theme.backgroundCard, padding: 10 }}
-        className="flex max-w-[40rem] rounded-md gap-5 shadow-[0_.4rem_.4rem_0_rgba(0,0,0,.25)]"
+    <MyView safe={true} style={styles.container}>
+      <Snackbar
+        visible={visible}
+        onDismiss={onDismissSnackBar}
+        action={{
+          label: "Fechar",
+        }}
       >
+        Seus dados estão salvos! (Enquanto você não recarregar o app)
+      </Snackbar>
+      <MyView style={styles.card}>
         <Text style={styles.title} className="flex flex-row gap-1">
           <Droplet color={Colors.primary} />
-          {date.displayDate} água
+          {Icon && <Icon size={24} color={Colors.primary} />} {date.displayDate}{" "}
+          {displayName}
         </Text>
 
         {/* card Wrapper */}
-        <MyView className="flex-row flex-wrap justify-between">
+        <MyView className=" flex-row flex-wrap justify-between">
           {/* Input Wrapper */}
           <MyView className="w-fit gap-[.6rem]">
             <Text style={styles.title}>MIN</Text>
             <TextInput
-              style={{
-                backgroundColor: theme.backgroundCard,
-              }}
-              className="px-1 text-[1.6rem] font-bold text-white rounded-md max-w-[10rem] shadow-[0_.4rem_.4rem_0_rgba(0,0,0,.25)]"
+              style={styles.input}
               placeholder="--"
               value={min}
               onChangeText={(value) => setMin(value)}
@@ -101,10 +145,7 @@ export default function Home() {
           <MyView className="w-fit gap-[.6rem]">
             <Text style={styles.title}>MAX</Text>
             <TextInput
-              style={{
-                backgroundColor: theme.backgroundCard,
-              }}
-              className="px-1 text-[1.6rem] font-bold text-white rounded-md max-w-[10rem] shadow-[0_.4rem_.4rem_0_rgba(0,0,0,.25)]"
+              style={styles.input}
               placeholder="--"
               value={max}
               onChangeText={(value) => setMax(value)}
@@ -114,10 +155,7 @@ export default function Home() {
           <MyView className="w-fit gap-[.6rem]">
             <Text style={styles.title}>IDEAL</Text>
             <TextInput
-              style={{
-                backgroundColor: theme.backgroundCard,
-              }}
-              className="px-1 text-[1.6rem] font-bold text-white rounded-md max-w-[10rem] shadow-[0_.4rem_.4rem_0_rgba(0,0,0,.25)]"
+              style={styles.input}
               placeholder="--"
               value={ideal}
               onChangeText={(value) => setIdeal(value)}
@@ -128,33 +166,33 @@ export default function Home() {
         <Text style={styles.title}>Nota</Text>
         <Score value={score} onPress={setScore} />
 
-        <Text style={styles.title}>OBS:</Text>
-        <TextInput
-          value={observation}
-          onChangeText={(value) => setObservation(value)}
-          style={{
-            backgroundColor: theme.backgroundCard,
-          }}
-          className="h-[4rem] px-1 text-[1.2rem] font-regular text-white rounded-md shadow-[0_.4rem_.4rem_0_rgba(0,0,0,.25)]
-          placeholder:opacity-50"
-          placeholder="Observações sobre água..."
-        />
+        <MyView className=" gap-1">
+          <Text style={styles.title}>OBS:</Text>
+          <TextInput
+            value={observation}
+            onChangeText={(value) => setObservation(value)}
+            style={styles.textArea}
+            placeholder="Observações sobre água..."
+          />
+        </MyView>
         <MyView className="flex-row flex-wrap justify-center gap-[1rem]">
           <MyView
-            className="min-w-1/2 w-full h-fit rounded-md flex-row gap-[1rem] justify-center items-start"
+            className="min-w-1/2 w-full h-fit rounded-md flex-row gap-[1rem]  items-center"
             style={{
               padding: 10,
-              backgroundColor: theme.backgroundCard,
             }}
           >
             <Text
               style={styles.title}
               className=" text-white font-bold text-[1.6rem]"
             >
-              água hoje
+              {displayName} hoje
             </Text>
             <TextInput
-              className="max-w-[10rem] w-fit bg-[#333333] h-[2.3rem] px-1 text-[1.2rem] font-regular text-white rounded-md shadow-[0_.4rem_.4rem_0_rgba(0,0,0,.25)]"
+              style={[
+                styles.input,
+                { backgroundColor: "#333", height: "3.2rem" },
+              ]}
               placeholder="--"
               value={quantity}
               onChangeText={(value) => setQuantity(value)}
@@ -168,7 +206,7 @@ export default function Home() {
           />
         </MyView>
       </MyView>
-      <History tableName="water" reload={reloadKey} />
+      <History tableName={pathname} reload={reloadKey} />
     </MyView>
   );
 }
