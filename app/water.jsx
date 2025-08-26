@@ -3,13 +3,13 @@ import { usePathname } from "expo-router";
 
 import { useState } from "react";
 import { Text, TextInput } from "react-native";
-import { shadow, Snackbar } from "react-native-paper";
+import { Snackbar } from "react-native-paper";
 
 import { Droplet } from "lucide-react-native";
 
 import { Colors } from "@/constants/Colors";
 
-import History from "@/components/History";
+import MyHistory from "@/components/MyHistory";
 import MyButton from "@/components/MyButton";
 import MyView from "@/components/MyView";
 import Score from "@/components/Score";
@@ -118,6 +118,7 @@ export default function Water() {
       quantity,
       score,
       observation,
+      unity: "ml",
     };
     add("water", data);
     setReloadKey((prev) => prev + 1);
@@ -181,7 +182,7 @@ export default function Water() {
 
         <Text style={styles.title}>Nota</Text>
         <Score value={score} onPress={setScore} />
-
+        {/* OBS */}
         <MyView className="gap-1">
           <Text style={styles.title}>OBS:</Text>
           <TextInput
@@ -236,7 +237,7 @@ export default function Water() {
           />
         </MyView>
       </MyView>
-      <History tableName={pathname} reload={reloadKey} />
+      <MyHistory tableName={pathname} reload={reloadKey} />
     </MyView>
   );
 }

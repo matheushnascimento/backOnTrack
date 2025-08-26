@@ -1,14 +1,22 @@
 //#region imports
+import { useEffect, useState } from "react";
 
 import { StyleSheet, Text, useColorScheme, View } from "react-native";
+
 import MyView from "./MyView";
+import { getCategoryInfo } from "./categoryUtils";
+
 import { Colors } from "@/constants/Colors";
-import { useEffect, useState } from "react";
+
 import { get } from "@/infra/database";
+//#endregion
 
 export default function History({ tableName, reload }) {
+  //#region variables
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme] ?? Colors.light;
+  const { displayName, unity } = getCategoryInfo(tableName);
+
   const styles = StyleSheet.create({
     container: {
       display: "flex",
@@ -62,6 +70,8 @@ export default function History({ tableName, reload }) {
 
   const [data, setData] = useState([]);
 
+  //#endregion
+
   function getDate(date) {
     date = date.substring(0, 10).split("-");
     return `${date[2]}/${date[1]}/${date[0]}`;
@@ -78,7 +88,7 @@ export default function History({ tableName, reload }) {
         <MyView style={styles.card} key={id}>
           <Text style={styles.title}>
             <Text style={styles.text}>
-              {getDate(obj.date)} {tableName === "sleep" ? "sono" : "água"}
+              {getDate(obj.date)} {displayName}
             </Text>
             <Text
               style={[
@@ -93,8 +103,8 @@ export default function History({ tableName, reload }) {
             </Text>
           </Text>
           <Text style={styles.subtext}>
-            {obj.quantity}
-            {tableName === "sleep" ? "h" : "ml"} | Nota {obj.score}
+            {obj.quantity ?? obj.trainingDuration}
+            {unity} | Nota {obj.score}
           </Text>
           <View className="flex-row items-center">
             <Text style={[styles.subtext, { fontSize: "1.6rem" }]}>OBS: </Text>
