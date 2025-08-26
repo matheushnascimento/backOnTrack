@@ -1,4 +1,4 @@
-import { Water, Moon } from "lucide-react-native";
+import { Dumbbell, Moon, Water } from "lucide-react-native";
 
 export const CATEGORY_MAP = {
   water: {
@@ -8,6 +8,10 @@ export const CATEGORY_MAP = {
   sleep: {
     displayName: "sono",
     Icon: Moon,
+  },
+  exercise: {
+    displayName: "exercício",
+    Icon: Dumbbell,
   },
 };
 
