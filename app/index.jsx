@@ -1,13 +1,15 @@
+//#region imports
+
 import { Text } from "react-native";
-
 import { Dot } from "lucide-react-native";
-
 import { Card } from "react-native-paper";
 
 import MyView from "@/components/MyView";
 
 import { useThemedStyles } from "@/hook/useThemedStyle";
+
 import { Colors } from "@/constants/Colors";
+//#endregion
 
 export default function Home() {
   const styles = useThemedStyles((theme) => ({
@@ -47,6 +49,10 @@ export default function Home() {
           <MyView className="flex-row items-center">
             <Dot />
             <Text>Registro diário de sono</Text>
+          </MyView>
+          <MyView className="flex-row items-center">
+            <Dot />
+            <Text>Registro diário de exercício</Text>
           </MyView>
         </Card.Content>
       </Card>

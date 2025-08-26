@@ -1,6 +1,6 @@
 //#region imports
 import { useState } from "react";
-import { StyleSheet, Text, TextInput, useColorScheme } from "react-native";
+import { Text, TextInput } from "react-native";
 import { Snackbar } from "react-native-paper";
 
 import { Colors } from "@/constants/Colors";
@@ -10,7 +10,7 @@ import Score from "@/components/Score";
 import MyButton from "@/components/MyButton";
 
 import { add } from "@/infra/database";
-import History from "@/components/History";
+import MyHistory from "@/components/MyHistory";
 import getDate from "@/constants/getDate";
 import { usePathname } from "expo-router";
 import { getCategoryInfo } from "@/components/categoryUtils";
@@ -20,8 +20,6 @@ import { useThemedStyles } from "@/hook/useThemedStyle";
 
 export default function Sleep() {
   //#region variables
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme] ?? Colors.light;
   const pathname = usePathname().substring(1);
   const { displayName, Icon } = getCategoryInfo(pathname);
 
@@ -113,7 +111,8 @@ export default function Sleep() {
       min,
       max,
       ideal,
-      quantity: `${sleepHours}:${sleepMinutes ?? "00"}`,
+      quantity: `${sleepHours ?? "00"}:${sleepMinutes ?? "00"}`,
+      unity: "h",
       score,
       observation,
     };
@@ -175,7 +174,7 @@ export default function Sleep() {
             value={observation}
             onChangeText={(value) => setObservation(value)}
             style={styles.textArea}
-            placeholder="Observações sobre água..."
+            placeholder="Observações sobre sono..."
           />
         </MyView>
 
@@ -223,7 +222,7 @@ export default function Sleep() {
           />
         </MyView>
       </MyView>
-      <History tableName={pathname} reload={reloadKey} />
+      <MyHistory tableName={pathname} reload={reloadKey} />
     </MyView>
   );
 }
