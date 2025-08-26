@@ -8,7 +8,7 @@ import { Snackbar } from "react-native-paper";
 import { Colors } from "@/constants/Colors";
 import MyButton from "@/components/MyButton";
 import MyCheckbox from "@/components/MyCheckbox";
-import MyHistory from "@/components/MyHistory";
+import { MyExerciseHistory } from "@/components/MyHistory";
 import MyView from "@/components/MyView";
 import Score from "@/components/Score";
 
@@ -118,7 +118,6 @@ export default function Exercise() {
       score,
       observation,
     };
-    console.log(data);
     add("exercise", data);
     setReloadKey((prev) => prev + 1);
   }
@@ -212,7 +211,7 @@ export default function Exercise() {
           onPress={() => handleSubmit()}
         />
       </MyView>
-      <MyHistory tableName={pathname} reload={reloadKey} />
+      <MyExerciseHistory tableName={pathname} reload={reloadKey} />
     </MyView>
   );
 }
