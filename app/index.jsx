@@ -2,7 +2,7 @@ import { Text } from "react-native";
 
 import { Dot } from "lucide-react-native";
 
-import { Card, List } from "react-native-paper";
+import { Card } from "react-native-paper";
 
 import MyView from "@/components/MyView";
 
@@ -37,13 +37,16 @@ export default function Home() {
           <Text variant="headlineMedium">
             Essa versão beta conta com as seguintes funcionalidades
           </Text>
-          <MyView className="flex-row items-center">
+          <MyView
+            className="flex-row items-c
+          enter"
+          >
             <Dot />
-            <List.Item title="Registro diário de ingestão de água" />
+            <Text>Registro diário de ingestão de água</Text>
           </MyView>
           <MyView className="flex-row items-center">
             <Dot />
-            <List.Item title="Registro diário de ingestão de sono" />
+            <Text>Registro diário de sono</Text>
           </MyView>
         </Card.Content>
       </Card>

@@ -14,6 +14,7 @@ import History from "@/components/History";
 import getDate from "@/constants/getDate";
 import { usePathname } from "expo-router";
 import { getCategoryInfo } from "@/components/categoryUtils";
+import { useThemedStyles } from "@/hook/useThemedStyle";
 
 //#endregion
 
@@ -26,30 +27,82 @@ export default function Sleep() {
 
   //#region states
   const [date, setDate] = useState(getDate());
-  const [ideal, setIdeal] = useState();
+  const [ideal, setIdeal] = useState(8);
   const [score, setScore] = useState();
-  const [min, setMin] = useState();
+  const [min, setMin] = useState(7);
   const [max, setMax] = useState();
   const [observation, setObservation] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
-  const [quantity, setQuantity] = useState();
+  const [sleepHours, setSleepHours] = useState();
+  const [sleepMinutes, setSleepMinutes] = useState();
   const [visible, setVisible] = useState(false);
   //#endregion
 
-  const styles = StyleSheet.create({
+  const styles = useThemedStyles((theme) => ({
+    card: {
+      backgroundColor: theme.backgroundCard,
+      display: "flex",
+      gap: "2rem",
+      maxWidth: "40rem",
+      borderRadius: ".6rem",
+      padding: 10,
+      paddingTop: 10,
+      paddingBottom: 10,
+      boxShadow: Colors.shadow,
+    },
+    cardWrapper: {
+      display: "flex",
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
+    container: {
+      flex: 1,
+      alignItems: "center",
+      gap: "1rem",
+      padding: "1rem",
+      backgroundColor: theme.background,
+    },
+    input: {
+      padding: ".4rem",
+      backgroundColor: theme.backgroundCard,
+      fontSize: "1.6rem",
+      fontWeight: "bold",
+      color: "white",
+      borderRadius: ".6rem",
+      maxWidth: "10rem",
+      boxShadow: Colors.shadow,
+    },
+    inputWrapper: {
+      width: "fit",
+      gap: ".6rem",
+    },
     title: {
+      width: "fit",
+      display: "flex",
+      flexDirection: "row",
+      gap: ".4rem",
       color: theme.text,
       fontWeight: "bold",
       fontSize: 18,
-      width: "fit",
     },
-
     text: {
       color: theme.text,
       fontWeight: "bold",
       fontSize: 18,
     },
-  });
+    textArea: {
+      padding: ".4rem",
+      fontSize: "1.6rem",
+      fontWeight: "bold",
+      color: theme.text,
+      borderRadius: ".6rem",
+      boxShadow: Colors.shadow,
+      backgroundColor: theme.backgroundCard,
+      height: "4rem",
+      fontSize: "1.2rem",
+      fontWeight: "regular",
+    },
+  }));
   //#endregion
 
   //#region functions
@@ -60,7 +113,7 @@ export default function Sleep() {
       min,
       max,
       ideal,
-      quantity,
+      quantity: `${sleepHours}:${sleepMinutes ?? "00"}`,
       score,
       observation,
     };
@@ -73,11 +126,7 @@ export default function Sleep() {
   //#endregion
 
   return (
-    <MyView
-      safe={true}
-      className="flex-1 items-center gap-3 p-5"
-      style={{ backgroundColor: theme.background }}
-    >
+    <MyView safe={true} style={styles.container}>
       <Snackbar
         visible={visible}
         onDismiss={onDismissSnackBar}
@@ -87,96 +136,88 @@ export default function Sleep() {
       >
         Seus dados estão salvos! (Enquanto você não recarregar o app)
       </Snackbar>
-      <MyView
-        style={{ backgroundColor: theme.backgroundCard, padding: 10 }}
-        className="flex max-w-[40rem] rounded-md gap-5 shadow-[0_.4rem_.4rem_0_rgba(0,0,0,.25)]"
-      >
-        <Text style={styles.title} className="flex flex-row gap-1">
+      <MyView style={styles.card}>
+        <Text style={styles.title}>
           {Icon && <Icon size={24} color={Colors.primary} />} {date.displayDate}{" "}
           {displayName}
         </Text>
 
         {/* card Wrapper */}
-        <MyView className="flex-row flex-wrap justify-between">
+        <MyView style={styles.cardWrapper}>
           {/* Input Wrapper */}
-          <MyView className="w-fit gap-[.6rem]">
+          <MyView style={styles.inputWrapper}>
             <Text style={styles.title}>MIN</Text>
-            <TextInput
-              style={{
-                backgroundColor: theme.backgroundCard,
-              }}
-              className="px-1 text-[1.6rem] font-bold text-white rounded-md max-w-[10rem] shadow-[0_.4rem_.4rem_0_rgba(0,0,0,.25)]"
-              placeholder="--"
-              value={min}
-              onChangeText={(value) => setMin(value)}
-            />
+            <TextInput style={styles.input} placeholder="--" value={min} />
           </MyView>
           {/* Input Wrapper */}
-          <MyView className="w-fit gap-[.6rem]">
+          <MyView style={styles.inputWrapper}>
             <Text style={styles.title}>MAX</Text>
             <TextInput
-              style={{
-                backgroundColor: theme.backgroundCard,
-              }}
-              className="px-1 text-[1.6rem] font-bold text-white rounded-md max-w-[10rem] shadow-[0_.4rem_.4rem_0_rgba(0,0,0,.25)]"
+              style={styles.input}
               placeholder="--"
               value={max}
               onChangeText={(value) => setMax(value)}
             />
           </MyView>
           {/* Input Wrapper */}
-          <MyView className="w-fit gap-[.6rem]">
+          <MyView style={styles.inputWrapper}>
             <Text style={styles.title}>IDEAL</Text>
-            <TextInput
-              style={{
-                backgroundColor: theme.backgroundCard,
-              }}
-              className="px-1 text-[1.6rem] font-bold text-white rounded-md max-w-[10rem] shadow-[0_.4rem_.4rem_0_rgba(0,0,0,.25)]"
-              placeholder="--"
-              value={ideal}
-              onChangeText={(value) => setIdeal(value)}
-            />
+            <TextInput style={styles.input} placeholder="--" value={ideal} />
           </MyView>
         </MyView>
 
         <Text style={styles.title}>Nota</Text>
         <Score value={score} onPress={setScore} />
 
-        <Text style={styles.title}>OBS:</Text>
-        <TextInput
-          value={observation}
-          onChangeText={(value) => setObservation(value)}
-          style={{
-            backgroundColor: theme.backgroundCard,
-          }}
-          className="h-[4rem] px-1 text-[1.2rem] font-regular text-white rounded-md shadow-[0_.4rem_.4rem_0_rgba(0,0,0,.25)]
-          placeholder:opacity-50"
-          placeholder="Observações sobre água..."
-        />
-        <MyView className="flex-row flex-wrap justify-center gap-[1rem]">
+        <MyView className="gap-1">
+          <Text style={styles.title}>OBS:</Text>
+          <TextInput
+            value={observation}
+            onChangeText={(value) => setObservation(value)}
+            style={styles.textArea}
+            placeholder="Observações sobre água..."
+          />
+        </MyView>
+
+        <MyView className=" flex-row flex-wrap justify-center items-center gap-[1rem]">
           <MyView
             className="min-w-1/2 w-full h-fit rounded-md flex-row gap-[1rem] justify-center items-start"
-            style={{
-              padding: 10,
-              backgroundColor: theme.backgroundCard,
-            }}
+            style={[
+              styles.card,
+              {
+                width: "50%",
+                height: "fit",
+                justifyContent: "center",
+                alignItems: "center",
+                flexGrow: 1,
+                display: "flex",
+                flexDirection: "row",
+              },
+            ]}
           >
             <Text
               style={styles.title}
-              className=" text-white font-bold text-[1.6rem]"
+              className="text-white font-bold text-[1.6rem]"
             >
               {displayName} hoje
             </Text>
             <TextInput
-              className="max-w-[10rem] w-fit bg-[#333333] h-[2.3rem] px-1 text-[1.2rem] font-regular text-white rounded-md shadow-[0_.4rem_.4rem_0_rgba(0,0,0,.25)]"
+              className="max-w-[2.4rem] w-fit text-center bg-[#333333] h-[2.3rem] px-1 text-[1.2rem] font-regular text-white rounded-md shadow-[0_.4rem_.4rem_0_rgba(0,0,0,.25)]"
               placeholder="--"
-              value={quantity}
-              onChangeText={(value) => setQuantity(value)}
+              value={sleepHours}
+              onChangeText={(value) => setSleepHours(value)}
             />
             <Text style={styles.title}>h</Text>
+            <TextInput
+              className="max-w-[2.4rem] text-center w-fit bg-[#333333] h-[2.3rem] px-1 text-[1.2rem] font-regular text-white rounded-md shadow-[0_.4rem_.4rem_0_rgba(0,0,0,.25)]"
+              placeholder="--"
+              value={sleepMinutes}
+              onChangeText={(value) => setSleepMinutes(value)}
+            />
+            <Text style={styles.title}>min</Text>
           </MyView>
           <MyButton
-            style={{ width: "100%" }}
+            style={{ height: "fit-content" }}
             title="Salvar"
             onPress={() => handleSubmit()}
           />

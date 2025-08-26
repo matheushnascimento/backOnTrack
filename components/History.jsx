@@ -1,3 +1,5 @@
+//#region imports
+
 import { StyleSheet, Text, useColorScheme, View } from "react-native";
 import MyView from "./MyView";
 import { Colors } from "@/constants/Colors";
@@ -72,24 +74,27 @@ export default function History({ tableName, reload }) {
 
   return (
     <MyView style={styles.container}>
-      {Object.entries(data).map(([id, row]) => (
+      {Object.entries(data).map(([id, obj]) => (
         <MyView style={styles.card} key={id}>
           <Text style={styles.title}>
-            <Text style={styles.text}>{getDate(row.date)} água</Text>
+            <Text style={styles.text}>
+              {getDate(obj.date)} {tableName === "sleep" ? "sono" : "água"}
+            </Text>
             <Text
               style={[
                 styles.score,
                 {
                   backgroundColor:
-                    row.score === 5 ? Colors.secondary : Colors.primary,
+                    obj.score === 5 ? Colors.secondary : Colors.primary,
                 },
               ]}
             >
-              {row.score}
+              {obj.score}
             </Text>
           </Text>
           <Text style={styles.subtext}>
-            {row.quantity}ml | Nota {row.score}
+            {obj.quantity}
+            {tableName === "sleep" ? "h" : "ml"} | Nota {obj.score}
           </Text>
           <View className="flex-row items-center">
             <Text style={[styles.subtext, { fontSize: "1.6rem" }]}>OBS: </Text>
@@ -99,7 +104,7 @@ export default function History({ tableName, reload }) {
                 { fontWeight: "medium", fontSize: "1.6rem" },
               ]}
             >
-              {row.observation}
+              {obj.observation}
             </Text>
           </View>
         </MyView>

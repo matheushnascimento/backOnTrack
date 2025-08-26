@@ -3,7 +3,7 @@ import { usePathname } from "expo-router";
 
 import { useState } from "react";
 import { Text, TextInput } from "react-native";
-import { Snackbar } from "react-native-paper";
+import { shadow, Snackbar } from "react-native-paper";
 
 import { Droplet } from "lucide-react-native";
 
@@ -51,21 +51,45 @@ export default function Water() {
       paddingBottom: 10,
       boxShadow: Colors.shadow,
     },
+    cardWrapper: {
+      display: "flex",
+      flexDirection: "row",
+      justifyContent: "space-between",
+    },
     container: {
       flex: 1,
       alignItems: "center",
+      padding: "1rem",
       gap: "1rem",
       backgroundColor: theme.background,
     },
     input: {
       padding: ".4rem",
+      backgroundColor: theme.backgroundCard,
       fontSize: "1.6rem",
       fontWeight: "bold",
-      maxWidth: "10rem",
-      color: theme.text,
+      color: "white",
       borderRadius: ".6rem",
+      maxWidth: "10rem",
       boxShadow: Colors.shadow,
-      backgroundColor: theme.backgroundCard,
+    },
+    inputWrapper: {
+      width: "fit",
+      gap: ".6rem",
+    },
+    title: {
+      width: "fit",
+      display: "flex",
+      flexDirection: "row",
+      gap: ".4rem",
+      color: theme.text,
+      fontWeight: "bold",
+      fontSize: 18,
+    },
+    text: {
+      color: theme.text,
+      fontWeight: "bold",
+      fontSize: 18,
     },
     textArea: {
       padding: ".4rem",
@@ -79,19 +103,10 @@ export default function Water() {
       fontSize: "1.2rem",
       fontWeight: "regular",
     },
-    text: {
-      color: theme.text,
-      fontWeight: "bold",
-      fontSize: 18,
-    },
-    title: {
-      width: "fit",
-      color: theme.text,
-      fontWeight: "bold",
-      fontSize: 18,
-    },
   }));
   //#endregion
+
+  //#region functions
 
   function handleSubmit() {
     setVisible(true);
@@ -110,6 +125,7 @@ export default function Water() {
   function onDismissSnackBar() {
     setVisible(false);
   }
+  //#endregion
 
   return (
     <MyView safe={true} style={styles.container}>
@@ -123,16 +139,16 @@ export default function Water() {
         Seus dados estão salvos! (Enquanto você não recarregar o app)
       </Snackbar>
       <MyView style={styles.card}>
-        <Text style={styles.title} className="flex flex-row gap-1">
+        <Text style={styles.title}>
           <Droplet color={Colors.primary} />
           {Icon && <Icon size={24} color={Colors.primary} />} {date.displayDate}{" "}
           {displayName}
         </Text>
 
         {/* card Wrapper */}
-        <MyView className=" flex-row flex-wrap justify-between">
+        <MyView style={styles.cardWrapper}>
           {/* Input Wrapper */}
-          <MyView className="w-fit gap-[.6rem]">
+          <MyView style={styles.inputWrapper}>
             <Text style={styles.title}>MIN</Text>
             <TextInput
               style={styles.input}
@@ -142,7 +158,7 @@ export default function Water() {
             />
           </MyView>
           {/* Input Wrapper */}
-          <MyView className="w-fit gap-[.6rem]">
+          <MyView style={styles.inputWrapper}>
             <Text style={styles.title}>MAX</Text>
             <TextInput
               style={styles.input}
@@ -152,7 +168,7 @@ export default function Water() {
             />
           </MyView>
           {/* Input Wrapper */}
-          <MyView className="w-fit gap-[.6rem]">
+          <MyView style={styles.inputWrapper}>
             <Text style={styles.title}>IDEAL</Text>
             <TextInput
               style={styles.input}
@@ -166,7 +182,7 @@ export default function Water() {
         <Text style={styles.title}>Nota</Text>
         <Score value={score} onPress={setScore} />
 
-        <MyView className=" gap-1">
+        <MyView className="gap-1">
           <Text style={styles.title}>OBS:</Text>
           <TextInput
             value={observation}
@@ -175,23 +191,37 @@ export default function Water() {
             placeholder="Observações sobre água..."
           />
         </MyView>
-        <MyView className="flex-row flex-wrap justify-center gap-[1rem]">
+
+        <MyView className="flex-row flex-wrap gap-[1rem] items-center">
           <MyView
-            className="min-w-1/2 w-full h-fit rounded-md flex-row gap-[1rem]  items-center"
-            style={{
-              padding: 10,
-            }}
+            style={[
+              styles.card,
+              {
+                width: "50%",
+                height: "fit",
+                justifyContent: "center",
+                alignItems: "center",
+                flexGrow: 1,
+                display: "flex",
+                flexDirection: "row",
+              },
+            ]}
           >
             <Text
               style={styles.title}
-              className=" text-white font-bold text-[1.6rem]"
+              className="flex-nowrap text-white font-bold text-nowrap text-[1.6rem]"
             >
               {displayName} hoje
             </Text>
             <TextInput
               style={[
                 styles.input,
-                { backgroundColor: "#333", height: "3.2rem" },
+                {
+                  backgroundColor: "#333",
+                  width: "5rem",
+                  height: "3.2rem",
+                  textAlign: "center",
+                },
               ]}
               placeholder="--"
               value={quantity}
@@ -200,7 +230,7 @@ export default function Water() {
             <Text style={styles.title}>ml</Text>
           </MyView>
           <MyButton
-            style={{ width: "100%" }}
+            style={{ height: "fit-content" }}
             title="Salvar"
             onPress={() => handleSubmit()}
           />
