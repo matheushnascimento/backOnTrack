@@ -24,6 +24,6 @@ export function getCategoryInfo(key) {
     Icon: CATEGORY_MAP[key]?.Icon ?? null,
     exists: !!CATEGORY_MAP[key],
     key: CATEGORY_MAP[key]?.key ?? key,
-    unity: CATEGORY_MAP[key].unity,
+    unity: CATEGORY_MAP[key]?.unity ?? null,
   };
 }
