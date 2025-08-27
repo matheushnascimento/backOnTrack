@@ -1,7 +1,7 @@
 //#region imports
 import { usePathname } from "expo-router";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Text, TextInput } from "react-native";
 import { Snackbar } from "react-native-paper";
 
@@ -145,8 +145,16 @@ export default function Exercise() {
 
         {/* card Wrapper */}
         <MyView style={styles.cardWrapper}>
-          <MyCheckbox value={training} label="Treino" />
-          <MyCheckbox value={cardio} label="Cardio" />
+          <MyCheckbox
+            value={training}
+            label="Treino"
+            onValueChange={() => setTraining(!training)}
+          />
+          <MyCheckbox
+            value={cardio}
+            label="Cardio"
+            onValueChange={() => setCardio(!cardio)}
+          />
         </MyView>
 
         {/* Nota */}
