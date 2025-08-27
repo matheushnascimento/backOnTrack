@@ -223,7 +223,7 @@ export function MyExerciseHistory({ tableName, reload }) {
                 gap: ".6rem",
               }}
             >
-              <Checkbox color={Colors.primary} value={true} />
+              <Checkbox color={Colors.primary} value={obj.training} />
               <Text style={styles.text}>Treino</Text>
             </MyView>
             <MyView
@@ -233,7 +233,7 @@ export function MyExerciseHistory({ tableName, reload }) {
                 gap: ".6rem",
               }}
             >
-              <Checkbox color={Colors.primary} value={true} />
+              <Checkbox color={Colors.primary} value={obj.cardio} />
               <Text style={styles.text}>Cardio</Text>
             </MyView>
           </MyView>
