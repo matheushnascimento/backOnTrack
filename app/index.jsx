@@ -54,6 +54,10 @@ export default function Home() {
             <Dot />
             <Text>Registro diário de exercício</Text>
           </MyView>
+          <MyView className="flex-row items-center">
+            <Dot />
+            <Text>Registro diário de refeições</Text>
+          </MyView>
         </Card.Content>
       </Card>
     </MyView>
