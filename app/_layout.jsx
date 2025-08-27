@@ -48,6 +48,10 @@ export default function RootLayout() {
           name="exercise"
           options={{ headerShown: false, title: "Exercícios" }}
         />
+        <Stack.Screen
+          name="feeding"
+          options={{ headerShown: false, title: "Alimentação" }}
+        />
       </Stack>
     </>
   );
