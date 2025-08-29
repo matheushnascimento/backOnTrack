@@ -4,7 +4,12 @@ import Button from "./MyButton";
 import MyView from "./MyView";
 import { getCategoryInfo, CATEGORY_MAP } from "./categoryUtils";
 import { router, usePathname } from "expo-router";
-import { useColorScheme } from "react-native";
+import {
+  FlatList,
+  ScrollView,
+  ScrollViewBase,
+  useColorScheme,
+} from "react-native";
 import { Colors } from "@/constants/Colors";
 
 export default function MyHeader() {
@@ -36,23 +41,24 @@ export default function MyHeader() {
     }
   }, [pathname]);
   return (
-    <MyView
-      className="self-start items-start gap-5"
+    <ScrollView
+      horizontal={true}
       style={{
-        width: "100%",
-        flexDirection: "row",
+        flexGrow: 0,
         padding: 12,
+        gap: 20,
         backgroundColor: theme.background,
       }}
     >
       {Object.entries(CATEGORY_MAP).map(([index, category]) => (
         <Button
+          style={{ marginHorizontal: "1rem" }}
           key={index}
           title={category.displayName}
           isSelected={selectedButton === index}
           onPress={() => handleButtonSelection(index)}
         ></Button>
       ))}
-    </MyView>
+    </ScrollView>
   );
 }

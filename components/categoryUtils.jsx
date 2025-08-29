@@ -1,4 +1,10 @@
-import { Dumbbell, Moon, Utensils, Water } from "lucide-react-native";
+import {
+  Dumbbell,
+  Moon,
+  NotebookPen,
+  Utensils,
+  Water,
+} from "lucide-react-native";
 
 export const CATEGORY_MAP = {
   water: {
@@ -20,6 +26,11 @@ export const CATEGORY_MAP = {
     displayName: "alimentação",
     Icon: Utensils,
     unity: "Refeições",
+  },
+  study: {
+    displayName: "estudo",
+    Icon: NotebookPen,
+    unity: "h",
   },
 };
 
