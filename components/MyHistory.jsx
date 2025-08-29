@@ -104,7 +104,7 @@ export default function MyHistory({ tableName, reload }) {
             </Text>
           </Text>
           <Text style={styles.subtext}>
-            {obj.quantity ?? obj.trainingDuration}
+            {obj.quantity ?? obj.duration}
             {unity} | Nota {obj.score}
           </Text>
           <View className="flex-row items-center">
@@ -239,7 +239,7 @@ export function MyExerciseHistory({ tableName, reload }) {
           </MyView>
 
           <Text style={styles.subtext}>
-            {obj.quantity ?? obj.trainingDuration}
+            {obj.quantity ?? obj.duration}
             {unity} | Nota {obj.score}
           </Text>
           <View className="flex-row items-center">

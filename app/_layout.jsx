@@ -52,6 +52,10 @@ export default function RootLayout() {
           name="feeding"
           options={{ headerShown: false, title: "Alimentação" }}
         />
+        <Stack.Screen
+          name="study"
+          options={{ headerShown: false, title: "Estudo" }}
+        />
       </Stack>
     </>
   );
