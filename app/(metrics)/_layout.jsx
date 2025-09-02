@@ -3,6 +3,7 @@ import "@/global.css";
 import { Stack } from "expo-router";
 import { useColorScheme } from "react-native";
 import { Colors } from "@/constants/Colors";
+import MyHeader from "@/components/MyHeader";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
@@ -10,6 +11,7 @@ export default function RootLayout() {
 
   return (
     <>
+      <MyHeader />
       <Stack
         screenOptions={{
           headerShown: false,
@@ -17,21 +19,6 @@ export default function RootLayout() {
           headerTintColor: theme.text,
         }}
       >
-        <Stack.Screen
-          name="index"
-          options={{
-            headerShown: false,
-            title: "Home",
-          }}
-        />
-        <Stack.Screen
-          name="history"
-          options={{ headerShown: false, title: "Histórico" }}
-        />
-        <Stack.Screen
-          name="export"
-          options={{ headerShown: false, title: "Exportação" }}
-        />
         <Stack.Screen
           name="water"
           options={{ headerShown: false, title: "Água" }}
@@ -52,8 +39,6 @@ export default function RootLayout() {
           name="study"
           options={{ headerShown: false, title: "Estudo" }}
         />
-        <Stack.Screen name="(history)" options={{ headerShown: false }} />
-        <Stack.Screen name="(metrics)" options={{ headerShown: false }} />
       </Stack>
     </>
   );

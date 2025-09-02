@@ -9,13 +9,13 @@ import MyView from "@/components/MyView";
 import { useThemedStyles } from "@/hook/useThemedStyle";
 
 import { Colors } from "@/constants/Colors";
+import MyHeader from "@/components/MyHeader";
 //#endregion
 
 export default function Home() {
   const styles = useThemedStyles((theme) => ({
     container: {
       flex: 1,
-      justifyContent: "center",
       alignItems: "center",
       backgroundColor: theme.background,
     },
@@ -29,7 +29,8 @@ export default function Home() {
     },
   }));
   return (
-    <MyView style={styles.container} safe={true}>
+    <MyView style={styles.container}>
+      <MyHeader />
       <Card mode="contained" style={styles.card}>
         <Card.Title
           title="Olá, mundo!"
