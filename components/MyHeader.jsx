@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 
 import Button from "./MyButton";
-import MyView from "./MyView";
 import { getCategoryInfo, CATEGORY_MAP } from "./categoryUtils";
 import { router, usePathname } from "expo-router";
 import {
@@ -27,7 +26,7 @@ export default function MyHeader() {
       setSelectedButton(null);
       router.navigate("/");
     } else {
-      router.navigate(`/${category}`);
+      router.navigate(`/(metrics)/${category}`);
       setSelectedButton(category);
     }
   }
@@ -56,6 +55,43 @@ export default function MyHeader() {
           key={index}
           title={category.displayName}
           isSelected={selectedButton === index}
+          onPress={() => handleButtonSelection(index)}
+        ></Button>
+      ))}
+    </ScrollView>
+  );
+}
+export function MyMonthHeader({ onMonthSelect }) {
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+
+  const months = new Array(12).fill(0).map((_, i) => {
+    return new Date(`${i + 1}/1`).toLocaleDateString(undefined, {
+      month: "long",
+    });
+  });
+
+  function handleButtonSelection(index) {
+    setSelectedMonth(index);
+    onMonthSelect?.(index);
+  }
+
+  return (
+    <ScrollView
+      horizontal={true}
+      style={{
+        width: "100%",
+        flexGrow: 0,
+        padding: 12,
+        gap: 20,
+        backgroundColor: "transparent",
+      }}
+    >
+      {months.map((month, index) => (
+        <Button
+          style={{ marginHorizontal: "1rem" }}
+          key={index}
+          title={month.toUpperCase().substring(0, 3)}
+          isSelected={selectedMonth === index}
           onPress={() => handleButtonSelection(index)}
         ></Button>
       ))}

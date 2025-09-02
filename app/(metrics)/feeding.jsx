@@ -133,7 +133,7 @@ export default function Feeding() {
       </Snackbar>
       <MyView style={styles.card}>
         <Text style={styles.title}>
-          {Icon && <Icon size={24} color={Colors.primary} />} {date.displayDate}
+          {Icon && <Icon size={24} color={Colors.primary} />} {date.displayDate}{" "}
           {displayName}
         </Text>
 
