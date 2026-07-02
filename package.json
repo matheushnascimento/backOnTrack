@@ -11,12 +11,15 @@
     "lint:prettier:check": "prettier --check .",
     "lint:prettier:fix": "prettier --write .",
     "lint:eslint:check": "eslint .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "commit": "cz"
   },
   "dependencies": {
     "@expo/metro-runtime": "~5.0.4",
     "@react-native-vector-icons/material-design-icons": "^12.3.0",
+    "commitizen": "^4.3.2",
     "expo": "^53.0.22",
+    "expo-checkbox": "~4.1.4",
     "expo-constants": "~17.1.7",
     "expo-linking": "~7.1.7",
     "expo-router": "^5.1.5",
@@ -34,8 +37,7 @@
     "react-native-screens": "~4.11.1",
     "react-native-web": "^0.20.0",
     "tailwindcss": "^3.4.17",
-    "tinybase": "^6.5.2",
-    "expo-checkbox": "~4.1.4"
+    "tinybase": "^6.5.2"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0",
