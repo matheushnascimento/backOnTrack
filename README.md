@@ -4,10 +4,10 @@ Aplicação React Native para registro de métricas pessoais mínimas. O MVP cob
 
 ## Documentos
 
-1. [Project Charter](01-project-charter.md) — visão, objetivo, justificativa, critérios de sucesso
-2. [Escopo & MVP](02-escopo-mvp.md) — modelo de domínio, o que entra na v1, non-goals
-3. [Decisões Técnicas (ADR)](03-decisoes-tecnicas.md) — stack escolhida e o porquê de cada decisão
-4. [Roadmap de Milestones](04-roadmap-milestones.md) — sequência de desenvolvimento (projeto em adaptação)
+1. [Project Charter](docs/01-project-charter.md) — visão, objetivo, justificativa, critérios de sucesso
+2. [Escopo & MVP](docs/02-escopo-mvp.md) — modelo de domínio, o que entra na v1, non-goals
+3. [Decisões Técnicas (ADR)](docs/03-decisoes-tecnicas.md) — stack escolhida e o porquê de cada decisão
+4. [Roadmap de Milestones](docs/04-roadmap-milestones.md) — sequência de desenvolvimento (projeto em adaptação)
 
 ## Como usar esta documentação
 
