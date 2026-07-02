@@ -57,5 +57,10 @@
     "prettier": "^3.6.2",
     "typescript": "~5.8.3"
   },
-  "private": true
+  "private": true,
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  }
 }
