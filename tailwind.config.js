@@ -15,7 +15,7 @@ module.exports = {
           background: "#333333",
           text: "#F8F9FA",
           outerText: "#333333",
-          backgroundCard: "rgba(255, 255, 255, 0.15)",
+          backgroundCard: "rgba(255, 255, 255, 0d.15)",
         },
       },
     },
