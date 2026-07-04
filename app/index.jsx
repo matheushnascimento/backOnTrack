@@ -40,10 +40,7 @@ export default function Home() {
           <Text variant="headlineMedium">
             Essa versão beta conta com as seguintes funcionalidades
           </Text>
-          <MyView
-            className="flex-row items-c
-          enter"
-          >
+          <MyView className="flex-row items-center">
             <Dot />
             <Text>Registro diário de ingestão de água</Text>
           </MyView>
