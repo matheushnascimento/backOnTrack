@@ -24,7 +24,7 @@ export default function Score({ onPress, value, ...props }) {
     },
     text: {
       fontWeight: "bold",
-      fontSize: "1.6rem",
+      fontSize: 16,
       color: theme.text,
     },
   });

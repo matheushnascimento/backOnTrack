@@ -1,31 +1,60 @@
-import "@/global.css";
+//#region imports
 
-import { Stack } from "expo-router";
-import { useColorScheme } from "react-native";
+import { Text } from "react-native";
+import { Card } from "react-native-paper";
+
+import MyView from "@/components/MyView";
+
+import { useThemedStyles } from "@/hook/useThemedStyle";
+
 import { Colors } from "@/constants/Colors";
-import { StatusBar } from "expo-status-bar";
+import MyHeader from "@/components/MyHeader";
+//#endregion
 
-export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme] ?? Colors.light;
-
+export default function Home() {
+  const styles = useThemedStyles((theme) => ({
+    container: {
+      flex: 1,
+      alignItems: "center",
+      backgroundColor: theme.background,
+    },
+    card: {
+      width: "50%",
+      height: "50%",
+    },
+    button: {
+      backgroundColor: theme.background,
+    },
+  }));
   return (
-    <>
-      <StatusBar />
-
-      <Stack
-        screenOptions={{
-          headerStyle: { backgroundColor: theme.background },
-          headerTintColor: theme.text,
-        }}
-      >
-        <Stack.Screen
-          name="water"
-          options={{
-            headerShown: false,
-          }}
+    <MyView style={styles.container}>
+      <MyHeader />
+      <Card mode="contained" style={styles.card}>
+        <Card.Title
+          title="Olá, mundo!"
+          subtitle="Esse pedaço de tecnologia está em construção!"
         />
-      </Stack>
-    </>
+        <Card.Content>
+          <Text variant="headlineMedium">
+            Essa versão beta conta com as seguintes funcionalidades
+          </Text>
+          <MyView className="flex-row items-center">
+            <Text>• Registro diário de ingestão de água</Text>
+          </MyView>
+          <MyView className="flex-row items-center">
+            <Text>• Registro diário de sono</Text>
+          </MyView>
+          <MyView className="flex-row items-center">
+            <Text>• Registro diário de exercício</Text>
+          </MyView>
+          <MyView className="flex-row items-center">
+            <Text>• Registro diário de refeições</Text>
+          </MyView>
+          <MyView className="flex-row items-center">
+            <Text>• Registro diário de estudo</Text>
+          </MyView>
+        </Card.Content>
+      </Card>
+    </MyView>
   );
 }

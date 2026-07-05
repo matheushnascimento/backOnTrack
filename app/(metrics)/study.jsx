@@ -23,7 +23,7 @@ import { useThemedStyles } from "@/hook/useThemedStyle";
 export default function Study() {
   //#region variables
   const pathname = usePathname().substring(1);
-  const { displayName, Icon } = getCategoryInfo(pathname);
+  const { displayName } = getCategoryInfo(pathname) ?? {};
 
   //#region states
   const [date, setDate] = useState(getDate());
@@ -39,45 +39,39 @@ export default function Study() {
   const styles = useThemedStyles((theme) => ({
     card: {
       backgroundColor: theme.backgroundCard,
-      display: "flex",
-      gap: "2rem",
-      maxWidth: "40rem",
-      borderRadius: ".6rem",
+      gap: 32,
+      maxWidth: 640,
+      borderRadius: 10,
       padding: 10,
       paddingTop: 10,
       paddingBottom: 10,
-      boxShadow: Colors.shadow,
     },
-    cardWrapper: { gap: "1rem" },
+    cardWrapper: { gap: 16 },
     container: {
       flex: 1,
       alignItems: "center",
-      padding: "1rem",
-      gap: "1rem",
+      padding: 16,
+      gap: 16,
       backgroundColor: theme.background,
     },
     input: {
-      width: "5rem",
-      height: "3.2rem",
+      width: 80,
+      height: 51,
       textAlign: "center",
-      padding: ".4rem",
+      padding: 6,
       backgroundColor: "#333",
-      fontSize: "1.6rem",
+      fontSize: 26,
       fontWeight: "bold",
       color: "white",
-      borderRadius: ".6rem",
-      maxWidth: "10rem",
-      boxShadow: Colors.shadow,
+      borderRadius: 10,
+      maxWidth: 160,
     },
     inputWrapper: {
-      width: "fit",
-      gap: ".6rem",
+      gap: 10,
     },
     title: {
-      width: "fit",
-      display: "flex",
       flexDirection: "row",
-      gap: ".4rem",
+      gap: 6,
       color: theme.text,
       fontWeight: "bold",
       fontSize: 18,
@@ -88,16 +82,13 @@ export default function Study() {
       fontSize: 18,
     },
     textArea: {
-      padding: ".4rem",
-      fontSize: "1.6rem",
-      fontWeight: "bold",
+      padding: 6,
       color: theme.text,
-      borderRadius: ".6rem",
-      boxShadow: Colors.shadow,
+      borderRadius: 10,
       backgroundColor: theme.backgroundCard,
-      height: "4rem",
-      fontSize: "1.2rem",
-      fontWeight: "regular",
+      height: 64,
+      fontSize: 19,
+      fontWeight: "normal",
     },
   }));
   //#endregion
@@ -133,8 +124,7 @@ export default function Study() {
       </Snackbar>
       <MyView style={styles.card}>
         <Text style={styles.title}>
-          {Icon && <Icon size={24} color={Colors.primary} />} {date.displayDate}{" "}
-          {displayName}
+          {date.displayDate} {displayName}
         </Text>
 
         {/* card Wrapper */}
@@ -161,7 +151,7 @@ export default function Study() {
           />
         </MyView>
 
-        <MyView className="flex-row gap-[1rem] items-end justify-between">
+        <MyView className="flex-row gap-4 items-end justify-between">
           {/* Tempo de treino */}
           <MyView style={[styles.card, { alignItems: "center" }]}>
             <Text style={styles.title}>Tempo de estudo</Text>
@@ -182,11 +172,7 @@ export default function Study() {
               <Text style={styles.text}>min</Text>
             </MyView>
           </MyView>
-          <MyButton
-            style={{ height: "fit-content" }}
-            title="Salvar"
-            onPress={() => handleSubmit()}
-          />
+          <MyButton title="Salvar" onPress={() => handleSubmit()} />
         </MyView>
       </MyView>
       <MyHistory tableName={pathname} reload={reloadKey} />
