@@ -3,8 +3,6 @@ import { useState } from "react";
 import { Text, TextInput } from "react-native";
 import { Snackbar } from "react-native-paper";
 
-import { Colors } from "@/constants/Colors";
-
 import MyView from "@/components/MyView";
 import Score from "@/components/Score";
 import MyButton from "@/components/MyButton";
@@ -21,7 +19,7 @@ import { useThemedStyles } from "@/hook/useThemedStyle";
 export default function Sleep() {
   //#region variables
   const pathname = usePathname().substring(1);
-  const { displayName, Icon } = getCategoryInfo(pathname);
+  const { displayName } = getCategoryInfo(pathname) ?? {};
 
   //#region states
   const [date, setDate] = useState(getDate());
@@ -39,46 +37,39 @@ export default function Sleep() {
   const styles = useThemedStyles((theme) => ({
     card: {
       backgroundColor: theme.backgroundCard,
-      display: "flex",
-      gap: "2rem",
-      maxWidth: "40rem",
-      borderRadius: ".6rem",
+      gap: 32,
+      maxWidth: 640,
+      borderRadius: 10,
       padding: 10,
       paddingTop: 10,
       paddingBottom: 10,
-      boxShadow: Colors.shadow,
     },
     cardWrapper: {
-      display: "flex",
       flexDirection: "row",
       justifyContent: "space-between",
     },
     container: {
       flex: 1,
       alignItems: "center",
-      gap: "1rem",
-      padding: "1rem",
+      gap: 16,
+      padding: 16,
       backgroundColor: theme.background,
     },
     input: {
-      padding: ".4rem",
+      padding: 6,
       backgroundColor: theme.backgroundCard,
-      fontSize: "1.6rem",
+      fontSize: 26,
       fontWeight: "bold",
       color: "white",
-      borderRadius: ".6rem",
-      maxWidth: "10rem",
-      boxShadow: Colors.shadow,
+      borderRadius: 10,
+      maxWidth: 160,
     },
     inputWrapper: {
-      width: "fit",
-      gap: ".6rem",
+      gap: 10,
     },
     title: {
-      width: "fit",
-      display: "flex",
       flexDirection: "row",
-      gap: ".4rem",
+      gap: 6,
       color: theme.text,
       fontWeight: "bold",
       fontSize: 18,
@@ -89,16 +80,13 @@ export default function Sleep() {
       fontSize: 18,
     },
     textArea: {
-      padding: ".4rem",
-      fontSize: "1.6rem",
-      fontWeight: "bold",
+      padding: 6,
       color: theme.text,
-      borderRadius: ".6rem",
-      boxShadow: Colors.shadow,
+      borderRadius: 10,
       backgroundColor: theme.backgroundCard,
-      height: "4rem",
-      fontSize: "1.2rem",
-      fontWeight: "regular",
+      height: 64,
+      fontSize: 19,
+      fontWeight: "normal",
     },
   }));
   //#endregion
@@ -137,8 +125,7 @@ export default function Sleep() {
       </Snackbar>
       <MyView style={styles.card}>
         <Text style={styles.title}>
-          {Icon && <Icon size={24} color={Colors.primary} />} {date.displayDate}{" "}
-          {displayName}
+          {date.displayDate} {displayName}
         </Text>
 
         {/* card Wrapper */}
@@ -178,48 +165,42 @@ export default function Sleep() {
           />
         </MyView>
 
-        <MyView className=" flex-row flex-wrap justify-center items-center gap-[1rem]">
+        <MyView className=" flex-row flex-wrap justify-center items-center gap-4">
           <MyView
-            className="min-w-1/2 w-full h-fit rounded-md flex-row gap-[1rem] justify-center items-start"
+            className="min-w-1/2 w-full rounded-md flex-row gap-4 justify-center items-start"
             style={[
               styles.card,
               {
                 width: "50%",
-                height: "fit",
                 justifyContent: "center",
                 alignItems: "center",
                 flexGrow: 1,
-                display: "flex",
                 flexDirection: "row",
               },
             ]}
           >
             <Text
               style={styles.title}
-              className="text-white font-bold text-[1.6rem]"
+              className="text-white font-bold text-2xl"
             >
               {displayName} hoje
             </Text>
             <TextInput
-              className="max-w-[2.4rem] w-fit text-center bg-[#333333] h-[2.3rem] px-1 text-[1.2rem] font-regular text-white rounded-md shadow-[0_.4rem_.4rem_0_rgba(0,0,0,.25)]"
+              className="max-w-[38px] text-center bg-[#333333] h-[37px] px-1 text-xl font-normal text-white rounded-md"
               placeholder="--"
               value={sleepHours}
               onChangeText={(value) => setSleepHours(value)}
             />
             <Text style={styles.title}>h</Text>
             <TextInput
-              className="max-w-[2.4rem] text-center w-fit bg-[#333333] h-[2.3rem] px-1 text-[1.2rem] font-regular text-white rounded-md shadow-[0_.4rem_.4rem_0_rgba(0,0,0,.25)]"
+              className="max-w-[38px] text-center bg-[#333333] h-[37px] px-1 text-xl font-normal text-white rounded-md"
               placeholder="--"
               value={sleepMinutes}
               onChangeText={(value) => setSleepMinutes(value)}
             />
             <Text style={styles.title}>min</Text>
           </MyView>
-          <MyButton
-            style={{ height: "fit-content" }}
-            title="Salvar"
-            onPress={() => handleSubmit()}
-          />
+          <MyButton title="Salvar" onPress={() => handleSubmit()} />
         </MyView>
       </MyView>
       <MyHistory tableName={pathname} reload={reloadKey} />

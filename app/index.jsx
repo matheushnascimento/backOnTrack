@@ -1,7 +1,6 @@
 //#region imports
 
 import { Text } from "react-native";
-import { Dot } from "lucide-react-native";
 import { Card } from "react-native-paper";
 
 import MyView from "@/components/MyView";
@@ -40,28 +39,20 @@ export default function Home() {
           <Text variant="headlineMedium">
             Essa versão beta conta com as seguintes funcionalidades
           </Text>
-          <MyView
-            className="flex-row items-c
-          enter"
-          >
-            <Dot />
-            <Text>Registro diário de ingestão de água</Text>
+          <MyView className="flex-row items-center">
+            <Text>* Registro diário de ingestão de água</Text>
           </MyView>
           <MyView className="flex-row items-center">
-            <Dot />
-            <Text>Registro diário de sono</Text>
+            <Text>* Registro diário de sono</Text>
           </MyView>
           <MyView className="flex-row items-center">
-            <Dot />
-            <Text>Registro diário de exercício</Text>
+            <Text>* Registro diário de exercício</Text>
           </MyView>
           <MyView className="flex-row items-center">
-            <Dot />
-            <Text>Registro diário de refeições</Text>
+            <Text>* Registro diário de refeições</Text>
           </MyView>
           <MyView className="flex-row items-center">
-            <Dot />
-            <Text>Registro diário de estudo</Text>
+            <Text>* Registro diário de estudo</Text>
           </MyView>
         </Card.Content>
       </Card>

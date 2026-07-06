@@ -7,10 +7,10 @@ import { useThemedStyles } from "@/hook/useThemedStyle";
 
 export default function MyCheckbox({ label, onValueChange, value }) {
   const styles = useThemedStyles((theme) => ({
-    container: { flexDirection: "row", alignItems: "center", gap: ".6rem" },
+    container: { flexDirection: "row", alignItems: "center", gap: 6 },
     text: {
       fontWeight: "bold",
-      fontSize: "1.6rem",
+      fontSize: 16,
       color: theme.text,
     },
   }));

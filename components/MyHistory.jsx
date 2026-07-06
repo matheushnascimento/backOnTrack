@@ -29,13 +29,13 @@ export default function MyHistory({ cardStyle, tableName, reload }) {
     card: {
       display: "flex",
       width: "100%",
-      maxWidth: "40rem",
+      maxWidth: 40,
       gap: 10,
       backgroundColor: theme.backgroundCard,
       borderRadius: 6,
-      padding: "1rem",
-      paddingTop: "1rem",
-      paddingBottom: "1rem",
+      padding: 1,
+      paddingTop: 1,
+      paddingBottom: 1,
       boxShadow: Colors.shadow,
     },
     text: {
@@ -48,10 +48,10 @@ export default function MyHistory({ cardStyle, tableName, reload }) {
       color: theme.text,
       opacity: "50%",
       fontWeight: "bold",
-      fontSize: "1.2rem",
+      fontSize: 12,
     },
     title: {
-      fontSize: "1.8rem",
+      fontSize: 18,
       display: "flex",
       flexDirection: "row",
       justifyContent: "space-between",
@@ -62,11 +62,11 @@ export default function MyHistory({ cardStyle, tableName, reload }) {
       lineHeight: "auto",
       color: theme.text,
       fontWeight: "bold",
-      fontSize: "1.6rem",
-      width: "2.4rem",
-      height: "2.4rem",
+      fontSize: 16,
+      width: 24,
+      height: 24,
       borderRadius: 100,
-      boxShadow: "0 .4rem .4rem 0 rgba(0,0,0,.25)",
+      boxShadow: "0 4 4 0 rgba(0,0,0,.25)",
     },
   });
 
@@ -112,13 +112,8 @@ export default function MyHistory({ cardStyle, tableName, reload }) {
             {unity} | Nota {obj.score}
           </Text>
           <View className="flex-row items-center">
-            <Text style={[styles.subtext, { fontSize: "1.6rem" }]}>OBS: </Text>
-            <Text
-              style={[
-                styles.text,
-                { fontWeight: "medium", fontSize: "1.6rem" },
-              ]}
-            >
+            <Text style={[styles.subtext, { fontSize: 16 }]}>OBS: </Text>
+            <Text style={[styles.text, { fontWeight: "medium", fontSize: 16 }]}>
               {obj.observation}
             </Text>
           </View>
@@ -143,13 +138,13 @@ export function MyMonthHistory({ cardStyle, tableName, month }) {
     card: {
       display: "flex",
       width: "100%",
-      maxWidth: "40rem",
+      maxWidth: 40,
       gap: 10,
       backgroundColor: theme.backgroundCard,
       borderRadius: 6,
-      padding: "1rem",
-      paddingTop: "1rem",
-      paddingBottom: "1rem",
+      padding: 1,
+      paddingTop: 1,
+      paddingBottom: 1,
       boxShadow: Colors.shadow,
     },
     text: {
@@ -162,10 +157,10 @@ export function MyMonthHistory({ cardStyle, tableName, month }) {
       color: theme.text,
       opacity: "50%",
       fontWeight: "bold",
-      fontSize: "1.2rem",
+      fontSize: 12,
     },
     title: {
-      fontSize: "1.8rem",
+      fontSize: 18,
       display: "flex",
       flexDirection: "row",
       justifyContent: "space-between",
@@ -176,11 +171,10 @@ export function MyMonthHistory({ cardStyle, tableName, month }) {
       lineHeight: "auto",
       color: theme.text,
       fontWeight: "bold",
-      fontSize: "1.6rem",
-      width: "2.4rem",
-      height: "2.4rem",
+      fontSize: 16,
+      width: 24,
+      height: 24,
       borderRadius: 100,
-      boxShadow: "0 .4rem .4rem 0 rgba(0,0,0,.25)",
     },
   });
 
@@ -226,13 +220,8 @@ export function MyMonthHistory({ cardStyle, tableName, month }) {
             {unity} | Nota {obj.score}
           </Text>
           <View className="flex-row items-center">
-            <Text style={[styles.subtext, { fontSize: "1.6rem" }]}>OBS: </Text>
-            <Text
-              style={[
-                styles.text,
-                { fontWeight: "medium", fontSize: "1.6rem" },
-              ]}
-            >
+            <Text style={[styles.subtext, { fontSize: 16 }]}>OBS: </Text>
+            <Text style={[styles.text, { fontWeight: "medium", fontSize: 16 }]}>
               {obj.observation}
             </Text>
           </View>
@@ -257,13 +246,13 @@ export function MyExerciseHistory({ tableName, reload }) {
     card: {
       display: "flex",
       width: "100%",
-      maxWidth: "40rem",
+      maxWidth: 40,
       gap: 10,
       backgroundColor: theme.backgroundCard,
       borderRadius: 6,
-      padding: "1rem",
-      paddingTop: "1rem",
-      paddingBottom: "1rem",
+      padding: 1,
+      paddingTop: 1,
+      paddingBottom: 1,
       boxShadow: Colors.shadow,
     },
     text: {
@@ -276,10 +265,10 @@ export function MyExerciseHistory({ tableName, reload }) {
       color: theme.text,
       opacity: "50%",
       fontWeight: "bold",
-      fontSize: "1.2rem",
+      fontSize: 12,
     },
     title: {
-      fontSize: "1.8rem",
+      fontSize: 18,
       display: "flex",
       flexDirection: "row",
       justifyContent: "space-between",
@@ -290,11 +279,10 @@ export function MyExerciseHistory({ tableName, reload }) {
       lineHeight: "auto",
       color: theme.text,
       fontWeight: "bold",
-      fontSize: "1.6rem",
-      width: "2.4rem",
-      height: "2.4rem",
+      fontSize: 16,
+      width: 24,
+      height: 24,
       borderRadius: 100,
-      boxShadow: "0 .4rem .4rem 0 rgba(0,0,0,.25)",
     },
   });
 
@@ -333,12 +321,12 @@ export function MyExerciseHistory({ tableName, reload }) {
               {obj.score}
             </Text>
           </Text>
-          <MyView className="flex-row gap-[.6rem]">
+          <MyView className="flex-row gap-[6]">
             <MyView
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                gap: ".6rem",
+                gap: 6,
               }}
             >
               <Checkbox color={Colors.primary} value={obj.training} />
@@ -348,7 +336,7 @@ export function MyExerciseHistory({ tableName, reload }) {
               style={{
                 flexDirection: "row",
                 alignItems: "center",
-                gap: ".6rem",
+                gap: 6,
               }}
             >
               <Checkbox color={Colors.primary} value={obj.cardio} />
@@ -361,13 +349,8 @@ export function MyExerciseHistory({ tableName, reload }) {
             {unity} | Nota {obj.score}
           </Text>
           <View className="flex-row items-center">
-            <Text style={[styles.subtext, { fontSize: "1.6rem" }]}>OBS: </Text>
-            <Text
-              style={[
-                styles.text,
-                { fontWeight: "medium", fontSize: "1.6rem" },
-              ]}
-            >
+            <Text style={[styles.subtext, { fontSize: 16 }]}>OBS: </Text>
+            <Text style={[styles.text, { fontWeight: "medium", fontSize: 16 }]}>
               {obj.observation}
             </Text>
           </View>

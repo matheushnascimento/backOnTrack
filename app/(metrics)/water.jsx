@@ -5,8 +5,6 @@ import { useState } from "react";
 import { Text, TextInput } from "react-native";
 import { Snackbar } from "react-native-paper";
 
-import { Droplet } from "lucide-react-native";
-
 import { Colors } from "@/constants/Colors";
 
 import MyHistory from "@/components/MyHistory";
@@ -25,7 +23,7 @@ import { useThemedStyles } from "@/hook/useThemedStyle";
 export default function Water() {
   //#region variables
   const pathname = usePathname().substring(1);
-  const { displayName, Icon } = getCategoryInfo(pathname);
+  const { displayName } = getCategoryInfo(pathname) ?? {};
 
   //#region states
   const [date, setDate] = useState(getDate());
@@ -42,46 +40,39 @@ export default function Water() {
   const styles = useThemedStyles((theme) => ({
     card: {
       backgroundColor: theme.backgroundCard,
-      display: "flex",
-      gap: "2rem",
-      maxWidth: "40rem",
-      borderRadius: ".6rem",
+      gap: 32,
+      maxWidth: 640,
+      borderRadius: 10,
       padding: 10,
       paddingTop: 10,
       paddingBottom: 10,
-      boxShadow: Colors.shadow,
     },
     cardWrapper: {
-      display: "flex",
       flexDirection: "row",
       justifyContent: "space-between",
     },
     container: {
       flex: 1,
       alignItems: "center",
-      padding: "1rem",
-      gap: "1rem",
+      padding: 16,
+      gap: 16,
       backgroundColor: theme.background,
     },
     input: {
-      padding: ".4rem",
+      padding: 6,
       backgroundColor: theme.backgroundCard,
-      fontSize: "1.6rem",
+      fontSize: 26,
       fontWeight: "bold",
       color: "white",
-      borderRadius: ".6rem",
-      maxWidth: "10rem",
-      boxShadow: Colors.shadow,
+      borderRadius: 10,
+      maxWidth: 160,
     },
     inputWrapper: {
-      width: "fit",
-      gap: ".6rem",
+      gap: 10,
     },
     title: {
-      width: "fit",
-      display: "flex",
       flexDirection: "row",
-      gap: ".4rem",
+      gap: 6,
       color: theme.text,
       fontWeight: "bold",
       fontSize: 18,
@@ -92,16 +83,13 @@ export default function Water() {
       fontSize: 18,
     },
     textArea: {
-      padding: ".4rem",
-      fontSize: "1.6rem",
-      fontWeight: "bold",
+      padding: 6,
       color: theme.text,
-      borderRadius: ".6rem",
-      boxShadow: Colors.shadow,
+      borderRadius: 10,
       backgroundColor: theme.backgroundCard,
-      height: "4rem",
-      fontSize: "1.2rem",
-      fontWeight: "regular",
+      height: 64,
+      fontSize: 19,
+      fontWeight: "normal",
     },
   }));
   //#endregion
@@ -141,9 +129,7 @@ export default function Water() {
       </Snackbar>
       <MyView style={styles.card}>
         <Text style={styles.title}>
-          <Droplet color={Colors.primary} />
-          {Icon && <Icon size={24} color={Colors.primary} />} {date.displayDate}{" "}
-          {displayName}
+          {date.displayDate} {displayName}
         </Text>
 
         {/* card Wrapper */}
@@ -193,24 +179,22 @@ export default function Water() {
           />
         </MyView>
 
-        <MyView className="flex-row flex-wrap gap-[1rem] items-center">
+        <MyView className="flex-row flex-wrap gap-4 items-center">
           <MyView
             style={[
               styles.card,
               {
                 width: "50%",
-                height: "fit",
                 justifyContent: "center",
                 alignItems: "center",
                 flexGrow: 1,
-                display: "flex",
                 flexDirection: "row",
               },
             ]}
           >
             <Text
               style={styles.title}
-              className="flex-nowrap text-white font-bold text-nowrap text-[1.6rem]"
+              className="text-white font-bold text-2xl"
             >
               {displayName} hoje
             </Text>
@@ -219,8 +203,8 @@ export default function Water() {
                 styles.input,
                 {
                   backgroundColor: "#333",
-                  width: "5rem",
-                  height: "3.2rem",
+                  width: 80,
+                  height: 51,
                   textAlign: "center",
                 },
               ]}
@@ -230,11 +214,7 @@ export default function Water() {
             />
             <Text style={styles.title}>ml</Text>
           </MyView>
-          <MyButton
-            style={{ height: "fit-content" }}
-            title="Salvar"
-            onPress={() => handleSubmit()}
-          />
+          <MyButton title="Salvar" onPress={() => handleSubmit()} />
         </MyView>
       </MyView>
       <MyHistory tableName={pathname} reload={reloadKey} />

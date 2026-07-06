@@ -9,52 +9,17 @@ export default function RootLayout() {
   const theme = Colors[colorScheme] ?? Colors.light;
 
   return (
-    <>
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          headerStyle: { backgroundColor: theme.background },
-          headerTintColor: theme.text,
-        }}
-      >
-        <Stack.Screen
-          name="index"
-          options={{
-            headerShown: false,
-            title: "Home",
-          }}
-        />
-        <Stack.Screen
-          name="history"
-          options={{ headerShown: false, title: "Histórico" }}
-        />
-        <Stack.Screen
-          name="export"
-          options={{ headerShown: false, title: "Exportação" }}
-        />
-        <Stack.Screen
-          name="water"
-          options={{ headerShown: false, title: "Água" }}
-        />
-        <Stack.Screen
-          name="sleep"
-          options={{ headerShown: false, title: "Sono" }}
-        />
-        <Stack.Screen
-          name="exercise"
-          options={{ headerShown: false, title: "Exercícios" }}
-        />
-        <Stack.Screen
-          name="feeding"
-          options={{ headerShown: false, title: "Alimentação" }}
-        />
-        <Stack.Screen
-          name="study"
-          options={{ headerShown: false, title: "Estudo" }}
-        />
-        <Stack.Screen name="(history)" options={{ headerShown: false }} />
-        <Stack.Screen name="(metrics)" options={{ headerShown: false }} />
-      </Stack>
-    </>
+    <Stack
+      screenOptions={{
+        headerShown: false,
+        headerStyle: { backgroundColor: theme.background },
+        headerTintColor: theme.text,
+      }}
+    >
+      <Stack.Screen name="index" options={{ title: "Home" }} />
+      <Stack.Screen name="export" options={{ title: "Exportação" }} />
+      <Stack.Screen name="(history)" />
+      <Stack.Screen name="(metrics)" />
+    </Stack>
   );
 }
