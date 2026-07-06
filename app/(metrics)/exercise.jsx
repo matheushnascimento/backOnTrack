@@ -1,11 +1,10 @@
 //#region imports
 import { usePathname } from "expo-router";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Text, TextInput } from "react-native";
 import { Snackbar } from "react-native-paper";
 
-import { Colors } from "@/constants/Colors";
 import MyButton from "@/components/MyButton";
 import MyCheckbox from "@/components/MyCheckbox";
 import { MyExerciseHistory } from "@/components/MyHistory";

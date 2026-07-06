@@ -1,11 +1,10 @@
 //#region imports
 import { usePathname } from "expo-router";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Text, TextInput } from "react-native";
 import { Snackbar } from "react-native-paper";
 
-import { Colors } from "@/constants/Colors";
 import MyButton from "@/components/MyButton";
 import { MyIconButton } from "@/components/MyButton";
 import MyHistory from "@/components/MyHistory";
@@ -23,7 +22,7 @@ import { useThemedStyles } from "@/hook/useThemedStyle";
 export default function Feeding() {
   //#region variables
   const pathname = usePathname().substring(1);
-  const { displayName } = getCategoryInfo(pathname);
+  const { displayName } = getCategoryInfo(pathname) ?? {};
 
   //#region states
   const [date] = useState(getDate());

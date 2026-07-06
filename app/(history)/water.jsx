@@ -63,7 +63,7 @@ export default function Water() {
     input: {
       padding: 4,
       backgroundColor: theme.backgroundCard,
-      fontSize: 16",
+      fontSize: 16,
       fontWeight: "bold",
       color: "white",
       borderRadius: 6,
