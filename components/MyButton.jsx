@@ -1,4 +1,4 @@
-import { Colors } from "@/constants/Colors";
+import { Colors, shadow } from "@/constants/Colors";
 import { useState } from "react";
 import { Text, useColorScheme } from "react-native";
 import { Button } from "react-native-paper";
@@ -39,13 +39,16 @@ export function MyIconButton({
 
   return (
     <Button
-      style={{
-        border: isSelected ? "none" : "solid 1px #333",
-        borderRadius: "100%",
-        padding: 3,
-        boxShadow: Colors.shadow,
-        overflow: "hidden",
-      }}
+      style={[
+        {
+          borderWidth: isSelected ? 0 : 1,
+          borderColor: "#333",
+          borderRadius: 9999,
+          padding: 3,
+          overflow: "hidden",
+        },
+        shadow,
+      ]}
       buttonColor={isSelected ? Colors.secondary : "transparent"}
       textColor={theme.text}
       mode="outlined"

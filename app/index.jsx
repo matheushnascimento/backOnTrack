@@ -7,7 +7,7 @@ import MyView from "@/components/MyView";
 
 import { useThemedStyles } from "@/hook/useThemedStyle";
 
-import { Colors } from "@/constants/Colors";
+import { shadow } from "@/constants/Colors";
 import MyHeader from "@/components/MyHeader";
 //#endregion
 
@@ -21,7 +21,6 @@ export default function Home() {
     card: {
       width: "50%",
       height: "50%",
-      boxShadow: Colors.shadow,
     },
     button: {
       backgroundColor: theme.background,
@@ -30,7 +29,7 @@ export default function Home() {
   return (
     <MyView style={styles.container}>
       <MyHeader />
-      <Card mode="contained" style={styles.card}>
+      <Card mode="contained" style={[styles.card, shadow]}>
         <Card.Title
           title="Olá, mundo!"
           subtitle="Esse pedaço de tecnologia está em construção!"
