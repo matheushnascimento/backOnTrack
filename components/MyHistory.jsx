@@ -6,7 +6,7 @@ import { StyleSheet, Text, useColorScheme, View } from "react-native";
 import MyView from "./MyView";
 import { getCategoryInfo } from "./categoryUtils";
 
-import { Colors } from "@/constants/Colors";
+import { Colors, shadow } from "@/constants/Colors";
 
 import { get, getByMonth } from "@/infra/database";
 import Checkbox from "expo-checkbox";
@@ -20,53 +20,38 @@ export default function MyHistory({ cardStyle, tableName, reload }) {
   const { displayName, unity } = getCategoryInfo(tableName);
 
   const styles = StyleSheet.create({
-    container: {
-      display: "flex",
-      alignItems: "center",
-      width: "100%",
-      gap: 10,
-    },
+    container: { alignItems: "center", width: "100%", gap: 10 },
     card: {
-      display: "flex",
       width: "100%",
-      maxWidth: 40,
+      maxWidth: 640,
       gap: 10,
       backgroundColor: theme.backgroundCard,
       borderRadius: 6,
       padding: 1,
       paddingTop: 1,
       paddingBottom: 1,
-      boxShadow: Colors.shadow,
     },
-    text: {
-      width: "fit",
-      color: theme.text,
-      fontWeight: "bold",
-      fontSize: 18,
-    },
+    text: { color: theme.text, fontWeight: "bold", fontSize: 18 },
     subtext: {
       color: theme.text,
-      opacity: "50%",
+      opacity: 0.5,
       fontWeight: "bold",
       fontSize: 12,
     },
     title: {
       fontSize: 18,
-      display: "flex",
       flexDirection: "row",
       justifyContent: "space-between",
       width: "100%",
     },
     score: {
       textAlign: "center",
-      lineHeight: "auto",
       color: theme.text,
       fontWeight: "bold",
       fontSize: 16,
       width: 24,
       height: 24,
       borderRadius: 100,
-      boxShadow: "0 4 4 0 rgba(0,0,0,.25)",
     },
   });
 
@@ -90,7 +75,7 @@ export default function MyHistory({ cardStyle, tableName, reload }) {
       onClick={() => router.navigate(`(history)/${tableName}`)}
     >
       {Object.entries(data).map(([id, obj]) => (
-        <MyView style={[styles.card, cardStyle]} key={id}>
+        <MyView style={[styles.card, cardStyle, shadow]} key={id}>
           <Text style={styles.title}>
             <Text style={styles.text}>
               {getDate(obj.date)} {displayName}
@@ -129,46 +114,32 @@ export function MyMonthHistory({ cardStyle, tableName, month }) {
   const { displayName, unity } = getCategoryInfo(tableName);
 
   const styles = StyleSheet.create({
-    container: {
-      display: "flex",
-      alignItems: "center",
-      width: "100%",
-      gap: 10,
-    },
+    container: { alignItems: "center", width: "100%", gap: 10 },
     card: {
-      display: "flex",
       width: "100%",
-      maxWidth: 40,
+      maxWidth: 640,
       gap: 10,
       backgroundColor: theme.backgroundCard,
       borderRadius: 6,
       padding: 1,
       paddingTop: 1,
       paddingBottom: 1,
-      boxShadow: Colors.shadow,
     },
-    text: {
-      width: "fit",
-      color: theme.text,
-      fontWeight: "bold",
-      fontSize: 18,
-    },
+    text: { color: theme.text, fontWeight: "bold", fontSize: 18 },
     subtext: {
       color: theme.text,
-      opacity: "50%",
+      opacity: 0.5,
       fontWeight: "bold",
       fontSize: 12,
     },
     title: {
       fontSize: 18,
-      display: "flex",
       flexDirection: "row",
       justifyContent: "space-between",
       width: "100%",
     },
     score: {
       textAlign: "center",
-      lineHeight: "auto",
       color: theme.text,
       fontWeight: "bold",
       fontSize: 16,
@@ -198,7 +169,7 @@ export function MyMonthHistory({ cardStyle, tableName, month }) {
       onClick={() => router.navigate(`(history)/${tableName}`)}
     >
       {Object.entries(data).map(([id, obj]) => (
-        <MyView style={[styles.card, cardStyle]} key={id}>
+        <MyView style={[styles.card, cardStyle, shadow]} key={id}>
           <Text style={styles.title}>
             <Text style={styles.text}>
               {getDate(obj.date)} {displayName}
@@ -237,46 +208,32 @@ export function MyExerciseHistory({ tableName, reload }) {
   const { displayName, unity } = getCategoryInfo(tableName);
 
   const styles = StyleSheet.create({
-    container: {
-      display: "flex",
-      alignItems: "center",
-      width: "100%",
-      gap: 10,
-    },
+    container: { alignItems: "center", width: "100%", gap: 10 },
     card: {
-      display: "flex",
       width: "100%",
-      maxWidth: 40,
+      maxWidth: 640,
       gap: 10,
       backgroundColor: theme.backgroundCard,
       borderRadius: 6,
       padding: 1,
       paddingTop: 1,
       paddingBottom: 1,
-      boxShadow: Colors.shadow,
     },
-    text: {
-      width: "fit",
-      color: theme.text,
-      fontWeight: "bold",
-      fontSize: 18,
-    },
+    text: { color: theme.text, fontWeight: "bold", fontSize: 18 },
     subtext: {
       color: theme.text,
-      opacity: "50%",
+      opacity: 0.5,
       fontWeight: "bold",
       fontSize: 12,
     },
     title: {
       fontSize: 18,
-      display: "flex",
       flexDirection: "row",
       justifyContent: "space-between",
       width: "100%",
     },
     score: {
       textAlign: "center",
-      lineHeight: "auto",
       color: theme.text,
       fontWeight: "bold",
       fontSize: 16,
@@ -303,7 +260,7 @@ export function MyExerciseHistory({ tableName, reload }) {
   return (
     <MyView style={styles.container}>
       {Object.entries(data).map(([id, obj]) => (
-        <MyView style={styles.card} key={id}>
+        <MyView style={[styles.card, shadow]} key={id}>
           <Text style={styles.title}>
             <Text style={styles.text}>
               {getDate(obj.date)} {obj.trainingTime} - {displayName}

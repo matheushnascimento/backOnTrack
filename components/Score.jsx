@@ -1,11 +1,11 @@
 import { StyleSheet, useColorScheme } from "react-native";
 import MyButton from "./MyButton";
 import MyView from "./MyView";
-import { Colors } from "@/constants/Colors";
+import { Colors, shadow } from "@/constants/Colors";
 
 export default function Score({ onPress, value, ...props }) {
   const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme] ?? theme.light;
+  const theme = Colors[colorScheme] ?? Colors.light;
   const scoreRange = 5;
 
   const styles = StyleSheet.create({
@@ -20,7 +20,6 @@ export default function Score({ onPress, value, ...props }) {
       width: 24,
       height: 24,
       borderRadius: 100,
-      boxShadow: Colors.shadow,
     },
     text: {
       fontWeight: "bold",
@@ -30,7 +29,7 @@ export default function Score({ onPress, value, ...props }) {
   });
   return (
     <MyView
-      className="flex h-fit justify-start items-center flex-row gap-[.6rem]"
+      className="flex justify-start items-center flex-row gap-2.5"
       style={styles.container}
     >
       {Array.from({ length: scoreRange + 1 }).map((_, index) => (
@@ -39,7 +38,7 @@ export default function Score({ onPress, value, ...props }) {
           title={index}
           value={value}
           compact="true"
-          style={styles.button}
+          style={[styles.button, shadow]}
           titleStyle={styles.title}
           {...props}
           onPress={() => onPress(index)}
