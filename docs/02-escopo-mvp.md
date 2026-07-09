@@ -18,6 +18,8 @@ O MVP cobre **5 métricas**, que são as que já existem como tela no código at
 
 Como as 6 métricas compartilham estrutura, o sistema é modelado em torno de uma única entidade genérica - o **Registro** - em vez de 6 entidades separadas e desconectadas. Campos específicos de cada métrica fica isolada num campo de detalhes, mantendo o núcleo do modelo uniforme.
 
+> **Modelo-alvo (M2), não o schema atual.** A `interface Registro` abaixo é o **modelo maduro** que o projeto pretende alcançar no M2 — a forma final de seus campos ainda será decidida nesse marco, informada pelo uso real. Ela **não** descreve o schema em uso hoje. O schema atual é o **frouxo do ADR-008** (`type` / `date` / `details` / `createdAt`), no qual os campos específicos de cada métrica ficam serializados como JSON dentro de `details`.
+
 ```typescript
 interface Registro {
   id: string;
@@ -45,7 +47,7 @@ Exemplos de uso por tipo:
 
 Essa modelagem permite que **toda tela de registro, toda listagem e todo histórico usem o mesmo componente base**, variando apenas configuração.
 
-> **Nota de estado atual:** o código de hoje ainda não usa este modelo. As telas gravam campos ad-hoc por métrica (`score`, `min`/`max`/`ideal`, `observation`, `training`/`cardio`, etc.). Convergir os dados existentes para este `Registro` unificado é o trabalho de M1 no roadmap.O campo de observação livre passa a se chamar `nota` (o código atual usa `observation`).
+> **Nota de estado atual:** o código de hoje ainda não usa este modelo. As telas gravam campos ad-hoc por métrica (`score`, `min`/`max`/`ideal`, `observation`, `training`/`cardio`, etc.), que hoje vivem serializados dentro do campo `details` do schema frouxo do ADR-008 (`type`/`date`/`details`/`createdAt`). Convergir os dados existentes para este `Registro` unificado é o trabalho de M1 no roadmap. O campo de observação livre passa a se chamar `nota` (o código atual usa `observation`).
 
 ## Escopo do MVP (v1)
 
