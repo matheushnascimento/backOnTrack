@@ -3,10 +3,13 @@ import "@/global.css";
 import { Stack } from "expo-router";
 import { useColorScheme } from "react-native";
 import { Colors } from "@/constants/Colors";
+import { useRegistrosPersistencia } from "@/infra/persistence";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme] ?? Colors.light;
+
+  useRegistrosPersistencia();
 
   return (
     <Stack
