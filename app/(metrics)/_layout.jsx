@@ -2,16 +2,24 @@
 import "@/global.css";
 
 import { Stack } from "expo-router";
-import { useColorScheme } from "react-native";
+import { useColorScheme, View } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Colors } from "@/constants/Colors";
 import MyHeader from "@/components/MyHeader";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   const theme = Colors[colorScheme] ?? Colors.light;
+  const insets = useSafeAreaInsets();
 
   return (
-    <>
+    <View
+      style={{
+        flex: 1,
+        paddingTop: insets.top,
+        backgroundColor: theme.background,
+      }}
+    >
       <MyHeader />
       <Stack
         screenOptions={{
@@ -41,6 +49,6 @@ export default function RootLayout() {
           options={{ headerShown: false, title: "Estudo" }}
         />
       </Stack>
-    </>
+    </View>
   );
 }

@@ -7,11 +7,18 @@ export const store = createStore().setTablesSchema({
   [TABLE]: {
     type: { type: "string" },
     date: { type: "string" },
+    quantity: { type: "number" },
+    unit: { type: "string" },
+    note: { type: "string" },
     details: { type: "string", default: "{}" },
     createdAt: { type: "number" },
   },
 });
 
+// Espalha `details` (JSON) de volta pro topo. É espalhado por último de
+// propósito: registros antigos (schema frouxo, com quantity/observation
+// dentro de details) continuam aparecendo achatados, dando fallback pros
+// campos que hoje viraram coluna própria.
 function hidratar(id, linha) {
   const { details, ...resto } = linha;
   let extras;
@@ -23,14 +30,46 @@ function hidratar(id, linha) {
   return { id, ...resto, ...extras };
 }
 
-export function add(type, data) {
-  const { date, ...details } = data;
-  store.addRow(TABLE, {
+// Separa os campos unificados (colunas) dos extras específicos do tipo
+// (serializados em details).
+function buildRow(type, data) {
+  const { date, quantity, unit, note, ...extras } = data;
+  return {
     type,
     date: date ?? "",
-    details: JSON.stringify(details ?? {}),
+    quantity: Number(quantity) || 0,
+    unit: unit ?? "",
+    note: note ?? "",
+    details: JSON.stringify(extras ?? {}),
     createdAt: Date.now(),
+  };
+}
+
+export function add(type, data) {
+  store.addRow(TABLE, buildRow(type, data));
+}
+
+export function update(id, data) {
+  const { quantity, unit, note, ...rest } = data;
+  const extras = { ...rest };
+  // A data não é editável na UI (é sempre "hoje"); não mexer nela aqui,
+  // senão editar um registro antigo trocaria a data original pela de hoje.
+  delete extras.date;
+  store.setPartialRow(TABLE, id, {
+    quantity: Number(quantity) || 0,
+    unit: unit ?? "",
+    note: note ?? "",
+    details: JSON.stringify(extras),
   });
+}
+
+export function remove(id) {
+  store.delRow(TABLE, id);
+}
+
+export function getById(id) {
+  if (!store.hasRow(TABLE, id)) return undefined;
+  return hidratar(id, store.getRow(TABLE, id));
 }
 
 export function get(type) {
@@ -42,6 +81,10 @@ export function get(type) {
     }
   }
   return resultado;
+}
+
+export function getAll(type) {
+  return Object.values(get(type));
 }
 
 export function getByMonth(type, month) {

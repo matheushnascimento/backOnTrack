@@ -1,9 +1,9 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //#region imports
-import { usePathname } from "expo-router";
+import { useLocalSearchParams, usePathname } from "expo-router";
 
-import { useState } from "react";
-import { Text, TextInput } from "react-native";
+import { useEffect, useState } from "react";
+import { ScrollView, Text, TextInput } from "react-native";
 import { Snackbar } from "react-native-paper";
 
 import MyButton from "@/components/MyButton";
@@ -14,8 +14,9 @@ import Score from "@/components/Score";
 
 import { getCategoryInfo } from "@/components/categoryUtils";
 import getDate from "@/constants/getDate";
+import { hhmmToMinutes, minutesToHHMM } from "@/constants/duration";
 
-import { add } from "@/infra/database";
+import { add, getById, update } from "@/infra/database";
 import { useThemedStyles } from "@/hook/useThemedStyle";
 
 //#endregion
@@ -23,7 +24,8 @@ import { useThemedStyles } from "@/hook/useThemedStyle";
 export default function Exercise() {
   //#region variables
   const pathname = usePathname().substring(1);
-  const { displayName } = getCategoryInfo(pathname) ?? {};
+  const { displayName, unit } = getCategoryInfo(pathname) ?? {};
+  const { id } = useLocalSearchParams();
 
   //#region states
   const [cardio, setCardio] = useState(false);
@@ -37,6 +39,24 @@ export default function Exercise() {
   const [trainingDurationHour, setTrainingDurationHour] = useState("");
   const [trainingDurationMinute, setTrainingDurationMinute] = useState("");
   const [visible, setVisible] = useState(false);
+  //#endregion
+
+  //#region edição
+  useEffect(() => {
+    if (!id) return;
+    const r = getById(id);
+    if (!r) return;
+    const [dh, dm] = minutesToHHMM(r.quantity).split(":");
+    setTrainingDurationHour(dh);
+    setTrainingDurationMinute(dm);
+    const [th, tm] = String(r.trainingTime ?? ":").split(":");
+    setTrainingTimeHour(th ?? "");
+    setTrainingTimeMinute(tm ?? "");
+    setTraining(!!r.training);
+    setCardio(!!r.cardio);
+    setObservation(r.note ?? r.observation ?? "");
+    setScore(r.score);
+  }, [id]);
   //#endregion
 
   const styles = useThemedStyles((theme) => ({
@@ -102,14 +122,18 @@ export default function Exercise() {
     setVisible(true);
     const data = {
       date: date.ISOdate,
+      quantity: hhmmToMinutes(
+        `${trainingDurationHour}:${trainingDurationMinute}`,
+      ),
+      unit,
+      note: observation,
       training,
       cardio,
       trainingTime: `${trainingTimeHour}:${trainingTimeMinute}`,
-      duration: `${trainingDurationHour}:${trainingDurationMinute}`,
       score,
-      observation,
     };
-    add("exercise", data);
+    if (id) update(id, data);
+    else add("exercise", data);
     setReloadKey((prev) => prev + 1);
   }
   function onDismissSnackBar() {
@@ -124,88 +148,99 @@ export default function Exercise() {
         onDismiss={onDismissSnackBar}
         action={{
           label: "Fechar",
+          onPress: onDismissSnackBar,
         }}
       >
-        Seus dados estão salvos! (Enquanto você não recarregar o app)
+        Registro salvo!
       </Snackbar>
-      <MyView style={styles.card}>
-        <Text style={styles.title}>
-          {date.displayDate} {displayName}
-        </Text>
+      <ScrollView
+        style={{ width: "100%" }}
+        contentContainerStyle={{
+          alignItems: "center",
+          gap: 16,
+          paddingBottom: 24,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <MyView style={styles.card}>
+          <Text style={styles.title}>
+            {date.displayDate} {displayName}
+          </Text>
 
-        {/* card Wrapper */}
-        <MyView style={styles.cardWrapper}>
-          <MyCheckbox
-            value={training}
-            label="Treino"
-            onValueChange={() => setTraining(!training)}
-          />
-          <MyCheckbox
-            value={cardio}
-            label="Cardio"
-            onValueChange={() => setCardio(!cardio)}
-          />
-        </MyView>
+          {/* card Wrapper */}
+          <MyView style={styles.cardWrapper}>
+            <MyCheckbox
+              value={training}
+              label="Treino"
+              onValueChange={() => setTraining(!training)}
+            />
+            <MyCheckbox
+              value={cardio}
+              label="Cardio"
+              onValueChange={() => setCardio(!cardio)}
+            />
+          </MyView>
 
-        {/* Nota */}
-        <Text style={styles.title}>Nota</Text>
-        <Score value={score} onPress={setScore} />
+          {/* Nota */}
+          <Text style={styles.title}>Nota</Text>
+          <Score value={score} onPress={setScore} />
 
-        {/* OBS */}
-        <MyView className="gap-1">
-          <Text style={styles.title}>OBS:</Text>
-          <TextInput
-            value={observation}
-            onChangeText={(value) => setObservation(value)}
-            style={styles.textArea}
-            placeholder="Observações sobre o exercício..."
-          />
-        </MyView>
+          {/* OBS */}
+          <MyView className="gap-1">
+            <Text style={styles.title}>OBS:</Text>
+            <TextInput
+              value={observation}
+              onChangeText={(value) => setObservation(value)}
+              style={styles.textArea}
+              placeholder="Observações sobre o exercício..."
+            />
+          </MyView>
 
-        <MyView className="flex-row flex-wrap gap-4 items-center">
-          {/* Hora do exercício */}
-          <MyView style={[styles.card, { alignItems: "center" }]}>
-            <Text style={styles.title}>Hora do treino</Text>
-            <MyView className="flex-row gap-1 justify-center items-center">
-              <TextInput
-                style={styles.input}
-                placeholder="--"
-                value={trainingTimeHour}
-                onChangeText={(value) => setTrainingTimeHour(value)}
-              />
-              <Text style={styles.text}>:</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="--"
-                value={trainingTimeMinute}
-                onChangeText={(value) => setTrainingTimeMinute(value)}
-              />
+          <MyView className="flex-row flex-wrap gap-4 items-center">
+            {/* Hora do exercício */}
+            <MyView style={[styles.card, { alignItems: "center" }]}>
+              <Text style={styles.title}>Hora do treino</Text>
+              <MyView className="flex-row gap-1 justify-center items-center">
+                <TextInput
+                  style={styles.input}
+                  placeholder="--"
+                  value={trainingTimeHour}
+                  onChangeText={(value) => setTrainingTimeHour(value)}
+                />
+                <Text style={styles.text}>:</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="--"
+                  value={trainingTimeMinute}
+                  onChangeText={(value) => setTrainingTimeMinute(value)}
+                />
+              </MyView>
+            </MyView>
+            {/* Tempo de treino */}
+            <MyView style={[styles.card, { alignItems: "center" }]}>
+              <Text style={styles.title}>Tempo de treino</Text>
+              <MyView className="flex flex-row gap-1 items-end">
+                <TextInput
+                  style={styles.input}
+                  placeholder="--"
+                  value={trainingDurationHour}
+                  onChangeText={(value) => setTrainingDurationHour(value)}
+                />
+                <Text style={styles.text}>h</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="--"
+                  value={trainingDurationMinute}
+                  onChangeText={(value) => setTrainingDurationMinute(value)}
+                />
+                <Text style={styles.text}>min</Text>
+              </MyView>
             </MyView>
           </MyView>
-          {/* Tempo de treino */}
-          <MyView style={[styles.card, { alignItems: "center" }]}>
-            <Text style={styles.title}>Tempo de treino</Text>
-            <MyView className="flex flex-row gap-1 items-end">
-              <TextInput
-                style={styles.input}
-                placeholder="--"
-                value={trainingDurationHour}
-                onChangeText={(value) => setTrainingDurationHour(value)}
-              />
-              <Text style={styles.text}>h</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="--"
-                value={trainingDurationMinute}
-                onChangeText={(value) => setTrainingDurationMinute(value)}
-              />
-              <Text style={styles.text}>min</Text>
-            </MyView>
-          </MyView>
+          <MyButton title="Salvar" onPress={() => handleSubmit()} />
         </MyView>
-        <MyButton title="Salvar" onPress={() => handleSubmit()} />
-      </MyView>
-      <MyExerciseHistory tableName={pathname} reload={reloadKey} />
+        <MyExerciseHistory tableName={pathname} reload={reloadKey} />
+      </ScrollView>
     </MyView>
   );
 }

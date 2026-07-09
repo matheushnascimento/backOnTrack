@@ -1,9 +1,9 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //#region imports
-import { usePathname } from "expo-router";
+import { useLocalSearchParams, usePathname } from "expo-router";
 
-import { useState } from "react";
-import { Text, TextInput } from "react-native";
+import { useEffect, useState } from "react";
+import { ScrollView, Text, TextInput } from "react-native";
 import { Snackbar } from "react-native-paper";
 
 import MyButton from "@/components/MyButton";
@@ -14,8 +14,9 @@ import Score from "@/components/Score";
 
 import { getCategoryInfo } from "@/components/categoryUtils";
 import getDate from "@/constants/getDate";
+import { hhmmToMinutes, minutesToHHMM } from "@/constants/duration";
 
-import { add } from "@/infra/database";
+import { add, getById, update } from "@/infra/database";
 import { useThemedStyles } from "@/hook/useThemedStyle";
 
 //#endregion
@@ -23,7 +24,8 @@ import { useThemedStyles } from "@/hook/useThemedStyle";
 export default function Study() {
   //#region variables
   const pathname = usePathname().substring(1);
-  const { displayName } = getCategoryInfo(pathname) ?? {};
+  const { displayName, unit } = getCategoryInfo(pathname) ?? {};
+  const { id } = useLocalSearchParams();
 
   //#region states
   const [date, setDate] = useState(getDate());
@@ -34,6 +36,20 @@ export default function Study() {
   const [studyDurationHour, setStudyDurationHour] = useState("");
   const [studyDurationMinute, setStudyDurationMinute] = useState("");
   const [visible, setVisible] = useState(false);
+  //#endregion
+
+  //#region edição
+  useEffect(() => {
+    if (!id) return;
+    const r = getById(id);
+    if (!r) return;
+    const [dh, dm] = minutesToHHMM(r.quantity).split(":");
+    setStudyDurationHour(dh);
+    setStudyDurationMinute(dm);
+    setStudied(!!r.studied);
+    setObservation(r.note ?? r.observation ?? "");
+    setScore(r.score);
+  }, [id]);
   //#endregion
 
   const styles = useThemedStyles((theme) => ({
@@ -99,11 +115,14 @@ export default function Study() {
     setVisible(true);
     const data = {
       date: date.ISOdate,
-      duration: `${studyDurationHour}:${studyDurationMinute}`,
+      quantity: hhmmToMinutes(`${studyDurationHour}:${studyDurationMinute}`),
+      unit,
+      note: observation,
       score,
-      observation,
+      studied,
     };
-    add("study", data);
+    if (id) update(id, data);
+    else add("study", data);
     setReloadKey((prev) => prev + 1);
   }
   function onDismissSnackBar() {
@@ -118,64 +137,75 @@ export default function Study() {
         onDismiss={onDismissSnackBar}
         action={{
           label: "Fechar",
+          onPress: onDismissSnackBar,
         }}
       >
-        Seus dados estão salvos! (Enquanto você não recarregar o app)
+        Registro salvo!
       </Snackbar>
-      <MyView style={styles.card}>
-        <Text style={styles.title}>
-          {date.displayDate} {displayName}
-        </Text>
+      <ScrollView
+        style={{ width: "100%" }}
+        contentContainerStyle={{
+          alignItems: "center",
+          gap: 16,
+          paddingBottom: 24,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <MyView style={styles.card}>
+          <Text style={styles.title}>
+            {date.displayDate} {displayName}
+          </Text>
 
-        {/* card Wrapper */}
-        <MyView style={styles.cardWrapper}>
-          <MyCheckbox
-            value={studied}
-            label="Feito"
-            onValueChange={() => setStudied(!studied)}
-          />
-        </MyView>
-
-        {/* Nota */}
-        <Text style={styles.title}>Nota</Text>
-        <Score value={score} onPress={setScore} />
-
-        {/* OBS */}
-        <MyView className="gap-1">
-          <Text style={styles.title}>OBS:</Text>
-          <TextInput
-            value={observation}
-            onChangeText={(value) => setObservation(value)}
-            style={styles.textArea}
-            placeholder="Observações sobre o exercício..."
-          />
-        </MyView>
-
-        <MyView className="flex-row gap-4 items-end justify-between">
-          {/* Tempo de treino */}
-          <MyView style={[styles.card, { alignItems: "center" }]}>
-            <Text style={styles.title}>Tempo de estudo</Text>
-            <MyView className="flex flex-row gap-1 items-end">
-              <TextInput
-                style={styles.input}
-                placeholder="--"
-                value={studyDurationHour}
-                onChangeText={(value) => setStudyDurationHour(value)}
-              />
-              <Text style={styles.text}>h</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="--"
-                value={studyDurationMinute}
-                onChangeText={(value) => setStudyDurationMinute(value)}
-              />
-              <Text style={styles.text}>min</Text>
-            </MyView>
+          {/* card Wrapper */}
+          <MyView style={styles.cardWrapper}>
+            <MyCheckbox
+              value={studied}
+              label="Feito"
+              onValueChange={() => setStudied(!studied)}
+            />
           </MyView>
-          <MyButton title="Salvar" onPress={() => handleSubmit()} />
+
+          {/* Nota */}
+          <Text style={styles.title}>Nota</Text>
+          <Score value={score} onPress={setScore} />
+
+          {/* OBS */}
+          <MyView className="gap-1">
+            <Text style={styles.title}>OBS:</Text>
+            <TextInput
+              value={observation}
+              onChangeText={(value) => setObservation(value)}
+              style={styles.textArea}
+              placeholder="Observações sobre o estudo..."
+            />
+          </MyView>
+
+          <MyView className="flex-row gap-4 items-end justify-between">
+            {/* Tempo de treino */}
+            <MyView style={[styles.card, { alignItems: "center" }]}>
+              <Text style={styles.title}>Tempo de estudo</Text>
+              <MyView className="flex flex-row gap-1 items-end">
+                <TextInput
+                  style={styles.input}
+                  placeholder="--"
+                  value={studyDurationHour}
+                  onChangeText={(value) => setStudyDurationHour(value)}
+                />
+                <Text style={styles.text}>h</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="--"
+                  value={studyDurationMinute}
+                  onChangeText={(value) => setStudyDurationMinute(value)}
+                />
+                <Text style={styles.text}>min</Text>
+              </MyView>
+            </MyView>
+            <MyButton title="Salvar" onPress={() => handleSubmit()} />
+          </MyView>
         </MyView>
-      </MyView>
-      <MyHistory tableName={pathname} reload={reloadKey} />
+        <MyHistory tableName={pathname} reload={reloadKey} />
+      </ScrollView>
     </MyView>
   );
 }

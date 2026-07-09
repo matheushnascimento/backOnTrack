@@ -3,7 +3,7 @@
 import { usePathname } from "expo-router";
 
 import { useState } from "react";
-import { Text, TextInput } from "react-native";
+import { ScrollView, Text, TextInput } from "react-native";
 import { Snackbar } from "react-native-paper";
 
 import { Colors } from "@/constants/Colors";
@@ -24,7 +24,7 @@ import { useThemedStyles } from "@/hook/useThemedStyle";
 export default function Water() {
   //#region variables
   const pathname = usePathname().substring(1);
-  const { displayName } = getCategoryInfo(pathname) ?? {};
+  const { displayName, unit } = getCategoryInfo(pathname) ?? {};
 
   //#region states
   const [date, setDate] = useState(getDate());
@@ -108,13 +108,13 @@ export default function Water() {
     setVisible(true);
     const data = {
       date: date.ISOdate,
+      quantity: Number(quantity) || 0,
+      unit,
+      note: observation,
       min,
       max,
       ideal,
-      quantity,
       score,
-      observation,
-      unity: "ml",
     };
     add("water", data);
     setReloadKey((prev) => prev + 1);
@@ -131,103 +131,114 @@ export default function Water() {
         onDismiss={onDismissSnackBar}
         action={{
           label: "Fechar",
+          onPress: onDismissSnackBar,
         }}
       >
-        Seus dados estão salvos! (Enquanto você não recarregar o app)
+        Registro salvo!
       </Snackbar>
-      <MyView style={styles.card}>
-        <Text style={styles.title}>
-          {date.displayDate} {displayName}
-        </Text>
+      <ScrollView
+        style={{ width: "100%" }}
+        contentContainerStyle={{
+          alignItems: "center",
+          gap: 16,
+          paddingBottom: 24,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <MyView style={styles.card}>
+          <Text style={styles.title}>
+            {date.displayDate} {displayName}
+          </Text>
 
-        {/* card Wrapper */}
-        <MyView style={styles.cardWrapper}>
-          {/* Input Wrapper */}
-          <MyView style={styles.inputWrapper}>
-            <Text style={styles.title}>MIN</Text>
+          {/* card Wrapper */}
+          <MyView style={styles.cardWrapper}>
+            {/* Input Wrapper */}
+            <MyView style={styles.inputWrapper}>
+              <Text style={styles.title}>MIN</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="--"
+                value={min}
+                onChangeText={(value) => setMin(value)}
+              />
+            </MyView>
+            {/* Input Wrapper */}
+            <MyView style={styles.inputWrapper}>
+              <Text style={styles.title}>MAX</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="--"
+                value={max}
+                onChangeText={(value) => setMax(value)}
+              />
+            </MyView>
+            {/* Input Wrapper */}
+            <MyView style={styles.inputWrapper}>
+              <Text style={styles.title}>IDEAL</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="--"
+                value={ideal}
+                onChangeText={(value) => setIdeal(value)}
+              />
+            </MyView>
+          </MyView>
+
+          <Text style={styles.title}>Nota</Text>
+          <Score value={score} onPress={setScore} />
+          {/* OBS */}
+          <MyView className="gap-1">
+            <Text style={styles.title}>OBS:</Text>
             <TextInput
-              style={styles.input}
-              placeholder="--"
-              value={min}
-              onChangeText={(value) => setMin(value)}
+              value={observation}
+              onChangeText={(value) => setObservation(value)}
+              style={styles.textArea}
+              placeholder="Observações sobre água..."
             />
           </MyView>
-          {/* Input Wrapper */}
-          <MyView style={styles.inputWrapper}>
-            <Text style={styles.title}>MAX</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="--"
-              value={max}
-              onChangeText={(value) => setMax(value)}
-            />
-          </MyView>
-          {/* Input Wrapper */}
-          <MyView style={styles.inputWrapper}>
-            <Text style={styles.title}>IDEAL</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="--"
-              value={ideal}
-              onChangeText={(value) => setIdeal(value)}
-            />
-          </MyView>
-        </MyView>
 
-        <Text style={styles.title}>Nota</Text>
-        <Score value={score} onPress={setScore} />
-        {/* OBS */}
-        <MyView className="gap-1">
-          <Text style={styles.title}>OBS:</Text>
-          <TextInput
-            value={observation}
-            onChangeText={(value) => setObservation(value)}
-            style={styles.textArea}
-            placeholder="Observações sobre água..."
-          />
-        </MyView>
-
-        <MyView className="flex-row flex-wrap gap-[16] items-center">
-          <MyView
-            style={[
-              styles.card,
-              {
-                width: "50%",
-                height: "fit",
-                justifyContent: "center",
-                alignItems: "center",
-                flexGrow: 1,
-                display: "flex",
-                flexDirection: "row",
-              },
-            ]}
-          >
-            <Text
-              style={styles.title}
-              className="flex-nowrap text-white font-bold text-nowrap text-[16]"
-            >
-              {displayName} hoje
-            </Text>
-            <TextInput
+          <MyView className="flex-row flex-wrap gap-[16] items-center">
+            <MyView
               style={[
-                styles.input,
+                styles.card,
                 {
-                  backgroundColor: "#333",
-                  width: 5,
-                  height: 32,
-                  textAlign: "center",
+                  width: "50%",
+                  height: "fit",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  flexGrow: 1,
+                  display: "flex",
+                  flexDirection: "row",
                 },
               ]}
-              placeholder="--"
-              value={quantity}
-              onChangeText={(value) => setQuantity(value)}
-            />
-            <Text style={styles.title}>ml</Text>
+            >
+              <Text
+                style={styles.title}
+                className="flex-nowrap text-white font-bold text-nowrap text-[16]"
+              >
+                {displayName} hoje
+              </Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  {
+                    backgroundColor: "#333",
+                    width: 5,
+                    height: 32,
+                    textAlign: "center",
+                  },
+                ]}
+                placeholder="--"
+                value={quantity}
+                onChangeText={(value) => setQuantity(value)}
+              />
+              <Text style={styles.title}>ml</Text>
+            </MyView>
+            <MyButton title="Salvar" onPress={() => handleSubmit()} />
           </MyView>
-          <MyButton title="Salvar" onPress={() => handleSubmit()} />
         </MyView>
-      </MyView>
-      <MyHistory tableName={pathname} reload={reloadKey} />
+        <MyHistory tableName={pathname} reload={reloadKey} />
+      </ScrollView>
     </MyView>
   );
 }

@@ -2,23 +2,23 @@
 export const CATEGORY_MAP = {
   water: {
     displayName: "água",
-    unity: "ml",
+    unit: "ml",
   },
   sleep: {
     displayName: "sono",
-    unity: "h",
+    unit: "min",
   },
   exercise: {
     displayName: "exercício",
-    unity: "h",
+    unit: "min",
   },
   feeding: {
     displayName: "alimentação",
-    unity: "Refeições",
+    unit: "refeição",
   },
   study: {
     displayName: "estudo",
-    unity: "h",
+    unit: "min",
   },
 };
 
@@ -27,6 +27,6 @@ export function getCategoryInfo(key) {
     displayName: CATEGORY_MAP[key]?.displayName ?? key,
     exists: !!CATEGORY_MAP[key],
     key: CATEGORY_MAP[key]?.key ?? key,
-    unity: CATEGORY_MAP[key]?.unity ?? null,
+    unit: CATEGORY_MAP[key]?.unit ?? null,
   };
 }
