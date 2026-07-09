@@ -1,7 +1,7 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //#region imports
 import { useEffect, useState } from "react";
-import { Text, TextInput } from "react-native";
+import { ScrollView, Text, TextInput } from "react-native";
 import { Snackbar } from "react-native-paper";
 
 import MyView from "@/components/MyView";
@@ -139,91 +139,102 @@ export default function Sleep() {
         onDismiss={onDismissSnackBar}
         action={{
           label: "Fechar",
+          onPress: onDismissSnackBar,
         }}
       >
-        Seus dados estão salvos! (Enquanto você não recarregar o app)
+        Registro salvo!
       </Snackbar>
-      <MyView style={styles.card}>
-        <Text style={styles.title}>
-          {date.displayDate} {displayName}
-        </Text>
+      <ScrollView
+        style={{ width: "100%" }}
+        contentContainerStyle={{
+          alignItems: "center",
+          gap: 16,
+          paddingBottom: 24,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <MyView style={styles.card}>
+          <Text style={styles.title}>
+            {date.displayDate} {displayName}
+          </Text>
 
-        {/* card Wrapper */}
-        <MyView style={styles.cardWrapper}>
-          {/* Input Wrapper */}
-          <MyView style={styles.inputWrapper}>
-            <Text style={styles.title}>MIN</Text>
-            <TextInput style={styles.input} placeholder="--" value={min} />
+          {/* card Wrapper */}
+          <MyView style={styles.cardWrapper}>
+            {/* Input Wrapper */}
+            <MyView style={styles.inputWrapper}>
+              <Text style={styles.title}>MIN</Text>
+              <TextInput style={styles.input} placeholder="--" value={min} />
+            </MyView>
+            {/* Input Wrapper */}
+            <MyView style={styles.inputWrapper}>
+              <Text style={styles.title}>MAX</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="--"
+                value={max}
+                onChangeText={(value) => setMax(value)}
+              />
+            </MyView>
+            {/* Input Wrapper */}
+            <MyView style={styles.inputWrapper}>
+              <Text style={styles.title}>IDEAL</Text>
+              <TextInput style={styles.input} placeholder="--" value={ideal} />
+            </MyView>
           </MyView>
-          {/* Input Wrapper */}
-          <MyView style={styles.inputWrapper}>
-            <Text style={styles.title}>MAX</Text>
+
+          <Text style={styles.title}>Nota</Text>
+          <Score value={score} onPress={setScore} />
+
+          <MyView className="gap-1">
+            <Text style={styles.title}>OBS:</Text>
             <TextInput
-              style={styles.input}
-              placeholder="--"
-              value={max}
-              onChangeText={(value) => setMax(value)}
+              value={observation}
+              onChangeText={(value) => setObservation(value)}
+              style={styles.textArea}
+              placeholder="Observações sobre sono..."
             />
           </MyView>
-          {/* Input Wrapper */}
-          <MyView style={styles.inputWrapper}>
-            <Text style={styles.title}>IDEAL</Text>
-            <TextInput style={styles.input} placeholder="--" value={ideal} />
-          </MyView>
-        </MyView>
 
-        <Text style={styles.title}>Nota</Text>
-        <Score value={score} onPress={setScore} />
-
-        <MyView className="gap-1">
-          <Text style={styles.title}>OBS:</Text>
-          <TextInput
-            value={observation}
-            onChangeText={(value) => setObservation(value)}
-            style={styles.textArea}
-            placeholder="Observações sobre sono..."
-          />
-        </MyView>
-
-        <MyView className=" flex-row flex-wrap justify-center items-center gap-4">
-          <MyView
-            className="min-w-1/2 w-full rounded-md flex-row gap-4 justify-center items-start"
-            style={[
-              styles.card,
-              {
-                width: "50%",
-                justifyContent: "center",
-                alignItems: "center",
-                flexGrow: 1,
-                flexDirection: "row",
-              },
-            ]}
-          >
-            <Text
-              style={styles.title}
-              className="text-white font-bold text-2xl"
+          <MyView className=" flex-row flex-wrap justify-center items-center gap-4">
+            <MyView
+              className="min-w-1/2 w-full rounded-md flex-row gap-4 justify-center items-start"
+              style={[
+                styles.card,
+                {
+                  width: "50%",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  flexGrow: 1,
+                  flexDirection: "row",
+                },
+              ]}
             >
-              {displayName} hoje
-            </Text>
-            <TextInput
-              className="max-w-[38px] text-center bg-[#333333] h-[37px] px-1 text-xl font-normal text-white rounded-md"
-              placeholder="--"
-              value={sleepHours}
-              onChangeText={(value) => setSleepHours(value)}
-            />
-            <Text style={styles.title}>h</Text>
-            <TextInput
-              className="max-w-[38px] text-center bg-[#333333] h-[37px] px-1 text-xl font-normal text-white rounded-md"
-              placeholder="--"
-              value={sleepMinutes}
-              onChangeText={(value) => setSleepMinutes(value)}
-            />
-            <Text style={styles.title}>min</Text>
+              <Text
+                style={styles.title}
+                className="text-white font-bold text-2xl"
+              >
+                {displayName} hoje
+              </Text>
+              <TextInput
+                className="max-w-[38px] text-center bg-[#333333] h-[37px] px-1 text-xl font-normal text-white rounded-md"
+                placeholder="--"
+                value={sleepHours}
+                onChangeText={(value) => setSleepHours(value)}
+              />
+              <Text style={styles.title}>h</Text>
+              <TextInput
+                className="max-w-[38px] text-center bg-[#333333] h-[37px] px-1 text-xl font-normal text-white rounded-md"
+                placeholder="--"
+                value={sleepMinutes}
+                onChangeText={(value) => setSleepMinutes(value)}
+              />
+              <Text style={styles.title}>min</Text>
+            </MyView>
+            <MyButton title="Salvar" onPress={() => handleSubmit()} />
           </MyView>
-          <MyButton title="Salvar" onPress={() => handleSubmit()} />
         </MyView>
-      </MyView>
-      <MyHistory tableName={pathname} reload={reloadKey} />
+        <MyHistory tableName={pathname} reload={reloadKey} />
+      </ScrollView>
     </MyView>
   );
 }

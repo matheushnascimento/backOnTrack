@@ -3,7 +3,7 @@
 import { useLocalSearchParams, usePathname } from "expo-router";
 
 import { useEffect, useState } from "react";
-import { Text, TextInput } from "react-native";
+import { ScrollView, Text, TextInput } from "react-native";
 import { Snackbar } from "react-native-paper";
 
 import MyButton from "@/components/MyButton";
@@ -131,54 +131,65 @@ export default function Feeding() {
         onDismiss={onDismissSnackBar}
         action={{
           label: "Fechar",
+          onPress: onDismissSnackBar,
         }}
       >
-        Seus dados estão salvos! (Enquanto você não recarregar o app)
+        Registro salvo!
       </Snackbar>
-      <MyView style={styles.card}>
-        <Text style={styles.title}>
-          {date.displayDate} {displayName}
-        </Text>
+      <ScrollView
+        style={{ width: "100%" }}
+        contentContainerStyle={{
+          alignItems: "center",
+          gap: 16,
+          paddingBottom: 24,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <MyView style={styles.card}>
+          <Text style={styles.title}>
+            {date.displayDate} {displayName}
+          </Text>
 
-        {/* card Wrapper */}
-        <MyView style={styles.cardWrapper}>
-          <MyView className="flex-row gap-5">
-            {Array.from({ length: quantity }).map((_, index) => (
+          {/* card Wrapper */}
+          <MyView style={styles.cardWrapper}>
+            <MyView className="flex-row gap-5">
+              {Array.from({ length: quantity }).map((_, index) => (
+                <MyIconButton
+                  key={index}
+                  value={index}
+                  compact="true"
+                  // style={styles.button}
+                  // titleStyle={styles.title}
+                  isSelected={true}
+                  onPress={() => setQuantity(quantity - 1)}
+                />
+              ))}
               <MyIconButton
-                key={index}
-                value={index}
+                onPress={() => setQuantity(quantity + 1)}
                 compact="true"
-                // style={styles.button}
-                // titleStyle={styles.title}
-                isSelected={true}
-                onPress={() => setQuantity(quantity - 1)}
               />
-            ))}
-            <MyIconButton
-              onPress={() => setQuantity(quantity + 1)}
-              compact="true"
+            </MyView>
+          </MyView>
+
+          {/* Nota */}
+          <Text style={styles.title}>Nota</Text>
+          <Score value={score} onPress={setScore} />
+
+          {/* OBS */}
+          <MyView className="gap-1">
+            <Text style={styles.title}>OBS:</Text>
+            <TextInput
+              value={observation}
+              onChangeText={(value) => setObservation(value)}
+              style={styles.textArea}
+              placeholder="Observações sobre refeições..."
             />
           </MyView>
+
+          <MyButton title="Salvar" onPress={() => handleSubmit()} />
         </MyView>
-
-        {/* Nota */}
-        <Text style={styles.title}>Nota</Text>
-        <Score value={score} onPress={setScore} />
-
-        {/* OBS */}
-        <MyView className="gap-1">
-          <Text style={styles.title}>OBS:</Text>
-          <TextInput
-            value={observation}
-            onChangeText={(value) => setObservation(value)}
-            style={styles.textArea}
-            placeholder="Observações sobre refeições..."
-          />
-        </MyView>
-
-        <MyButton title="Salvar" onPress={() => handleSubmit()} />
-      </MyView>
-      <MyHistory tableName={pathname} reload={reloadKey} />
+        <MyHistory tableName={pathname} reload={reloadKey} />
+      </ScrollView>
     </MyView>
   );
 }

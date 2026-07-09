@@ -3,7 +3,7 @@
 import { useLocalSearchParams, usePathname } from "expo-router";
 
 import { useEffect, useState } from "react";
-import { Text, TextInput } from "react-native";
+import { ScrollView, Text, TextInput } from "react-native";
 import { Snackbar } from "react-native-paper";
 
 import MyButton from "@/components/MyButton";
@@ -137,64 +137,75 @@ export default function Study() {
         onDismiss={onDismissSnackBar}
         action={{
           label: "Fechar",
+          onPress: onDismissSnackBar,
         }}
       >
-        Seus dados estão salvos! (Enquanto você não recarregar o app)
+        Registro salvo!
       </Snackbar>
-      <MyView style={styles.card}>
-        <Text style={styles.title}>
-          {date.displayDate} {displayName}
-        </Text>
+      <ScrollView
+        style={{ width: "100%" }}
+        contentContainerStyle={{
+          alignItems: "center",
+          gap: 16,
+          paddingBottom: 24,
+        }}
+        showsVerticalScrollIndicator={false}
+      >
+        <MyView style={styles.card}>
+          <Text style={styles.title}>
+            {date.displayDate} {displayName}
+          </Text>
 
-        {/* card Wrapper */}
-        <MyView style={styles.cardWrapper}>
-          <MyCheckbox
-            value={studied}
-            label="Feito"
-            onValueChange={() => setStudied(!studied)}
-          />
-        </MyView>
-
-        {/* Nota */}
-        <Text style={styles.title}>Nota</Text>
-        <Score value={score} onPress={setScore} />
-
-        {/* OBS */}
-        <MyView className="gap-1">
-          <Text style={styles.title}>OBS:</Text>
-          <TextInput
-            value={observation}
-            onChangeText={(value) => setObservation(value)}
-            style={styles.textArea}
-            placeholder="Observações sobre o estudo..."
-          />
-        </MyView>
-
-        <MyView className="flex-row gap-4 items-end justify-between">
-          {/* Tempo de treino */}
-          <MyView style={[styles.card, { alignItems: "center" }]}>
-            <Text style={styles.title}>Tempo de estudo</Text>
-            <MyView className="flex flex-row gap-1 items-end">
-              <TextInput
-                style={styles.input}
-                placeholder="--"
-                value={studyDurationHour}
-                onChangeText={(value) => setStudyDurationHour(value)}
-              />
-              <Text style={styles.text}>h</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="--"
-                value={studyDurationMinute}
-                onChangeText={(value) => setStudyDurationMinute(value)}
-              />
-              <Text style={styles.text}>min</Text>
-            </MyView>
+          {/* card Wrapper */}
+          <MyView style={styles.cardWrapper}>
+            <MyCheckbox
+              value={studied}
+              label="Feito"
+              onValueChange={() => setStudied(!studied)}
+            />
           </MyView>
-          <MyButton title="Salvar" onPress={() => handleSubmit()} />
+
+          {/* Nota */}
+          <Text style={styles.title}>Nota</Text>
+          <Score value={score} onPress={setScore} />
+
+          {/* OBS */}
+          <MyView className="gap-1">
+            <Text style={styles.title}>OBS:</Text>
+            <TextInput
+              value={observation}
+              onChangeText={(value) => setObservation(value)}
+              style={styles.textArea}
+              placeholder="Observações sobre o estudo..."
+            />
+          </MyView>
+
+          <MyView className="flex-row gap-4 items-end justify-between">
+            {/* Tempo de treino */}
+            <MyView style={[styles.card, { alignItems: "center" }]}>
+              <Text style={styles.title}>Tempo de estudo</Text>
+              <MyView className="flex flex-row gap-1 items-end">
+                <TextInput
+                  style={styles.input}
+                  placeholder="--"
+                  value={studyDurationHour}
+                  onChangeText={(value) => setStudyDurationHour(value)}
+                />
+                <Text style={styles.text}>h</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="--"
+                  value={studyDurationMinute}
+                  onChangeText={(value) => setStudyDurationMinute(value)}
+                />
+                <Text style={styles.text}>min</Text>
+              </MyView>
+            </MyView>
+            <MyButton title="Salvar" onPress={() => handleSubmit()} />
+          </MyView>
         </MyView>
-      </MyView>
-      <MyHistory tableName={pathname} reload={reloadKey} />
+        <MyHistory tableName={pathname} reload={reloadKey} />
+      </ScrollView>
     </MyView>
   );
 }
