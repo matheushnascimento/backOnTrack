@@ -6,6 +6,10 @@ import { store } from "./database";
 const db = openDatabaseSync("back_on_track.db");
 
 /**
+ * Versão native (iOS/Android) de useRegistrosPersistencia, com Expo SQLite.
+ * No bundle web o Metro resolve persistence.web.js no lugar deste arquivo,
+ * porque o expo-sqlite não é suportado no `expo export` web.
+ *
  * Chame este hook uma vez, perto da raiz do app (ex: app/_layout.jsx),
  * pra carregar os dados salvos ao abrir o app e manter tudo persistido
  * automaticamente a cada mudança. Sem isso, a store do TinyBase vive só
