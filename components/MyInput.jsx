@@ -1,3 +1,4 @@
+// @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 import { Colors } from "@/constants/Colors";
 import { Text, TextInput, useColorScheme, View } from "react-native";
 import MyView from "./MyView";
