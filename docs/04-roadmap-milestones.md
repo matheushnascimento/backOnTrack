@@ -19,22 +19,22 @@ Cada milestone tem um objetivo de saída claro. Sabe-se que terminou quando esse
 - ✅ Navegação entre as telas das métricas (Expo Router, rotas em `app/`)
 - ✅ Design system embrionário (`MyView`, `MyButton`, `Score`, `MyCheckbox`, `useThemedStyles`)
 - ✅ `categoryUtils` centralizando metadados por métrica
-- 🟡 ESLint/Prettier — verificar se estão configurados (não confirmado no diagnóstico)
+- ✅ ESLint/Prettier configurados (`eslint.config.mjs`, Prettier + `eslint-config-prettier`, Husky e job de CI)
 
 Essencialmente pronto. O que faltar aqui é pontual e não bloqueia o resto.
 
 ---
 
-## M1: Sanear a Fundação (o trabalho real de agora)
+## M1: Sanear a Fundação (o trabalho real de agora) 🟡 em andamento
 
 **Objetivo de saída:** o app persiste dados de verdade e renderiza correto no Android. É aqui que mora a correção das duas causas de "mais visual do que funcional".
 
 Esta milestone não existia no plano original — ela nasceu do diagnóstico do código. É a mais importante do roadmap: ataca exatamente as raízes que derrubaram as versões anteriores.
 
-- ⬜ **Persistência:** integrar o persister TinyBase + Expo SQLite (`store.js` + `persistencia.js` revisados). Sem isso os dados somem a cada reload — a causa do "salvo enquanto não recarregar".
-- ⬜ **TypeScript incremental:** ligar `allowJs` + `checkJs` (ADR-002). Sem migrar nada à força; arquivos novos nascem tipados.
-- ⬜ **Fundação de estilo:** consolidar cores em `constants/Colors.js`, `tailwind.config.js` importando dela, `shadow` corrigida para objeto RN nativo (ADR-006).
-- ⬜ **Migrar estilo para NativeWind**, componente a componente, começando pelos compartilhados (`MyButton` primeiro — conserta todos os botões de uma vez), validando no Android antes/depois (ver guia de migração de estilo).
+- ✅ **Persistência:** persister TinyBase integrado (`infra/persistence.js` com Expo SQLite, `infra/persistence.web.js` com `localPersister`), store em `infra/database.js`, ligado no root via `useRegistrosPersistencia()` em `app/_layout.jsx`. Os dados não somem mais no reload.
+- ✅ **TypeScript incremental:** `checkJs` ligado no `tsconfig.json` (`allowJs` herdado da base do Expo), ADR-002 (#48); legados com `@ts-nocheck` (grandfather) e job `Types` no CI barrando arquivos novos.
+- ✅ **Fundação de estilo:** cores consolidadas em `constants/Colors.js`, `tailwind.config.js` importando dela, `shadow` corrigida para objeto RN nativo (`elevation`), ADR-006.
+- 🟡 **Migrar estilo para NativeWind**, componente a componente, começando pelos compartilhados (`MyButton` primeiro — conserta todos os botões de uma vez), validando no Android antes/depois (ver guia de migração de estilo). NativeWind já está instalado e `className` é usado em várias telas/componentes, mas `StyleSheet`/`useThemedStyles` ainda coexistem em vários arquivos e o `MyButton` ainda não foi migrado.
 
 ---
 
@@ -42,7 +42,7 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 
 **Objetivo de saída:** as telas gravam no modelo `Registro` unificado, com CRUD completo.
 
-- ⬜ Implementar o `Registro` (ver Escopo & MVP) via a store revisada
+- 🟡 Implementar o `Registro` (ver Escopo & MVP) via a store revisada — a store já é uma tabela única `records` com `setTablesSchema` (ADR-007/008), mas ainda no schema frouxo (`type`/`date`/`details`/`createdAt`), sem os campos unificados (`quantidade`/`unidade`/`nota`)
 - ⬜ Mapear/migrar os campos ad-hoc atuais (`score`, `min`/`max`/`ideal`, `observation`, `training`/`cardio`) para o formato unificado (`quantidade`/`unidade`/`nota`/`detalhes`)
 - ⬜ Ligar as telas ao `add`/`update`/`remove`/`getAll` novos (hoje só existe criação)
 - ⬜ **Extrair a tela de registro única:** as 5 telas viram configuração de um componente-base. É o passo que mata a duplicação de ~90 linhas por tela e fecha o risco de reboot por "arquitetura que não escala".
@@ -53,9 +53,9 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 
 **Objetivo de saída:** o papel pode ser aposentado.
 
-- ⬜ As 5 telas de registro rápido, sobre o componente-base unificado
+- 🟡 As 5 telas de registro rápido, sobre o componente-base unificado — as 5 telas existem e já persistem, mas ainda duplicadas, não sobre um componente-base unificado
 - ⬜ Tela "hoje" consolidando o progresso do dia (uma query só, graças à tabela única)
-- ⬜ Histórico navegável por data (as rotas de histórico já existem, precisam consumir a store nova)
+- 🟡 Histórico navegável por data (as rotas de histórico já existem, precisam consumir a store nova) — `MyHistory` já lê a store via `get`/`getByMonth`, mas ainda falta a navegação por data e as rotas `(history)/*` são stubs
 - ⬜ Editar/excluir registros
 - ⬜ Primeiro dia de uso real substituindo o papel
 
@@ -92,7 +92,7 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 - ⬜ Tratamento de erros e estados vazios
 - ⬜ Testes nas funções de domínio (unitários); E2E opcional
 - ⬜ Exportação/backup de dados (JSON/CSV) — a rota de exportação já está prevista
-- ⬜ Build de produção via EAS, instalado fora do Expo Go
+- 🟡 Build de produção via EAS, instalado fora do Expo Go — `eas.json` (perfis dev/preview/production) e `projectId` em `app.json` já configurados, mas sem build de produção real gerado/instalado
 - ⬜ Documentação de manutenção (como rodar, como publicar updates)
 
 ---
