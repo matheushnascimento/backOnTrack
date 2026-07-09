@@ -1,14 +1,11 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
-import { Colors } from "@/constants/Colors";
-import { useColorScheme, View } from "react-native";
+import { View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function MyView({ className, style, safe = true, ...props }) {
-  const colorScheme = useColorScheme();
-  const themes = Colors[colorScheme] || Colors.light;
-  if (!safe) return <View className={className} style={style} {...props} />;
-
   const insets = useSafeAreaInsets();
+
+  if (!safe) return <View className={className} style={style} {...props} />;
 
   return (
     <View
