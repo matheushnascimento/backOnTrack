@@ -2,7 +2,7 @@
 //#region imports
 import { useEffect, useState } from "react";
 
-import { Alert, StyleSheet, Text, useColorScheme, View } from "react-native";
+import { Alert, Text, View } from "react-native";
 
 import MyView from "./MyView";
 import MyButton from "./MyButton";
@@ -15,43 +15,6 @@ import { minutesToHHMM } from "@/constants/duration";
 import Checkbox from "expo-checkbox";
 import { router } from "expo-router";
 //#endregion
-
-function makeStyles(theme) {
-  return StyleSheet.create({
-    container: { alignItems: "center", width: "100%", gap: 10 },
-    card: {
-      width: "100%",
-      maxWidth: 640,
-      gap: 10,
-      backgroundColor: theme.backgroundCard,
-      borderRadius: 6,
-      padding: 10,
-    },
-    text: { color: theme.text, fontWeight: "bold", fontSize: 18 },
-    subtext: {
-      color: theme.text,
-      opacity: 0.5,
-      fontWeight: "bold",
-      fontSize: 12,
-    },
-    title: {
-      fontSize: 18,
-      flexDirection: "row",
-      justifyContent: "space-between",
-      width: "100%",
-    },
-    score: {
-      textAlign: "center",
-      color: theme.text,
-      fontWeight: "bold",
-      fontSize: 16,
-      width: 24,
-      height: 24,
-      borderRadius: 100,
-    },
-    actions: { flexDirection: "row", gap: 8, justifyContent: "flex-end" },
-  });
-}
 
 function formatDate(date) {
   const parts = String(date ?? "")
@@ -78,7 +41,6 @@ function HistoryCard({
   tableName,
   displayName,
   unit,
-  styles,
   cardStyle,
   exercise,
   onChanged,
@@ -105,21 +67,21 @@ function HistoryCard({
   }
 
   return (
-    <MyView safe={false} style={[styles.card, cardStyle, shadow]}>
-      <Text style={styles.title}>
-        <Text style={styles.text}>
+    <MyView
+      safe={false}
+      className="w-full max-w-[640px] gap-2.5 rounded-md bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
+      style={[cardStyle, shadow]}
+    >
+      <Text className="w-full flex-row justify-between">
+        <Text className="font-bold text-lg text-light-text dark:text-dark-text">
           {formatDate(obj.date)}
           {exercise && obj.trainingTime ? ` ${obj.trainingTime}` : ""}{" "}
           {displayName}
         </Text>
         <Text
-          style={[
-            styles.score,
-            {
-              backgroundColor:
-                obj.score === 5 ? Colors.secondary : Colors.primary,
-            },
-          ]}
+          className={`h-6 w-6 rounded-full text-center font-bold text-base text-light-text dark:text-dark-text ${
+            obj.score === 5 ? "bg-secondary" : "bg-primary"
+          }`}
         >
           {obj.score}
         </Text>
@@ -127,35 +89,35 @@ function HistoryCard({
 
       {exercise && (
         <MyView safe={false} className="flex-row gap-4">
-          <MyView
-            safe={false}
-            style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
-          >
+          <MyView safe={false} className="flex-row items-center gap-1.5">
             <Checkbox color={Colors.primary} value={!!obj.training} />
-            <Text style={styles.text}>Treino</Text>
+            <Text className="font-bold text-lg text-light-text dark:text-dark-text">
+              Treino
+            </Text>
           </MyView>
-          <MyView
-            safe={false}
-            style={{ flexDirection: "row", alignItems: "center", gap: 6 }}
-          >
+          <MyView safe={false} className="flex-row items-center gap-1.5">
             <Checkbox color={Colors.primary} value={!!obj.cardio} />
-            <Text style={styles.text}>Cardio</Text>
+            <Text className="font-bold text-lg text-light-text dark:text-dark-text">
+              Cardio
+            </Text>
           </MyView>
         </MyView>
       )}
 
-      <Text style={styles.subtext}>
+      <Text className="font-bold text-xs text-light-text opacity-50 dark:text-dark-text">
         {formatQuantity(obj, unit)}
         {unit} | Nota {obj.score}
       </Text>
       <View className="flex-row items-center">
-        <Text style={[styles.subtext, { fontSize: 16 }]}>OBS: </Text>
-        <Text style={[styles.text, { fontWeight: "medium", fontSize: 16 }]}>
+        <Text className="font-bold text-base text-light-text opacity-50 dark:text-dark-text">
+          OBS:{" "}
+        </Text>
+        <Text className="font-medium text-base text-light-text dark:text-dark-text">
           {note}
         </Text>
       </View>
 
-      <MyView safe={false} style={styles.actions}>
+      <MyView safe={false} className="flex-row justify-end gap-2">
         <MyButton title="Editar" onPress={handleEdit} />
         <MyButton title="Excluir" onPress={handleDelete} />
       </MyView>
@@ -163,12 +125,35 @@ function HistoryCard({
   );
 }
 
-export default function MyHistory({ cardStyle, tableName, reload }) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme] ?? Colors.light;
-  const styles = makeStyles(theme);
-  const { displayName, unit } = getCategoryInfo(tableName);
+function HistoryList({
+  data,
+  tableName,
+  displayName,
+  unit,
+  cardStyle,
+  exercise,
+  onChanged,
+}) {
+  return (
+    <MyView safe={false} className="w-full items-center gap-2.5">
+      {Object.values(data).map((obj) => (
+        <HistoryCard
+          key={obj.id}
+          obj={obj}
+          tableName={tableName}
+          displayName={displayName}
+          unit={unit}
+          cardStyle={cardStyle}
+          exercise={exercise}
+          onChanged={onChanged}
+        />
+      ))}
+    </MyView>
+  );
+}
 
+export default function MyHistory({ cardStyle, tableName, reload }) {
+  const { displayName, unit } = getCategoryInfo(tableName);
   const [data, setData] = useState({});
   const [tick, setTick] = useState(0);
 
@@ -177,29 +162,19 @@ export default function MyHistory({ cardStyle, tableName, reload }) {
   }, [reload, tick, tableName]);
 
   return (
-    <MyView safe={false} style={styles.container}>
-      {Object.values(data).map((obj) => (
-        <HistoryCard
-          key={obj.id}
-          obj={obj}
-          tableName={tableName}
-          displayName={displayName}
-          unit={unit}
-          styles={styles}
-          cardStyle={cardStyle}
-          onChanged={() => setTick((t) => t + 1)}
-        />
-      ))}
-    </MyView>
+    <HistoryList
+      data={data}
+      tableName={tableName}
+      displayName={displayName}
+      unit={unit}
+      cardStyle={cardStyle}
+      onChanged={() => setTick((t) => t + 1)}
+    />
   );
 }
 
 export function MyMonthHistory({ cardStyle, tableName, month }) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme] ?? Colors.light;
-  const styles = makeStyles(theme);
   const { displayName, unit } = getCategoryInfo(tableName);
-
   const [data, setData] = useState([]);
   const [tick, setTick] = useState(0);
 
@@ -208,29 +183,19 @@ export function MyMonthHistory({ cardStyle, tableName, month }) {
   }, [month, tick, tableName]);
 
   return (
-    <MyView safe={false} style={styles.container}>
-      {Object.values(data).map((obj) => (
-        <HistoryCard
-          key={obj.id}
-          obj={obj}
-          tableName={tableName}
-          displayName={displayName}
-          unit={unit}
-          styles={styles}
-          cardStyle={cardStyle}
-          onChanged={() => setTick((t) => t + 1)}
-        />
-      ))}
-    </MyView>
+    <HistoryList
+      data={data}
+      tableName={tableName}
+      displayName={displayName}
+      unit={unit}
+      cardStyle={cardStyle}
+      onChanged={() => setTick((t) => t + 1)}
+    />
   );
 }
 
 export function MyExerciseHistory({ cardStyle, tableName, reload }) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme] ?? Colors.light;
-  const styles = makeStyles(theme);
   const { displayName, unit } = getCategoryInfo(tableName);
-
   const [data, setData] = useState({});
   const [tick, setTick] = useState(0);
 
@@ -239,20 +204,14 @@ export function MyExerciseHistory({ cardStyle, tableName, reload }) {
   }, [reload, tick, tableName]);
 
   return (
-    <MyView safe={false} style={styles.container}>
-      {Object.values(data).map((obj) => (
-        <HistoryCard
-          key={obj.id}
-          obj={obj}
-          tableName={tableName}
-          displayName={displayName}
-          unit={unit}
-          styles={styles}
-          cardStyle={cardStyle}
-          exercise
-          onChanged={() => setTick((t) => t + 1)}
-        />
-      ))}
-    </MyView>
+    <HistoryList
+      data={data}
+      tableName={tableName}
+      displayName={displayName}
+      unit={unit}
+      cardStyle={cardStyle}
+      exercise
+      onChanged={() => setTick((t) => t + 1)}
+    />
   );
 }

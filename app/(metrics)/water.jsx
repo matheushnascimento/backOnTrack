@@ -6,8 +6,6 @@ import { useEffect, useState } from "react";
 import { ScrollView, Text, TextInput } from "react-native";
 import { Snackbar } from "react-native-paper";
 
-import { Colors } from "@/constants/Colors";
-
 import MyHistory from "@/components/MyHistory";
 import MyButton from "@/components/MyButton";
 import MyView from "@/components/MyView";
@@ -17,8 +15,6 @@ import { getCategoryInfo } from "@/components/categoryUtils";
 import getDate from "@/constants/getDate";
 
 import { add, getById, update } from "@/infra/database";
-import { useThemedStyles } from "@/hook/useThemedStyle";
-
 //#endregion
 
 export default function Water() {
@@ -28,7 +24,7 @@ export default function Water() {
   const { id } = useLocalSearchParams();
 
   //#region states
-  const [date, setDate] = useState(getDate());
+  const [date] = useState(getDate());
   const [ideal, setIdeal] = useState();
   const [score, setScore] = useState();
   const [min, setMin] = useState();
@@ -53,65 +49,7 @@ export default function Water() {
   }, [id]);
   //#endregion
 
-  const styles = useThemedStyles((theme) => ({
-    card: {
-      backgroundColor: theme.backgroundCard,
-      gap: 32,
-      maxWidth: 640,
-      borderRadius: 10,
-      padding: 10,
-      paddingTop: 10,
-      paddingBottom: 10,
-    },
-    cardWrapper: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-    },
-    container: {
-      flex: 1,
-      alignItems: "center",
-      padding: 16,
-      gap: 16,
-      backgroundColor: theme.background,
-    },
-    input: {
-      padding: 6,
-      backgroundColor: theme.backgroundCard,
-      fontSize: 26,
-      fontWeight: "bold",
-      color: "white",
-      borderRadius: 10,
-      maxWidth: 160,
-    },
-    inputWrapper: {
-      gap: 10,
-    },
-    title: {
-      flexDirection: "row",
-      gap: 6,
-      color: theme.text,
-      fontWeight: "bold",
-      fontSize: 18,
-    },
-    text: {
-      color: theme.text,
-      fontWeight: "bold",
-      fontSize: 18,
-    },
-    textArea: {
-      padding: 6,
-      color: theme.text,
-      borderRadius: 10,
-      backgroundColor: theme.backgroundCard,
-      height: 64,
-      fontSize: 19,
-      fontWeight: "normal",
-    },
-  }));
-  //#endregion
-
   //#region functions
-
   function handleSubmit() {
     setVisible(true);
     const data = {
@@ -134,7 +72,10 @@ export default function Water() {
   //#endregion
 
   return (
-    <MyView safe={true} style={styles.container}>
+    <MyView
+      safe={true}
+      className="flex-1 items-center gap-4 bg-light-background p-4 dark:bg-dark-background"
+    >
       <Snackbar
         visible={visible}
         onDismiss={onDismissSnackBar}
@@ -154,38 +95,44 @@ export default function Water() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <MyView style={styles.card}>
-          <Text style={styles.title}>
+        <MyView
+          safe={false}
+          className="max-w-[640px] gap-8 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
+        >
+          <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
             {date.displayDate} {displayName}
           </Text>
 
           {/* card Wrapper */}
-          <MyView style={styles.cardWrapper}>
-            {/* Input Wrapper */}
-            <MyView style={styles.inputWrapper}>
-              <Text style={styles.title}>MIN</Text>
+          <MyView safe={false} className="flex-row justify-between">
+            <MyView safe={false} className="gap-2.5">
+              <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+                MIN
+              </Text>
               <TextInput
-                style={styles.input}
+                className="max-w-[160px] rounded-lg bg-light-backgroundCard p-1.5 text-[26px] font-bold text-white dark:bg-dark-backgroundCard"
                 placeholder="--"
                 value={min}
                 onChangeText={(value) => setMin(value)}
               />
             </MyView>
-            {/* Input Wrapper */}
-            <MyView style={styles.inputWrapper}>
-              <Text style={styles.title}>MAX</Text>
+            <MyView safe={false} className="gap-2.5">
+              <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+                MAX
+              </Text>
               <TextInput
-                style={styles.input}
+                className="max-w-[160px] rounded-lg bg-light-backgroundCard p-1.5 text-[26px] font-bold text-white dark:bg-dark-backgroundCard"
                 placeholder="--"
                 value={max}
                 onChangeText={(value) => setMax(value)}
               />
             </MyView>
-            {/* Input Wrapper */}
-            <MyView style={styles.inputWrapper}>
-              <Text style={styles.title}>IDEAL</Text>
+            <MyView safe={false} className="gap-2.5">
+              <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+                IDEAL
+              </Text>
               <TextInput
-                style={styles.input}
+                className="max-w-[160px] rounded-lg bg-light-backgroundCard p-1.5 text-[26px] font-bold text-white dark:bg-dark-backgroundCard"
                 placeholder="--"
                 value={ideal}
                 onChangeText={(value) => setIdeal(value)}
@@ -193,53 +140,43 @@ export default function Water() {
             </MyView>
           </MyView>
 
-          <Text style={styles.title}>Nota</Text>
+          <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+            Nota
+          </Text>
           <Score value={score} onPress={setScore} />
           {/* OBS */}
-          <MyView className="gap-1">
-            <Text style={styles.title}>OBS:</Text>
+          <MyView safe={false} className="gap-1">
+            <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+              OBS:
+            </Text>
             <TextInput
               value={observation}
               onChangeText={(value) => setObservation(value)}
-              style={styles.textArea}
+              className="h-16 rounded-lg bg-light-backgroundCard p-1.5 text-[19px] font-normal text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
               placeholder="Observações sobre água..."
             />
           </MyView>
 
-          <MyView className="flex-row flex-wrap gap-4 items-center">
+          <MyView
+            safe={false}
+            className="flex-row flex-wrap items-center gap-4"
+          >
             <MyView
-              style={[
-                styles.card,
-                {
-                  width: "50%",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  flexGrow: 1,
-                  flexDirection: "row",
-                },
-              ]}
+              safe={false}
+              className="w-1/2 grow flex-row items-center justify-center gap-8 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
             >
-              <Text
-                style={styles.title}
-                className="text-white font-bold text-2xl"
-              >
+              <Text className="font-bold text-2xl text-white">
                 {displayName} hoje
               </Text>
               <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: "#333",
-                    width: 80,
-                    height: 51,
-                    textAlign: "center",
-                  },
-                ]}
+                className="h-[51px] w-20 rounded-lg bg-dark-background p-1.5 text-center text-[26px] font-bold text-white"
                 placeholder="--"
                 value={quantity}
                 onChangeText={(value) => setQuantity(value)}
               />
-              <Text style={styles.title}>ml</Text>
+              <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+                ml
+              </Text>
             </MyView>
             <MyButton title="Salvar" onPress={() => handleSubmit()} />
           </MyView>

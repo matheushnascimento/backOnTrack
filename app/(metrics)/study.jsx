@@ -17,8 +17,6 @@ import getDate from "@/constants/getDate";
 import { hhmmToMinutes, minutesToHHMM } from "@/constants/duration";
 
 import { add, getById, update } from "@/infra/database";
-import { useThemedStyles } from "@/hook/useThemedStyle";
-
 //#endregion
 
 export default function Study() {
@@ -28,7 +26,7 @@ export default function Study() {
   const { id } = useLocalSearchParams();
 
   //#region states
-  const [date, setDate] = useState(getDate());
+  const [date] = useState(getDate());
   const [score, setScore] = useState();
   const [observation, setObservation] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
@@ -52,65 +50,7 @@ export default function Study() {
   }, [id]);
   //#endregion
 
-  const styles = useThemedStyles((theme) => ({
-    card: {
-      backgroundColor: theme.backgroundCard,
-      gap: 32,
-      maxWidth: 640,
-      borderRadius: 10,
-      padding: 10,
-      paddingTop: 10,
-      paddingBottom: 10,
-    },
-    cardWrapper: { gap: 16 },
-    container: {
-      flex: 1,
-      alignItems: "center",
-      padding: 16,
-      gap: 16,
-      backgroundColor: theme.background,
-    },
-    input: {
-      width: 80,
-      height: 51,
-      textAlign: "center",
-      padding: 6,
-      backgroundColor: "#333",
-      fontSize: 26,
-      fontWeight: "bold",
-      color: "white",
-      borderRadius: 10,
-      maxWidth: 160,
-    },
-    inputWrapper: {
-      gap: 10,
-    },
-    title: {
-      flexDirection: "row",
-      gap: 6,
-      color: theme.text,
-      fontWeight: "bold",
-      fontSize: 18,
-    },
-    text: {
-      color: theme.text,
-      fontWeight: "bold",
-      fontSize: 18,
-    },
-    textArea: {
-      padding: 6,
-      color: theme.text,
-      borderRadius: 10,
-      backgroundColor: theme.backgroundCard,
-      height: 64,
-      fontSize: 19,
-      fontWeight: "normal",
-    },
-  }));
-  //#endregion
-
   //#region functions
-
   function handleSubmit() {
     setVisible(true);
     const data = {
@@ -131,7 +71,10 @@ export default function Study() {
   //#endregion
 
   return (
-    <MyView safe={true} style={styles.container}>
+    <MyView
+      safe={true}
+      className="flex-1 items-center gap-4 bg-light-background p-4 dark:bg-dark-background"
+    >
       <Snackbar
         visible={visible}
         onDismiss={onDismissSnackBar}
@@ -151,13 +94,16 @@ export default function Study() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <MyView style={styles.card}>
-          <Text style={styles.title}>
+        <MyView
+          safe={false}
+          className="max-w-[640px] gap-8 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
+        >
+          <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
             {date.displayDate} {displayName}
           </Text>
 
           {/* card Wrapper */}
-          <MyView style={styles.cardWrapper}>
+          <MyView safe={false} className="gap-4">
             <MyCheckbox
               value={studied}
               label="Feito"
@@ -166,39 +112,55 @@ export default function Study() {
           </MyView>
 
           {/* Nota */}
-          <Text style={styles.title}>Nota</Text>
+          <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+            Nota
+          </Text>
           <Score value={score} onPress={setScore} />
 
           {/* OBS */}
-          <MyView className="gap-1">
-            <Text style={styles.title}>OBS:</Text>
+          <MyView safe={false} className="gap-1">
+            <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+              OBS:
+            </Text>
             <TextInput
               value={observation}
               onChangeText={(value) => setObservation(value)}
-              style={styles.textArea}
+              className="h-16 rounded-lg bg-light-backgroundCard p-1.5 text-[19px] font-normal text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
               placeholder="Observações sobre o estudo..."
             />
           </MyView>
 
-          <MyView className="flex-row gap-4 items-end justify-between">
-            {/* Tempo de treino */}
-            <MyView style={[styles.card, { alignItems: "center" }]}>
-              <Text style={styles.title}>Tempo de estudo</Text>
-              <MyView className="flex flex-row gap-1 items-end">
+          <MyView
+            safe={false}
+            className="flex-row items-end justify-between gap-4"
+          >
+            {/* Tempo de estudo */}
+            <MyView
+              safe={false}
+              className="items-center gap-8 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
+            >
+              <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+                Tempo de estudo
+              </Text>
+              <MyView safe={false} className="flex-row items-end gap-1">
                 <TextInput
-                  style={styles.input}
+                  className="h-[51px] w-20 max-w-[160px] rounded-lg bg-dark-background p-1.5 text-center text-[26px] font-bold text-white"
                   placeholder="--"
                   value={studyDurationHour}
                   onChangeText={(value) => setStudyDurationHour(value)}
                 />
-                <Text style={styles.text}>h</Text>
+                <Text className="font-bold text-lg text-light-text dark:text-dark-text">
+                  h
+                </Text>
                 <TextInput
-                  style={styles.input}
+                  className="h-[51px] w-20 max-w-[160px] rounded-lg bg-dark-background p-1.5 text-center text-[26px] font-bold text-white"
                   placeholder="--"
                   value={studyDurationMinute}
                   onChangeText={(value) => setStudyDurationMinute(value)}
                 />
-                <Text style={styles.text}>min</Text>
+                <Text className="font-bold text-lg text-light-text dark:text-dark-text">
+                  min
+                </Text>
               </MyView>
             </MyView>
             <MyButton title="Salvar" onPress={() => handleSubmit()} />

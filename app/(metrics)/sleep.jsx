@@ -14,8 +14,6 @@ import getDate from "@/constants/getDate";
 import { hhmmToMinutes, minutesToHHMM } from "@/constants/duration";
 import { useLocalSearchParams, usePathname } from "expo-router";
 import { getCategoryInfo } from "@/components/categoryUtils";
-import { useThemedStyles } from "@/hook/useThemedStyle";
-
 //#endregion
 
 export default function Sleep() {
@@ -25,7 +23,7 @@ export default function Sleep() {
   const { id } = useLocalSearchParams();
 
   //#region states
-  const [date, setDate] = useState(getDate());
+  const [date] = useState(getDate());
   const [ideal, setIdeal] = useState(8);
   const [score, setScore] = useState();
   const [min, setMin] = useState(7);
@@ -53,63 +51,6 @@ export default function Sleep() {
   }, [id]);
   //#endregion
 
-  const styles = useThemedStyles((theme) => ({
-    card: {
-      backgroundColor: theme.backgroundCard,
-      gap: 32,
-      maxWidth: 640,
-      borderRadius: 10,
-      padding: 10,
-      paddingTop: 10,
-      paddingBottom: 10,
-    },
-    cardWrapper: {
-      flexDirection: "row",
-      justifyContent: "space-between",
-    },
-    container: {
-      flex: 1,
-      alignItems: "center",
-      gap: 16,
-      padding: 16,
-      backgroundColor: theme.background,
-    },
-    input: {
-      padding: 6,
-      backgroundColor: theme.backgroundCard,
-      fontSize: 26,
-      fontWeight: "bold",
-      color: "white",
-      borderRadius: 10,
-      maxWidth: 160,
-    },
-    inputWrapper: {
-      gap: 10,
-    },
-    title: {
-      flexDirection: "row",
-      gap: 6,
-      color: theme.text,
-      fontWeight: "bold",
-      fontSize: 18,
-    },
-    text: {
-      color: theme.text,
-      fontWeight: "bold",
-      fontSize: 18,
-    },
-    textArea: {
-      padding: 6,
-      color: theme.text,
-      borderRadius: 10,
-      backgroundColor: theme.backgroundCard,
-      height: 64,
-      fontSize: 19,
-      fontWeight: "normal",
-    },
-  }));
-  //#endregion
-
   //#region functions
   function handleSubmit() {
     setVisible(true);
@@ -133,7 +74,10 @@ export default function Sleep() {
   //#endregion
 
   return (
-    <MyView safe={true} style={styles.container}>
+    <MyView
+      safe={true}
+      className="flex-1 items-center gap-4 bg-light-background p-4 dark:bg-dark-background"
+    >
       <Snackbar
         visible={visible}
         onDismiss={onDismissSnackBar}
@@ -153,82 +97,95 @@ export default function Sleep() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <MyView style={styles.card}>
-          <Text style={styles.title}>
+        <MyView
+          safe={false}
+          className="max-w-[640px] gap-8 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
+        >
+          <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
             {date.displayDate} {displayName}
           </Text>
 
           {/* card Wrapper */}
-          <MyView style={styles.cardWrapper}>
-            {/* Input Wrapper */}
-            <MyView style={styles.inputWrapper}>
-              <Text style={styles.title}>MIN</Text>
-              <TextInput style={styles.input} placeholder="--" value={min} />
-            </MyView>
-            {/* Input Wrapper */}
-            <MyView style={styles.inputWrapper}>
-              <Text style={styles.title}>MAX</Text>
+          <MyView safe={false} className="flex-row justify-between">
+            <MyView safe={false} className="gap-2.5">
+              <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+                MIN
+              </Text>
               <TextInput
-                style={styles.input}
+                className="max-w-[160px] rounded-lg bg-light-backgroundCard p-1.5 text-[26px] font-bold text-white dark:bg-dark-backgroundCard"
+                placeholder="--"
+                value={min}
+              />
+            </MyView>
+            <MyView safe={false} className="gap-2.5">
+              <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+                MAX
+              </Text>
+              <TextInput
+                className="max-w-[160px] rounded-lg bg-light-backgroundCard p-1.5 text-[26px] font-bold text-white dark:bg-dark-backgroundCard"
                 placeholder="--"
                 value={max}
                 onChangeText={(value) => setMax(value)}
               />
             </MyView>
-            {/* Input Wrapper */}
-            <MyView style={styles.inputWrapper}>
-              <Text style={styles.title}>IDEAL</Text>
-              <TextInput style={styles.input} placeholder="--" value={ideal} />
+            <MyView safe={false} className="gap-2.5">
+              <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+                IDEAL
+              </Text>
+              <TextInput
+                className="max-w-[160px] rounded-lg bg-light-backgroundCard p-1.5 text-[26px] font-bold text-white dark:bg-dark-backgroundCard"
+                placeholder="--"
+                value={ideal}
+              />
             </MyView>
           </MyView>
 
-          <Text style={styles.title}>Nota</Text>
+          <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+            Nota
+          </Text>
           <Score value={score} onPress={setScore} />
 
-          <MyView className="gap-1">
-            <Text style={styles.title}>OBS:</Text>
+          <MyView safe={false} className="gap-1">
+            <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+              OBS:
+            </Text>
             <TextInput
               value={observation}
               onChangeText={(value) => setObservation(value)}
-              style={styles.textArea}
+              className="h-16 rounded-lg bg-light-backgroundCard p-1.5 text-[19px] font-normal text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
               placeholder="Observações sobre sono..."
             />
           </MyView>
 
-          <MyView className=" flex-row flex-wrap justify-center items-center gap-4">
+          <MyView
+            safe={false}
+            className="flex-row flex-wrap items-center justify-center gap-4"
+          >
             <MyView
-              className="min-w-1/2 w-full rounded-md flex-row gap-4 justify-center items-start"
-              style={[
-                styles.card,
-                {
-                  width: "50%",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  flexGrow: 1,
-                  flexDirection: "row",
-                },
-              ]}
+              safe={false}
+              className="w-full grow flex-row items-center justify-center gap-4 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
             >
-              <Text
-                style={styles.title}
-                className="text-white font-bold text-2xl"
-              >
+              <Text className="font-bold text-2xl text-white">
                 {displayName} hoje
               </Text>
               <TextInput
-                className="max-w-[38px] text-center bg-[#333333] h-[37px] px-1 text-xl font-normal text-white rounded-md"
+                className="h-[37px] max-w-[38px] rounded-md bg-dark-background px-1 text-center text-xl font-normal text-white"
                 placeholder="--"
                 value={sleepHours}
                 onChangeText={(value) => setSleepHours(value)}
               />
-              <Text style={styles.title}>h</Text>
+              <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+                h
+              </Text>
               <TextInput
-                className="max-w-[38px] text-center bg-[#333333] h-[37px] px-1 text-xl font-normal text-white rounded-md"
+                className="h-[37px] max-w-[38px] rounded-md bg-dark-background px-1 text-center text-xl font-normal text-white"
                 placeholder="--"
                 value={sleepMinutes}
                 onChangeText={(value) => setSleepMinutes(value)}
               />
-              <Text style={styles.title}>min</Text>
+              <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+                min
+              </Text>
             </MyView>
             <MyButton title="Salvar" onPress={() => handleSubmit()} />
           </MyView>

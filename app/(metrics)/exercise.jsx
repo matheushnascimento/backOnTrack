@@ -17,8 +17,6 @@ import getDate from "@/constants/getDate";
 import { hhmmToMinutes, minutesToHHMM } from "@/constants/duration";
 
 import { add, getById, update } from "@/infra/database";
-import { useThemedStyles } from "@/hook/useThemedStyle";
-
 //#endregion
 
 export default function Exercise() {
@@ -29,7 +27,7 @@ export default function Exercise() {
 
   //#region states
   const [cardio, setCardio] = useState(false);
-  const [date, setDate] = useState(getDate());
+  const [date] = useState(getDate());
   const [score, setScore] = useState();
   const [observation, setObservation] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
@@ -59,65 +57,7 @@ export default function Exercise() {
   }, [id]);
   //#endregion
 
-  const styles = useThemedStyles((theme) => ({
-    card: {
-      backgroundColor: theme.backgroundCard,
-      gap: 32,
-      maxWidth: 640,
-      borderRadius: 10,
-      padding: 10,
-      paddingTop: 10,
-      paddingBottom: 10,
-    },
-    cardWrapper: { gap: 16 },
-    container: {
-      flex: 1,
-      alignItems: "center",
-      padding: 16,
-      gap: 16,
-      backgroundColor: theme.background,
-    },
-    input: {
-      width: 80,
-      height: 51,
-      textAlign: "center",
-      padding: 6,
-      backgroundColor: "#333",
-      fontSize: 26,
-      fontWeight: "bold",
-      color: "white",
-      borderRadius: 10,
-      maxWidth: 160,
-    },
-    inputWrapper: {
-      gap: 10,
-    },
-    title: {
-      flexDirection: "row",
-      gap: 6,
-      color: theme.text,
-      fontWeight: "bold",
-      fontSize: 18,
-    },
-    text: {
-      color: theme.text,
-      fontWeight: "bold",
-      fontSize: 18,
-    },
-    textArea: {
-      padding: 6,
-      color: theme.text,
-      borderRadius: 10,
-      backgroundColor: theme.backgroundCard,
-      height: 64,
-      fontSize: 19,
-      fontWeight: "normal",
-    },
-  }));
-  //#endregion
-
   //#region functions
-
   function handleSubmit() {
     setVisible(true);
     const data = {
@@ -142,7 +82,10 @@ export default function Exercise() {
   //#endregion
 
   return (
-    <MyView safe={true} style={styles.container}>
+    <MyView
+      safe={true}
+      className="flex-1 items-center gap-4 bg-light-background p-4 dark:bg-dark-background"
+    >
       <Snackbar
         visible={visible}
         onDismiss={onDismissSnackBar}
@@ -162,13 +105,16 @@ export default function Exercise() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <MyView style={styles.card}>
-          <Text style={styles.title}>
+        <MyView
+          safe={false}
+          className="max-w-[640px] gap-8 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
+        >
+          <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
             {date.displayDate} {displayName}
           </Text>
 
           {/* card Wrapper */}
-          <MyView style={styles.cardWrapper}>
+          <MyView safe={false} className="gap-4">
             <MyCheckbox
               value={training}
               label="Treino"
@@ -182,34 +128,51 @@ export default function Exercise() {
           </MyView>
 
           {/* Nota */}
-          <Text style={styles.title}>Nota</Text>
+          <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+            Nota
+          </Text>
           <Score value={score} onPress={setScore} />
 
           {/* OBS */}
-          <MyView className="gap-1">
-            <Text style={styles.title}>OBS:</Text>
+          <MyView safe={false} className="gap-1">
+            <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+              OBS:
+            </Text>
             <TextInput
               value={observation}
               onChangeText={(value) => setObservation(value)}
-              style={styles.textArea}
+              className="h-16 rounded-lg bg-light-backgroundCard p-1.5 text-[19px] font-normal text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
               placeholder="Observações sobre o exercício..."
             />
           </MyView>
 
-          <MyView className="flex-row flex-wrap gap-4 items-center">
+          <MyView
+            safe={false}
+            className="flex-row flex-wrap items-center gap-4"
+          >
             {/* Hora do exercício */}
-            <MyView style={[styles.card, { alignItems: "center" }]}>
-              <Text style={styles.title}>Hora do treino</Text>
-              <MyView className="flex-row gap-1 justify-center items-center">
+            <MyView
+              safe={false}
+              className="items-center gap-8 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
+            >
+              <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+                Hora do treino
+              </Text>
+              <MyView
+                safe={false}
+                className="flex-row items-center justify-center gap-1"
+              >
                 <TextInput
-                  style={styles.input}
+                  className="h-[51px] w-20 max-w-[160px] rounded-lg bg-dark-background p-1.5 text-center text-[26px] font-bold text-white"
                   placeholder="--"
                   value={trainingTimeHour}
                   onChangeText={(value) => setTrainingTimeHour(value)}
                 />
-                <Text style={styles.text}>:</Text>
+                <Text className="font-bold text-lg text-light-text dark:text-dark-text">
+                  :
+                </Text>
                 <TextInput
-                  style={styles.input}
+                  className="h-[51px] w-20 max-w-[160px] rounded-lg bg-dark-background p-1.5 text-center text-[26px] font-bold text-white"
                   placeholder="--"
                   value={trainingTimeMinute}
                   onChangeText={(value) => setTrainingTimeMinute(value)}
@@ -217,23 +180,32 @@ export default function Exercise() {
               </MyView>
             </MyView>
             {/* Tempo de treino */}
-            <MyView style={[styles.card, { alignItems: "center" }]}>
-              <Text style={styles.title}>Tempo de treino</Text>
-              <MyView className="flex flex-row gap-1 items-end">
+            <MyView
+              safe={false}
+              className="items-center gap-8 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
+            >
+              <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+                Tempo de treino
+              </Text>
+              <MyView safe={false} className="flex-row items-end gap-1">
                 <TextInput
-                  style={styles.input}
+                  className="h-[51px] w-20 max-w-[160px] rounded-lg bg-dark-background p-1.5 text-center text-[26px] font-bold text-white"
                   placeholder="--"
                   value={trainingDurationHour}
                   onChangeText={(value) => setTrainingDurationHour(value)}
                 />
-                <Text style={styles.text}>h</Text>
+                <Text className="font-bold text-lg text-light-text dark:text-dark-text">
+                  h
+                </Text>
                 <TextInput
-                  style={styles.input}
+                  className="h-[51px] w-20 max-w-[160px] rounded-lg bg-dark-background p-1.5 text-center text-[26px] font-bold text-white"
                   placeholder="--"
                   value={trainingDurationMinute}
                   onChangeText={(value) => setTrainingDurationMinute(value)}
                 />
-                <Text style={styles.text}>min</Text>
+                <Text className="font-bold text-lg text-light-text dark:text-dark-text">
+                  min
+                </Text>
               </MyView>
             </MyView>
           </MyView>

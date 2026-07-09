@@ -25,7 +25,7 @@ Essencialmente pronto. O que faltar aqui é pontual e não bloqueia o resto.
 
 ---
 
-## M1: Sanear a Fundação (o trabalho real de agora) 🟡 em andamento
+## M1: Sanear a Fundação (o trabalho real de agora) ✅ concluído
 
 **Objetivo de saída:** o app persiste dados de verdade e renderiza correto no Android. É aqui que mora a correção das duas causas de "mais visual do que funcional".
 
@@ -34,9 +34,7 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 - ✅ **Persistência:** persister TinyBase integrado (`infra/persistence.js` com Expo SQLite, `infra/persistence.web.js` com `localPersister`), store em `infra/database.js`, ligado no root via `useRegistrosPersistencia()` em `app/_layout.jsx`. Os dados não somem mais no reload.
 - ✅ **TypeScript incremental:** `checkJs` ligado no `tsconfig.json` (`allowJs` herdado da base do Expo), ADR-002 (#48); legados com `@ts-nocheck` (grandfather) e job `Types` no CI barrando arquivos novos.
 - ✅ **Fundação de estilo:** cores consolidadas em `constants/Colors.js`, `tailwind.config.js` importando dela, `shadow` corrigida para objeto RN nativo (`elevation`), ADR-006.
-- 🟡 **Migrar estilo para NativeWind**, componente a componente (ver `docs/05-guia-migracao-estilo.md`).
-  - ✅ **Compartilhados migrados** (PR #61): `MyButton`/`MyIconButton` reescritos com `Pressable`, mais `MyView`, `Score`, `MyCheckbox`, `MyHeader` e `MyInput` (implementado); `primary`/`secondary` expostos no `tailwind.config.js`.
-  - ⬜ **Faltam as telas**: `app/index.jsx`, as 5 telas de métrica, `(history)/*` e o `components/MyHistory.jsx` ainda usam `StyleSheet`/`useThemedStyles`. Ao terminar, aposentar o `hook/useThemedStyle.js` e limpar os resíduos de CSS-web em `(history)/water.jsx`.
+- ✅ **Migrar estilo para NativeWind** (ver `docs/05-guia-migracao-estilo.md`): compartilhados migrados na #61 e telas na #65. Nenhum arquivo usa mais `StyleSheet`/`useThemedStyles` (o `hook/useThemedStyle.js` foi removido); cores por token com `dark:`, `MyHistory` deduplicado, stubs `(history)/*` reduzidos (retrabalho real no M3). `app.json` passou a `userInterfaceStyle: "automatic"`, ligando o tema claro/escuro real.
 
 ---
 
