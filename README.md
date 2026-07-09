@@ -8,6 +8,7 @@ Aplicação React Native para registro de métricas pessoais mínimas. O MVP cob
 2. [Escopo & MVP](docs/02-escopo-mvp.md) — modelo de domínio, o que entra na v1, non-goals
 3. [Decisões Técnicas (ADR)](docs/03-decisoes-tecnicas.md) — stack escolhida e o porquê de cada decisão
 4. [Roadmap de Milestones](docs/04-roadmap-milestones.md) — sequência de desenvolvimento (projeto em adaptação)
+5. [Guia de Migração de Estilo](docs/05-guia-migracao-estilo.md) — mapa de → para CSS-web → NativeWind
 
 ## Como usar esta documentação
 

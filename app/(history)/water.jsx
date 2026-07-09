@@ -224,11 +224,7 @@ export default function Water() {
             />
             <Text style={styles.title}>ml</Text>
           </MyView>
-          <MyButton
-            style={{ height: "fit-content" }}
-            title="Salvar"
-            onPress={() => handleSubmit()}
-          />
+          <MyButton title="Salvar" onPress={() => handleSubmit()} />
         </MyView>
       </MyView>
       <MyHistory tableName={pathname} reload={reloadKey} />

@@ -4,21 +4,12 @@ import { useEffect, useState } from "react";
 import Button from "./MyButton";
 import { getCategoryInfo, CATEGORY_MAP } from "./categoryUtils";
 import { router, usePathname } from "expo-router";
-import {
-  FlatList,
-  ScrollView,
-  ScrollViewBase,
-  useColorScheme,
-} from "react-native";
-import { Colors } from "@/constants/Colors";
+import { ScrollView } from "react-native";
 
 export default function MyHeader() {
-  const colorScheme = useColorScheme();
   const pathname = usePathname().substring(1);
 
   const { key } = getCategoryInfo(pathname);
-
-  const theme = Colors[colorScheme] ?? Colors.light;
 
   const [selectedButton, setSelectedButton] = useState(key);
 
@@ -43,21 +34,16 @@ export default function MyHeader() {
   return (
     <ScrollView
       horizontal={true}
-      style={{
-        flexGrow: 0,
-        padding: 12,
-        gap: 20,
-        backgroundColor: theme.background,
-      }}
+      className="grow-0 bg-light-background p-3 dark:bg-dark-background"
     >
       {Object.entries(CATEGORY_MAP).map(([index, category]) => (
         <Button
-          style={{ marginHorizontal: "1rem" }}
+          className="mx-4"
           key={index}
           title={category.displayName}
           isSelected={selectedButton === index}
           onPress={() => handleButtonSelection(index)}
-        ></Button>
+        />
       ))}
     </ScrollView>
   );
@@ -77,24 +63,15 @@ export function MyMonthHeader({ onMonthSelect }) {
   }
 
   return (
-    <ScrollView
-      horizontal={true}
-      style={{
-        width: "100%",
-        flexGrow: 0,
-        padding: 12,
-        gap: 20,
-        backgroundColor: "transparent",
-      }}
-    >
+    <ScrollView horizontal={true} className="w-full grow-0 bg-transparent p-3">
       {months.map((month, index) => (
         <Button
-          style={{ marginHorizontal: "1rem" }}
+          className="mx-4"
           key={index}
           title={month.toUpperCase().substring(0, 3)}
           isSelected={selectedMonth === index}
           onPress={() => handleButtonSelection(index)}
-        ></Button>
+        />
       ))}
     </ScrollView>
   );

@@ -1,63 +1,65 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 import { Colors, shadow } from "@/constants/Colors";
-import { useState } from "react";
-import { Text, useColorScheme } from "react-native";
-import { Button } from "react-native-paper";
+import { useColorScheme } from "nativewind";
+import { Pressable, Text } from "react-native";
 
 export default function MyButton({
   isSelected = false,
   title,
   Icon,
-  titleStyle,
-  styles,
+  titleClassName,
+  className,
+  style,
   ...props
 }) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme] ?? Colors.light;
-
   return (
-    <Button
-      buttonColor={isSelected ? Colors.secondary : Colors.primary}
-      textColor={theme.text}
-      mode="elevated"
-      style={styles}
+    <Pressable
+      className={`flex-row items-center justify-center rounded-full px-4 py-2 ${
+        isSelected ? "bg-secondary" : "bg-primary"
+      } ${className ?? ""}`}
+      style={[shadow, style]}
+      android_ripple={{ color: "#00000022" }}
       {...props}
     >
-      {title && <Text style={titleStyle}>{title}</Text>}
-      {Icon && <Icon size={24} color="#333" />}{" "}
-    </Button>
+      {title != null && (
+        <Text
+          className={`font-bold text-light-text dark:text-dark-text ${
+            titleClassName ?? ""
+          }`}
+        >
+          {title}
+        </Text>
+      )}
+      {Icon && <Icon size={24} color="#333" />}
+    </Pressable>
   );
 }
+
 export function MyIconButton({
   Icon,
   isSelected = false,
-  titleStyle,
-  styles,
+  className,
+  style,
   ...props
 }) {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme] ?? Colors.light;
+  const { colorScheme } = useColorScheme();
+  const themeText =
+    colorScheme === "dark" ? Colors.dark.text : Colors.light.text;
 
   return (
-    <Button
-      style={[
-        {
-          borderWidth: isSelected ? 0 : 1,
-          borderColor: "#333",
-          borderRadius: 9999,
-          padding: 3,
-          overflow: "hidden",
-        },
-        shadow,
-      ]}
-      buttonColor={isSelected ? Colors.secondary : "transparent"}
-      textColor={theme.text}
-      mode="outlined"
+    <Pressable
+      className={`items-center justify-center overflow-hidden rounded-full p-[3px] ${
+        isSelected
+          ? "border-0 bg-secondary"
+          : "border border-[#333] bg-transparent"
+      } ${className ?? ""}`}
+      style={[shadow, style]}
+      android_ripple={{ color: "#00000022" }}
       {...props}
     >
       {Icon && (
-        <Icon size={40} color={isSelected ? Colors.primary : theme.text} />
+        <Icon size={40} color={isSelected ? Colors.primary : themeText} />
       )}
-    </Button>
+    </Pressable>
   );
 }
