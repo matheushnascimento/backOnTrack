@@ -34,17 +34,19 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 - ✅ **Persistência:** persister TinyBase integrado (`infra/persistence.js` com Expo SQLite, `infra/persistence.web.js` com `localPersister`), store em `infra/database.js`, ligado no root via `useRegistrosPersistencia()` em `app/_layout.jsx`. Os dados não somem mais no reload.
 - ✅ **TypeScript incremental:** `checkJs` ligado no `tsconfig.json` (`allowJs` herdado da base do Expo), ADR-002 (#48); legados com `@ts-nocheck` (grandfather) e job `Types` no CI barrando arquivos novos.
 - ✅ **Fundação de estilo:** cores consolidadas em `constants/Colors.js`, `tailwind.config.js` importando dela, `shadow` corrigida para objeto RN nativo (`elevation`), ADR-006.
-- 🟡 **Migrar estilo para NativeWind**, componente a componente, começando pelos compartilhados (`MyButton` primeiro — conserta todos os botões de uma vez), validando no Android antes/depois (ver guia de migração de estilo). NativeWind já está instalado e `className` é usado em várias telas/componentes, mas `StyleSheet`/`useThemedStyles` ainda coexistem em vários arquivos e o `MyButton` ainda não foi migrado.
+- 🟡 **Migrar estilo para NativeWind**, componente a componente (ver `docs/05-guia-migracao-estilo.md`).
+  - ✅ **Compartilhados migrados** (PR #61): `MyButton`/`MyIconButton` reescritos com `Pressable`, mais `MyView`, `Score`, `MyCheckbox`, `MyHeader` e `MyInput` (implementado); `primary`/`secondary` expostos no `tailwind.config.js`.
+  - ⬜ **Faltam as telas**: `app/index.jsx`, as 5 telas de métrica, `(history)/*` e o `components/MyHistory.jsx` ainda usam `StyleSheet`/`useThemedStyles`. Ao terminar, aposentar o `hook/useThemedStyle.js` e limpar os resíduos de CSS-web em `(history)/water.jsx`.
 
 ---
 
-## M2 — Modelo de Dados Unificado
+## M2 — Modelo de Dados Unificado 🟡 em andamento
 
 **Objetivo de saída:** as telas gravam no modelo `Registro` unificado, com CRUD completo.
 
-- 🟡 Implementar o `Registro` (ver Escopo & MVP) via a store revisada — a store já é uma tabela única `records` com `setTablesSchema` (ADR-007/008), mas ainda no schema frouxo (`type`/`date`/`details`/`createdAt`), sem os campos unificados (`quantidade`/`unidade`/`nota`)
-- ⬜ Mapear/migrar os campos ad-hoc atuais (`score`, `min`/`max`/`ideal`, `observation`, `training`/`cardio`) para o formato unificado (`quantidade`/`unidade`/`nota`/`detalhes`)
-- ⬜ Ligar as telas ao `add`/`update`/`remove`/`getAll` novos (hoje só existe criação)
+- ✅ Implementar o `Registro` unificado na store (#63): schema com colunas `quantity`/`unit`/`note` + `details` para os extras específicos de cada tipo (nomes de topo em inglês, seguindo a padronização da #54). Durações (sono/exercício/estudo) guardadas em minutos (number); `constants/duration.js` converte `HH:MM` ↔ minutos.
+- ✅ Mapear os campos ad-hoc (`score`, `min`/`max`/`ideal`, `observation`→`note`, `training`/`cardio`) para o formato unificado (#63), sem migração destrutiva — dados antigos continuam renderizando por fallback de nomes (`note ?? observation`, `quantity ?? duration`).
+- ✅ Ligar as telas ao `add`/`update`/`remove`/`getById`/`getAll` (#63): as 5 telas gravam e leem no modelo unificado, com **modo edição** via `?id=` na rota.
 - ⬜ **Extrair a tela de registro única:** as 5 telas viram configuração de um componente-base. É o passo que mata a duplicação de ~90 linhas por tela e fecha o risco de reboot por "arquitetura que não escala".
 
 ---
@@ -56,7 +58,7 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 - 🟡 As 5 telas de registro rápido, sobre o componente-base unificado — as 5 telas existem e já persistem, mas ainda duplicadas, não sobre um componente-base unificado
 - ⬜ Tela "hoje" consolidando o progresso do dia (uma query só, graças à tabela única)
 - 🟡 Histórico navegável por data (as rotas de histórico já existem, precisam consumir a store nova) — `MyHistory` já lê a store via `get`/`getByMonth`, mas ainda falta a navegação por data e as rotas `(history)/*` são stubs
-- ⬜ Editar/excluir registros
+- ✅ Editar/excluir registros (#63): o `MyHistory` tem ações **Editar** (abre a tela via `?id=`) e **Excluir** (com confirmação) por registro
 - ⬜ Primeiro dia de uso real substituindo o papel
 
 ---
