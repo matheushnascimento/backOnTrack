@@ -1,9 +1,9 @@
 import { createStore } from "tinybase";
 
-const TABELA = "registros";
+const TABLE = "records";
 
 export const store = createStore().setTablesSchema({
-  [TABELA]: {
+  [TABLE]: {
     tipo: { type: "string" },
     date: { type: "string" },
     detalhes: { type: "string", default: "{}" },
@@ -24,7 +24,7 @@ function hidratar(id, linha) {
 
 export function add(tipo, data) {
   const { date, ...detalhes } = data;
-  store.addRow(TABELA, {
+  store.addRow(TABLE, {
     tipo,
     date: date ?? "",
     detalhes: JSON.stringify(detalhes ?? {}),
@@ -33,7 +33,7 @@ export function add(tipo, data) {
 }
 
 export function get(tipo) {
-  const linhas = store.getTable(TABELA);
+  const linhas = store.getTable(TABLE);
   const resultado = {};
   for (const [id, linha] of Object.entries(linhas)) {
     if (linha.tipo === tipo) {
@@ -44,8 +44,8 @@ export function get(tipo) {
 }
 
 export function getByMonth(tipo, month) {
-  const registros = get(tipo);
-  return Object.values(registros).filter((row) => {
+  const records = get(tipo);
+  return Object.values(records).filter((row) => {
     if (!row.date) return false;
     const date = new Date(row.date);
     return date.getMonth() === month;
