@@ -1,8 +1,8 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //#region imports
-import { usePathname } from "expo-router";
+import { useLocalSearchParams, usePathname } from "expo-router";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Text, TextInput } from "react-native";
 import { Snackbar } from "react-native-paper";
 
@@ -14,8 +14,9 @@ import Score from "@/components/Score";
 
 import { getCategoryInfo } from "@/components/categoryUtils";
 import getDate from "@/constants/getDate";
+import { hhmmToMinutes, minutesToHHMM } from "@/constants/duration";
 
-import { add } from "@/infra/database";
+import { add, getById, update } from "@/infra/database";
 import { useThemedStyles } from "@/hook/useThemedStyle";
 
 //#endregion
@@ -23,7 +24,8 @@ import { useThemedStyles } from "@/hook/useThemedStyle";
 export default function Study() {
   //#region variables
   const pathname = usePathname().substring(1);
-  const { displayName } = getCategoryInfo(pathname) ?? {};
+  const { displayName, unit } = getCategoryInfo(pathname) ?? {};
+  const { id } = useLocalSearchParams();
 
   //#region states
   const [date, setDate] = useState(getDate());
@@ -34,6 +36,20 @@ export default function Study() {
   const [studyDurationHour, setStudyDurationHour] = useState("");
   const [studyDurationMinute, setStudyDurationMinute] = useState("");
   const [visible, setVisible] = useState(false);
+  //#endregion
+
+  //#region edição
+  useEffect(() => {
+    if (!id) return;
+    const r = getById(id);
+    if (!r) return;
+    const [dh, dm] = minutesToHHMM(r.quantity).split(":");
+    setStudyDurationHour(dh);
+    setStudyDurationMinute(dm);
+    setStudied(!!r.studied);
+    setObservation(r.note ?? r.observation ?? "");
+    setScore(r.score);
+  }, [id]);
   //#endregion
 
   const styles = useThemedStyles((theme) => ({
@@ -99,11 +115,14 @@ export default function Study() {
     setVisible(true);
     const data = {
       date: date.ISOdate,
-      duration: `${studyDurationHour}:${studyDurationMinute}`,
+      quantity: hhmmToMinutes(`${studyDurationHour}:${studyDurationMinute}`),
+      unit,
+      note: observation,
       score,
-      observation,
+      studied,
     };
-    add("study", data);
+    if (id) update(id, data);
+    else add("study", data);
     setReloadKey((prev) => prev + 1);
   }
   function onDismissSnackBar() {
@@ -147,7 +166,7 @@ export default function Study() {
             value={observation}
             onChangeText={(value) => setObservation(value)}
             style={styles.textArea}
-            placeholder="Observações sobre o exercício..."
+            placeholder="Observações sobre o estudo..."
           />
         </MyView>
 

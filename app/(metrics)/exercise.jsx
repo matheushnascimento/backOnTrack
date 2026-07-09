@@ -1,8 +1,8 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //#region imports
-import { usePathname } from "expo-router";
+import { useLocalSearchParams, usePathname } from "expo-router";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Text, TextInput } from "react-native";
 import { Snackbar } from "react-native-paper";
 
@@ -14,8 +14,9 @@ import Score from "@/components/Score";
 
 import { getCategoryInfo } from "@/components/categoryUtils";
 import getDate from "@/constants/getDate";
+import { hhmmToMinutes, minutesToHHMM } from "@/constants/duration";
 
-import { add } from "@/infra/database";
+import { add, getById, update } from "@/infra/database";
 import { useThemedStyles } from "@/hook/useThemedStyle";
 
 //#endregion
@@ -23,7 +24,8 @@ import { useThemedStyles } from "@/hook/useThemedStyle";
 export default function Exercise() {
   //#region variables
   const pathname = usePathname().substring(1);
-  const { displayName } = getCategoryInfo(pathname) ?? {};
+  const { displayName, unit } = getCategoryInfo(pathname) ?? {};
+  const { id } = useLocalSearchParams();
 
   //#region states
   const [cardio, setCardio] = useState(false);
@@ -37,6 +39,24 @@ export default function Exercise() {
   const [trainingDurationHour, setTrainingDurationHour] = useState("");
   const [trainingDurationMinute, setTrainingDurationMinute] = useState("");
   const [visible, setVisible] = useState(false);
+  //#endregion
+
+  //#region edição
+  useEffect(() => {
+    if (!id) return;
+    const r = getById(id);
+    if (!r) return;
+    const [dh, dm] = minutesToHHMM(r.quantity).split(":");
+    setTrainingDurationHour(dh);
+    setTrainingDurationMinute(dm);
+    const [th, tm] = String(r.trainingTime ?? ":").split(":");
+    setTrainingTimeHour(th ?? "");
+    setTrainingTimeMinute(tm ?? "");
+    setTraining(!!r.training);
+    setCardio(!!r.cardio);
+    setObservation(r.note ?? r.observation ?? "");
+    setScore(r.score);
+  }, [id]);
   //#endregion
 
   const styles = useThemedStyles((theme) => ({
@@ -102,14 +122,18 @@ export default function Exercise() {
     setVisible(true);
     const data = {
       date: date.ISOdate,
+      quantity: hhmmToMinutes(
+        `${trainingDurationHour}:${trainingDurationMinute}`,
+      ),
+      unit,
+      note: observation,
       training,
       cardio,
       trainingTime: `${trainingTimeHour}:${trainingTimeMinute}`,
-      duration: `${trainingDurationHour}:${trainingDurationMinute}`,
       score,
-      observation,
     };
-    add("exercise", data);
+    if (id) update(id, data);
+    else add("exercise", data);
     setReloadKey((prev) => prev + 1);
   }
   function onDismissSnackBar() {

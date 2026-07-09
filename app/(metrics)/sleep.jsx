@@ -1,6 +1,6 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //#region imports
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Text, TextInput } from "react-native";
 import { Snackbar } from "react-native-paper";
 
@@ -8,10 +8,11 @@ import MyView from "@/components/MyView";
 import Score from "@/components/Score";
 import MyButton from "@/components/MyButton";
 
-import { add } from "@/infra/database";
+import { add, getById, update } from "@/infra/database";
 import MyHistory from "@/components/MyHistory";
 import getDate from "@/constants/getDate";
-import { usePathname } from "expo-router";
+import { hhmmToMinutes, minutesToHHMM } from "@/constants/duration";
+import { useLocalSearchParams, usePathname } from "expo-router";
 import { getCategoryInfo } from "@/components/categoryUtils";
 import { useThemedStyles } from "@/hook/useThemedStyle";
 
@@ -20,7 +21,8 @@ import { useThemedStyles } from "@/hook/useThemedStyle";
 export default function Sleep() {
   //#region variables
   const pathname = usePathname().substring(1);
-  const { displayName } = getCategoryInfo(pathname) ?? {};
+  const { displayName, unit } = getCategoryInfo(pathname) ?? {};
+  const { id } = useLocalSearchParams();
 
   //#region states
   const [date, setDate] = useState(getDate());
@@ -33,6 +35,22 @@ export default function Sleep() {
   const [sleepHours, setSleepHours] = useState();
   const [sleepMinutes, setSleepMinutes] = useState();
   const [visible, setVisible] = useState(false);
+  //#endregion
+
+  //#region edição
+  useEffect(() => {
+    if (!id) return;
+    const r = getById(id);
+    if (!r) return;
+    const [h, m] = minutesToHHMM(r.quantity).split(":");
+    setSleepHours(h);
+    setSleepMinutes(m);
+    setObservation(r.note ?? r.observation ?? "");
+    setMin(r.min ?? "");
+    setMax(r.max ?? "");
+    setIdeal(r.ideal ?? "");
+    setScore(r.score);
+  }, [id]);
   //#endregion
 
   const styles = useThemedStyles((theme) => ({
@@ -97,15 +115,16 @@ export default function Sleep() {
     setVisible(true);
     const data = {
       date: date.ISOdate,
+      quantity: hhmmToMinutes(`${sleepHours ?? 0}:${sleepMinutes ?? 0}`),
+      unit,
+      note: observation,
       min,
       max,
       ideal,
-      quantity: `${sleepHours ?? "00"}:${sleepMinutes ?? "00"}`,
-      unity: "h",
       score,
-      observation,
     };
-    add("sleep", data);
+    if (id) update(id, data);
+    else add("sleep", data);
     setReloadKey((prev) => prev + 1);
   }
   function onDismissSnackBar() {

@@ -24,7 +24,7 @@ import { useThemedStyles } from "@/hook/useThemedStyle";
 export default function Water() {
   //#region variables
   const pathname = usePathname().substring(1);
-  const { displayName } = getCategoryInfo(pathname) ?? {};
+  const { displayName, unit } = getCategoryInfo(pathname) ?? {};
 
   //#region states
   const [date, setDate] = useState(getDate());
@@ -108,13 +108,13 @@ export default function Water() {
     setVisible(true);
     const data = {
       date: date.ISOdate,
+      quantity: Number(quantity) || 0,
+      unit,
+      note: observation,
       min,
       max,
       ideal,
-      quantity,
       score,
-      observation,
-      unity: "ml",
     };
     add("water", data);
     setReloadKey((prev) => prev + 1);

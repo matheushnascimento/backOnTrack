@@ -1,8 +1,8 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //#region imports
-import { usePathname } from "expo-router";
+import { useLocalSearchParams, usePathname } from "expo-router";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Text, TextInput } from "react-native";
 import { Snackbar } from "react-native-paper";
 
@@ -16,7 +16,7 @@ import Score from "@/components/Score";
 import { getCategoryInfo } from "@/components/categoryUtils";
 import getDate from "@/constants/getDate";
 
-import { add } from "@/infra/database";
+import { add, getById, update } from "@/infra/database";
 import { useThemedStyles } from "@/hook/useThemedStyle";
 
 //#endregion
@@ -24,7 +24,8 @@ import { useThemedStyles } from "@/hook/useThemedStyle";
 export default function Water() {
   //#region variables
   const pathname = usePathname().substring(1);
-  const { displayName } = getCategoryInfo(pathname) ?? {};
+  const { displayName, unit } = getCategoryInfo(pathname) ?? {};
+  const { id } = useLocalSearchParams();
 
   //#region states
   const [date, setDate] = useState(getDate());
@@ -36,6 +37,20 @@ export default function Water() {
   const [reloadKey, setReloadKey] = useState(0);
   const [quantity, setQuantity] = useState();
   const [visible, setVisible] = useState(false);
+  //#endregion
+
+  //#region edição
+  useEffect(() => {
+    if (!id) return;
+    const r = getById(id);
+    if (!r) return;
+    setQuantity(String(r.quantity ?? ""));
+    setObservation(r.note ?? r.observation ?? "");
+    setMin(r.min ?? "");
+    setMax(r.max ?? "");
+    setIdeal(r.ideal ?? "");
+    setScore(r.score);
+  }, [id]);
   //#endregion
 
   const styles = useThemedStyles((theme) => ({
@@ -101,15 +116,16 @@ export default function Water() {
     setVisible(true);
     const data = {
       date: date.ISOdate,
+      quantity: Number(quantity) || 0,
+      unit,
+      note: observation,
       min,
       max,
       ideal,
-      quantity,
       score,
-      observation,
-      unity: "ml",
     };
-    add("water", data);
+    if (id) update(id, data);
+    else add("water", data);
     setReloadKey((prev) => prev + 1);
   }
   function onDismissSnackBar() {
