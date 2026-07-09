@@ -101,7 +101,7 @@ Cada entrada documenta uma decisão de arquitetura: o contexto, a decisão tomad
 
 **Contexto:** o código de armazenamento existente já era genérico por `tableName` (uma função `add`/`get` reaproveitada entre métricas), mas nada garantia que cada tabela manteria o mesmo formato de dados ao longo do tempo — exatamente o tipo de fragmentação silenciosa que costuma virar a "arquitetura que não escala" dos reboots anteriores.
 
-**Decisão:** uma única tabela `registros`, com o campo `tipo` distinguindo as métricas (5 no MVP), e um `TablesSchema` do TinyBase (`setTablesSchema`) que obriga todo registro — de qualquer métrica — a manter o formato-base definido no documento de Escopo & MVP.
+**Decisão:** uma única tabela `records`, com o campo `tipo` distinguindo as métricas (5 no MVP), e um `TablesSchema` do TinyBase (`setTablesSchema`) que obriga todo registro — de qualquer métrica — a manter o formato-base definido no documento de Escopo & MVP.
 
 **Consequências:**
 
@@ -109,6 +109,37 @@ Cada entrada documenta uma decisão de arquitetura: o contexto, a decisão tomad
 - O schema barra, em tempo de execução, qualquer registro que fuja do formato combinado — a fragmentação fica estruturalmente mais difícil de acontecer de novo.
 - Campos específicos de cada métrica (ex: horário de dormir do sono) continuam possíveis via o campo `detalhes`, sem abrir mão do formato comum.
 - Adicionar a 6ª métrica (autocuidado) no futuro é só um novo valor de `tipo` — sem tabela nova, sem migração de schema.
+
+---
+
+## ADR-008 — Schema frouxo com `detalhes` JSON durante o desenvolvimento
+
+**Status:** decidido, e explicitamente temporário. Refina o ADR-007 (tabela única) para a fase de desenvolvimento — não o contradiz.
+
+**Contexto:** o ADR-007 definiu uma tabela única `records` com um formato-base. Mas os dados reais de hoje são heterogêneos entre métricas: água tem `min`/`max`/`ideal`/`quantity`, exercício tem `training`/`cardio`/`trainingTime`/`duration`, estudo tem `duration`, todas têm `score`/`observation`. Definir agora um schema rígido que contemple todos esses campos exigiria decidir a forma final do dado **antes** de ter uso real que informe o que é necessário e o que sobra. Isso é decisão prematura — o tipo de over-engineering que trava o desenvolvimento sem retorno.
+
+**Decisão:** durante o desenvolvimento (até o M2 fechar com uso real), usar um schema deliberadamente **frouxo**: apenas os campos comuns a todas as métricas ficam no nível superior do registro; tudo que é específico de cada métrica vai serializado como JSON num único campo `detalhes`.
+
+Campos de topo (estáveis, comuns a todas as métricas):
+
+- `tipo` — "water", "sleep", "exercise", "feeding", "study"
+- `date` — data do registro (ISO)
+- `criadoEm` — timestamp
+
+Campo flexível:
+
+- `detalhes` — string JSON com todo o resto (`score`, `observation`, e os campos próprios de cada métrica). O schema não conhece nem valida o conteúdo de `detalhes`.
+
+**Por que assim, agora:**
+
+- Não perde nenhum dado atual — todos os campos existentes cabem em `detalhes` sem conversão.
+- Não obriga a decidir a forma final do dado antes do uso real.
+- Destrava a persistência (#47) imediatamente: dá pra persistir hoje, com os dados como estão.
+- É reversível: quando o schema maduro chegar (M2+), lê-se o `detalhes` JSON dos registros antigos e transforma-se no formato novo, uma vez só.
+
+**Trade-off aceito:** com `detalhes` como JSON string, perde-se validação de tipo por campo e queries diretas por campo interno (ex: "registros com `score > 3`" fica mais trabalhoso). Na fase de desenvolvimento isso não é necessário — query por campo interno é otimização de quando houver uso e volume. Troca-se validação futura por flexibilidade agora, conscientemente.
+
+**Quando revisitar:** ao entrar no M2 (modelo unificado maduro), com base no que o uso real mostrar ser necessário/desnecessário. Este ADR existe justamente para que essa decisão temporária não seja confundida com descuido no futuro — o `detalhes` como JSON solto é deliberado, não acidental.
 
 ---
 
