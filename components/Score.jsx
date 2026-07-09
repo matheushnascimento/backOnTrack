@@ -1,3 +1,4 @@
+// @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 import { StyleSheet, useColorScheme } from "react-native";
 import MyButton from "./MyButton";
 import MyView from "./MyView";

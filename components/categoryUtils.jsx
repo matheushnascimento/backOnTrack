@@ -1,3 +1,4 @@
+// @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 export const CATEGORY_MAP = {
   water: {
     displayName: "água",

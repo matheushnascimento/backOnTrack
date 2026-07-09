@@ -28,6 +28,8 @@ Cada entrada documenta uma decisão de arquitetura: o contexto, a decisão tomad
 
 **Alternativas consideradas:** migração completa para TypeScript (recomendação original) — mantida como opção futura, não bloqueante. Arquivos novos podem nascer em `.ts`/`.tsx` se for mais natural no momento, sem forçar a base existente.
 
+**Implementação (#48):** `allowJs` (já vinha da base do Expo) + `checkJs` ligados no `tsconfig.json`. Para não migrar à força, os arquivos legados que ainda não passam no `checkJs` foram marcados com `// @ts-nocheck` (grandfather) — a checagem some só naquele arquivo, e o marcador deve ser removido quando o arquivo for tipado. Arquivos **novos** nascem checados e são barrados no CI (job `Types` em `linting.yaml`, via `npm run lint:types:check`) se tiverem erro de tipo.
+
 ---
 
 ## ADR-003 — Navegação: Expo Router

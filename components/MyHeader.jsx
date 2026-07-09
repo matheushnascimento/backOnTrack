@@ -1,3 +1,4 @@
+// @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 import { useEffect, useState } from "react";
 
 import Button from "./MyButton";
