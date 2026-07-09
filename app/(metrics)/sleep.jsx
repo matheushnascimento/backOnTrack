@@ -112,7 +112,7 @@ export default function Sleep() {
                 MIN
               </Text>
               <TextInput
-                className="max-w-[160px] rounded-lg bg-light-backgroundCard p-1.5 text-[26px] font-bold text-white dark:bg-dark-backgroundCard"
+                className="max-w-[160px] rounded-lg bg-light-backgroundCard p-1.5 text-[26px] font-bold text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
                 placeholder="--"
                 value={min}
               />
@@ -122,7 +122,7 @@ export default function Sleep() {
                 MAX
               </Text>
               <TextInput
-                className="max-w-[160px] rounded-lg bg-light-backgroundCard p-1.5 text-[26px] font-bold text-white dark:bg-dark-backgroundCard"
+                className="max-w-[160px] rounded-lg bg-light-backgroundCard p-1.5 text-[26px] font-bold text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
                 placeholder="--"
                 value={max}
                 onChangeText={(value) => setMax(value)}
@@ -133,7 +133,7 @@ export default function Sleep() {
                 IDEAL
               </Text>
               <TextInput
-                className="max-w-[160px] rounded-lg bg-light-backgroundCard p-1.5 text-[26px] font-bold text-white dark:bg-dark-backgroundCard"
+                className="max-w-[160px] rounded-lg bg-light-backgroundCard p-1.5 text-[26px] font-bold text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
                 placeholder="--"
                 value={ideal}
               />
@@ -165,7 +165,7 @@ export default function Sleep() {
               safe={false}
               className="w-full grow flex-row items-center justify-center gap-4 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
             >
-              <Text className="font-bold text-2xl text-white">
+              <Text className="font-bold text-2xl text-light-text dark:text-dark-text">
                 {displayName} hoje
               </Text>
               <TextInput

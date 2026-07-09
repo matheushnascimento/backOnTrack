@@ -5,7 +5,9 @@ export const Colors = {
     background: "#F8F9FA",
     text: "#333333",
     outerText: "#F8F9FA",
-    backgroundCard: "rgba(255, 255, 255, 0.15)",
+    // Véu escuro (simétrico ao branco do dark): cards/inputs ficam
+    // visíveis sobre o fundo claro em vez de sumir (branco sobre branco).
+    backgroundCard: "rgba(0, 0, 0, 0.08)",
   },
   dark: {
     background: "#333333",

@@ -110,7 +110,7 @@ export default function Water() {
                 MIN
               </Text>
               <TextInput
-                className="max-w-[160px] rounded-lg bg-light-backgroundCard p-1.5 text-[26px] font-bold text-white dark:bg-dark-backgroundCard"
+                className="max-w-[160px] rounded-lg bg-light-backgroundCard p-1.5 text-[26px] font-bold text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
                 placeholder="--"
                 value={min}
                 onChangeText={(value) => setMin(value)}
@@ -121,7 +121,7 @@ export default function Water() {
                 MAX
               </Text>
               <TextInput
-                className="max-w-[160px] rounded-lg bg-light-backgroundCard p-1.5 text-[26px] font-bold text-white dark:bg-dark-backgroundCard"
+                className="max-w-[160px] rounded-lg bg-light-backgroundCard p-1.5 text-[26px] font-bold text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
                 placeholder="--"
                 value={max}
                 onChangeText={(value) => setMax(value)}
@@ -132,7 +132,7 @@ export default function Water() {
                 IDEAL
               </Text>
               <TextInput
-                className="max-w-[160px] rounded-lg bg-light-backgroundCard p-1.5 text-[26px] font-bold text-white dark:bg-dark-backgroundCard"
+                className="max-w-[160px] rounded-lg bg-light-backgroundCard p-1.5 text-[26px] font-bold text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
                 placeholder="--"
                 value={ideal}
                 onChangeText={(value) => setIdeal(value)}
@@ -165,7 +165,7 @@ export default function Water() {
               safe={false}
               className="w-1/2 grow flex-row items-center justify-center gap-8 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
             >
-              <Text className="font-bold text-2xl text-white">
+              <Text className="font-bold text-2xl text-light-text dark:text-dark-text">
                 {displayName} hoje
               </Text>
               <TextInput
