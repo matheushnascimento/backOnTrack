@@ -92,7 +92,7 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 - ⬜ Tratamento de erros e estados vazios
 - ⬜ Testes nas funções de domínio (unitários); E2E opcional
 - ⬜ Exportação/backup de dados (JSON/CSV) — a rota de exportação já está prevista
-- 🟡 Build de produção via EAS, instalado fora do Expo Go — `eas.json` (perfis dev/preview/production) e `projectId` em `app.json` já configurados, mas sem build de produção real gerado/instalado
+- 🟡 Build via EAS, instalado fora do Expo Go — perfil `preview` gera **APK** instalável (`buildType: apk`, #71/#72); primeiro APK `preview` gerado e **validado num Android real**. Falta o build de **produção** (`.aab` + submit à loja).
 - ⬜ Documentação de manutenção (como rodar, como publicar updates)
 
 ---
