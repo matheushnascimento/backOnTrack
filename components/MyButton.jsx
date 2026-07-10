@@ -23,7 +23,7 @@ export default function MyButton({
     >
       {title != null && (
         <Text
-          className={`font-bold text-light-text dark:text-dark-text ${
+          className={`font-bold text-light-outerText dark:text-dark-text ${
             titleClassName ?? ""
           }`}
         >

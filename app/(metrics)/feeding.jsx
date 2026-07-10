@@ -16,8 +16,6 @@ import { getCategoryInfo } from "@/components/categoryUtils";
 import getDate from "@/constants/getDate";
 
 import { add, getById, update } from "@/infra/database";
-import { useThemedStyles } from "@/hook/useThemedStyle";
-
 //#endregion
 
 export default function Feeding() {
@@ -46,66 +44,7 @@ export default function Feeding() {
   }, [id]);
   //#endregion
 
-  const styles = useThemedStyles((theme) => ({
-    card: {
-      overflow: "hidden",
-      backgroundColor: theme.backgroundCard,
-      gap: 32,
-      maxWidth: 640,
-      borderRadius: 10,
-      padding: 10,
-      paddingTop: 10,
-      paddingBottom: 10,
-    },
-    cardWrapper: { gap: 16 },
-    container: {
-      flex: 1,
-      alignItems: "center",
-      padding: 16,
-      gap: 16,
-      backgroundColor: theme.background,
-    },
-    input: {
-      width: 80,
-      height: 51,
-      textAlign: "center",
-      padding: 6,
-      backgroundColor: "#333",
-      fontSize: 26,
-      fontWeight: "bold",
-      color: "white",
-      borderRadius: 10,
-      maxWidth: 160,
-    },
-    inputWrapper: {
-      gap: 10,
-    },
-    title: {
-      flexDirection: "row",
-      gap: 6,
-      color: theme.text,
-      fontWeight: "bold",
-      fontSize: 18,
-    },
-    text: {
-      color: theme.text,
-      fontWeight: "bold",
-      fontSize: 18,
-    },
-    textArea: {
-      padding: 6,
-      color: theme.text,
-      borderRadius: 10,
-      backgroundColor: theme.backgroundCard,
-      height: 64,
-      fontSize: 19,
-      fontWeight: "normal",
-    },
-  }));
-  //#endregion
-
   //#region functions
-
   function handleSubmit() {
     setVisible(true);
     const data = {
@@ -125,7 +64,10 @@ export default function Feeding() {
   //#endregion
 
   return (
-    <MyView safe={true} style={styles.container}>
+    <MyView
+      safe={true}
+      className="flex-1 items-center gap-4 bg-light-background p-4 dark:bg-dark-background"
+    >
       <Snackbar
         visible={visible}
         onDismiss={onDismissSnackBar}
@@ -145,21 +87,22 @@ export default function Feeding() {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <MyView style={styles.card}>
-          <Text style={styles.title}>
+        <MyView
+          safe={false}
+          className="max-w-[640px] gap-8 overflow-hidden rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
+        >
+          <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
             {date.displayDate} {displayName}
           </Text>
 
           {/* card Wrapper */}
-          <MyView style={styles.cardWrapper}>
-            <MyView className="flex-row gap-5">
+          <MyView safe={false} className="gap-4">
+            <MyView safe={false} className="flex-row gap-5">
               {Array.from({ length: quantity }).map((_, index) => (
                 <MyIconButton
                   key={index}
                   value={index}
                   compact="true"
-                  // style={styles.button}
-                  // titleStyle={styles.title}
                   isSelected={true}
                   onPress={() => setQuantity(quantity - 1)}
                 />
@@ -172,16 +115,20 @@ export default function Feeding() {
           </MyView>
 
           {/* Nota */}
-          <Text style={styles.title}>Nota</Text>
+          <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+            Nota
+          </Text>
           <Score value={score} onPress={setScore} />
 
           {/* OBS */}
-          <MyView className="gap-1">
-            <Text style={styles.title}>OBS:</Text>
+          <MyView safe={false} className="gap-1">
+            <Text className="flex-row gap-1.5 font-bold text-lg text-light-text dark:text-dark-text">
+              OBS:
+            </Text>
             <TextInput
               value={observation}
               onChangeText={(value) => setObservation(value)}
-              style={styles.textArea}
+              className="h-16 rounded-lg bg-light-backgroundCard p-1.5 text-[19px] font-normal text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
               placeholder="Observações sobre refeições..."
             />
           </MyView>
