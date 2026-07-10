@@ -2,7 +2,7 @@
   "expo": {
     "name": "backOnTrack",
     "slug": "backOnTrack",
-    "scheme": "backOnTrack",
+    "scheme": "backontrack",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
