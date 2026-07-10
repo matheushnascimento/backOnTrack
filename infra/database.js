@@ -95,3 +95,7 @@ export function getByMonth(type, month) {
     return date.getMonth() === month;
   });
 }
+
+export function clearAll() {
+  store.delTables();
+}
