@@ -1,6 +1,9 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //#region imports
-import { ScrollView, Text, View } from "react-native";
+import { Alert, ScrollView, Text, View } from "react-native";
+import { useColorScheme } from "nativewind";
+import MyButton from "@/components/MyButton";
+import { clearAll } from "@/infra/database";
 
 import MyView from "@/components/MyView";
 import MyHeader from "@/components/MyHeader";
@@ -31,6 +34,18 @@ function ItemRow({ status, text }) {
 }
 
 export default function Home() {
+  const { toggleColorScheme } = useColorScheme();
+
+  function handleClear() {
+    Alert.alert(
+      "Limpar todos os dados",
+      "Isso apaga todos os registros. Tem certeza?",
+      [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Limpar", style: "destructive", onPress: () => clearAll() },
+      ],
+    );
+  }
   const {
     milestonesDone,
     milestonesTotal,
@@ -95,6 +110,12 @@ export default function Home() {
             </MyView>
           </MyView>
         )}
+        {/* Utilitários */}
+        <MyView safe={false} className={`${CARD} gap-2`} style={shadow}>
+          <Text className={LABEL}>UTILITÁRIOS</Text>
+          <MyButton title="Alternar tema" onPress={() => toggleColorScheme()} />
+          <MyButton title="Limpar todos os dados" onPress={handleClear} />
+        </MyView>
       </ScrollView>
     </MyView>
   );
