@@ -20,29 +20,36 @@ export default function Home() {
           subtitle="Esse pedaço de tecnologia está em construção!"
         />
         <Card.Content className="bg-light-backgroundCard dark:bg-dark-backgroundCard">
-          <Text className="text-light-text" variant="headlineMedium">
+          <Text
+            className="text-light-text dark:text-dark-text"
+            variant="headlineMedium"
+          >
             Essa versão beta conta com as seguintes funcionalidades
           </Text>
           <MyView className="flex-row items-center">
-            <Text className=" text-light-text">
+            <Text className=" text-light-text dark:text-dark-text">
               * Registro diário de ingestão de água
             </Text>
           </MyView>
           <MyView className="flex-row items-center">
-            <Text className="text-light-text">* Registro diário de sono</Text>
+            <Text className="text-light-text dark:text-dark-text">
+              * Registro diário de sono
+            </Text>
           </MyView>
           <MyView className="flex-row items-center">
-            <Text className="text-light-text">
+            <Text className="text-light-text dark:text-dark-text">
               * Registro diário de exercício
             </Text>
           </MyView>
           <MyView className="flex-row items-center">
-            <Text className="text-light-text">
+            <Text className="text-light-text dark:text-dark-text">
               * Registro diário de refeições
             </Text>
           </MyView>
           <MyView className="flex-row items-center">
-            <Text className="text-light-text">* Registro diário de estudo</Text>
+            <Text className="text-light-text dark:text-dark-text">
+              * Registro diário de estudo
+            </Text>
           </MyView>
         </Card.Content>
       </Card>

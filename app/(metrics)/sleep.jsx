@@ -169,7 +169,7 @@ export default function Sleep() {
                 {displayName} hoje
               </Text>
               <TextInput
-                className="h-[37px] max-w-[38px] rounded-md bg-light-backgroundCard dark:bg-dark-backgroundCard px-1 text-center text-xl font-normal text-white"
+                className="h-[37px] max-w-[38px] rounded-md bg-light-backgroundCard dark:bg-dark-backgroundCard px-1 text-center text-xl font-normal text-light-text dark:text-dark-text"
                 placeholder="--"
                 value={sleepHours}
                 onChangeText={(value) => setSleepHours(value)}
@@ -178,7 +178,7 @@ export default function Sleep() {
                 h
               </Text>
               <TextInput
-                className="h-[37px] max-w-[38px] rounded-md bg-light-backgroundCard dark:bg-dark-backgroundCard px-1 text-center text-xl font-normal text-white"
+                className="h-[37px] max-w-[38px] rounded-md bg-light-backgroundCard dark:bg-dark-backgroundCard px-1 text-center text-xl font-normal text-light-text dark:text-dark-text"
                 placeholder="--"
                 value={sleepMinutes}
                 onChangeText={(value) => setSleepMinutes(value)}
