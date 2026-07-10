@@ -169,7 +169,7 @@ export default function Water() {
                 {displayName} hoje
               </Text>
               <TextInput
-                className="h-[51px] w-20 rounded-lg bg-dark-background p-1.5 text-center text-[26px] font-bold text-white"
+                className="h-[51px] w-20 rounded-lg bg-light-backgroundCard p-1.5 text-center text-[26px] font-bold text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
                 placeholder="--"
                 value={quantity}
                 onChangeText={(value) => setQuantity(value)}

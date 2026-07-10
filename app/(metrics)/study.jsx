@@ -144,7 +144,7 @@ export default function Study() {
               </Text>
               <MyView safe={false} className="flex-row items-end gap-1">
                 <TextInput
-                  className="h-[51px] w-20 max-w-[160px] rounded-lg bg-dark-background p-1.5 text-center text-[26px] font-bold text-white"
+                  className="h-[51px] w-20 max-w-[160px] rounded-lg bg-light-backgroundCard dark:bg-dark-backgroundCard p-1.5 text-center text-[26px] font-bold text-white"
                   placeholder="--"
                   value={studyDurationHour}
                   onChangeText={(value) => setStudyDurationHour(value)}
@@ -153,7 +153,7 @@ export default function Study() {
                   h
                 </Text>
                 <TextInput
-                  className="h-[51px] w-20 max-w-[160px] rounded-lg bg-dark-background p-1.5 text-center text-[26px] font-bold text-white"
+                  className="h-[51px] w-20 max-w-[160px] rounded-lg bg-light-backgroundCard dark:bg-dark-backgroundCard p-1.5 text-center text-[26px] font-bold text-white"
                   placeholder="--"
                   value={studyDurationMinute}
                   onChangeText={(value) => setStudyDurationMinute(value)}

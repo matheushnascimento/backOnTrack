@@ -21,7 +21,7 @@ export default function Sleep() {
   const pathname = usePathname().substring(1);
   const { displayName, unit } = getCategoryInfo(pathname) ?? {};
   const { id } = useLocalSearchParams();
-
+  //#endregion endregion
   //#region states
   const [date] = useState(getDate());
   const [ideal, setIdeal] = useState(8);
@@ -169,7 +169,7 @@ export default function Sleep() {
                 {displayName} hoje
               </Text>
               <TextInput
-                className="h-[37px] max-w-[38px] rounded-md bg-dark-background px-1 text-center text-xl font-normal text-white"
+                className="h-[37px] max-w-[38px] rounded-md bg-light-backgroundCard dark:bg-dark-backgroundCard px-1 text-center text-xl font-normal text-white"
                 placeholder="--"
                 value={sleepHours}
                 onChangeText={(value) => setSleepHours(value)}
@@ -178,7 +178,7 @@ export default function Sleep() {
                 h
               </Text>
               <TextInput
-                className="h-[37px] max-w-[38px] rounded-md bg-dark-background px-1 text-center text-xl font-normal text-white"
+                className="h-[37px] max-w-[38px] rounded-md bg-light-backgroundCard dark:bg-dark-backgroundCard px-1 text-center text-xl font-normal text-white"
                 placeholder="--"
                 value={sleepMinutes}
                 onChangeText={(value) => setSleepMinutes(value)}
