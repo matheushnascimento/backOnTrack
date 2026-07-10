@@ -62,7 +62,17 @@ const theme = Colors[colorScheme] ?? Colors.light;
 
 Pra isso funcionar, garanta que o `darkMode` do NativeWind está ativo (o preset já cuida disso na maioria dos setups) e que o app declara suporte a dark mode no `app.json` (`"userInterfaceStyle": "automatic"`).
 
-> **Estado atual (#60):** o `app.json` está travado em `"userInterfaceStyle": "dark"` — o app roda só em dark hoje. Escreva as classes no formato `text-light-x dark:text-dark-x` mesmo assim (custo zero e já fica pronto): com o app em dark, o variant `dark:` sempre vence. Trocar para `"automatic"` e ligar o tema claro de verdade é um passo separado (follow-up), fora do escopo da migração de estilo.
+> **Estado atual (#65):** o `app.json` já está em `"userInterfaceStyle": "automatic"` — o tema claro/escuro real está ligado e segue o sistema. Sempre escreva as duas variantes (`text-light-x dark:text-dark-x`); classes fixas como `text-white` só valem sobre fundo que é escuro nos dois temas.
+
+## Cache: reinicie com `--clear` ao mexer em fontes de build
+
+Nem tudo é resolvido em runtime. Algumas coisas são compiladas em **build** e ficam no cache do Metro — editá-las **não reflete** no app até reiniciar limpando o cache:
+
+```bash
+npx expo start --tunnel --clear
+```
+
+Isso vale para: `constants/Colors.js` e `tailwind.config.js` (as cores de `className` são geradas em build), `babel.config.js`, e qualquer arquivo importado via `babel-plugin-inline-import` (ex.: o `docs/04-roadmap-milestones.md` exibido na Home). Sintoma clássico: você troca uma cor no `Colors.js` ou edita o roadmap e "nada acontece" — é o cache. Já mudanças em `style={{...}}` ou em `Colors.x` usados via JS atualizam na hora (são runtime).
 
 ## Sombra: o único caso que NÃO vai pro className
 
