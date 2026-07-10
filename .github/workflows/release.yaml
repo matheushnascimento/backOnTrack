@@ -1,0 +1,51 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag da release (ex: v0.1.0-beta.2)"
+        required: true
+      notes:
+        description: "Notas da release"
+        required: false
+        default: "Build de teste (beta) do Back on Track para Android."
+
+jobs:
+  build-and-release:
+    name: Build EAS + publicar release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "lts/jod"
+
+      - run: npm ci
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Build APK no EAS
+        run: |
+          APK_URL=$(eas build --platform android --profile preview --non-interactive --wait --json \
+            | jq -r '.[0].artifacts.applicationArchiveUrl')
+          if [ -z "$APK_URL" ] || [ "$APK_URL" = "null" ]; then
+            echo "Não foi possível obter a URL do APK do build." >&2
+            exit 1
+          fi
+          curl -sSL -o backOnTrack.apk "$APK_URL"
+
+      - name: Publicar release no GitHub
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${{ inputs.tag }}" \
+            "backOnTrack.apk#backOnTrack.apk" \
+            --title "Back on Track ${{ inputs.tag }}" \
+            --notes "${{ inputs.notes }}"
