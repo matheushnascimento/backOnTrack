@@ -7,6 +7,7 @@ import { clearAll } from "@/infra/database";
 
 import MyView from "@/components/MyView";
 import MyHeader from "@/components/MyHeader";
+import InstallApp from "@/components/InstallApp";
 
 import { shadow } from "@/constants/Colors";
 import { parseRoadmap, getDigest } from "@/constants/roadmap";
@@ -110,6 +111,9 @@ export default function Home() {
             </MyView>
           </MyView>
         )}
+        {/* Obter o app (só web: QR no desktop, download no celular) */}
+        <InstallApp />
+
         {/* Utilitários */}
         <MyView safe={false} className={`${CARD} gap-2`} style={shadow}>
           <Text className={LABEL}>UTILITÁRIOS</Text>
