@@ -28,26 +28,7 @@ export default function RootLayout() {
           headerTintColor: theme.text,
         }}
       >
-        <Stack.Screen
-          name="water"
-          options={{ headerShown: false, title: "Água" }}
-        />
-        <Stack.Screen
-          name="sleep"
-          options={{ headerShown: false, title: "Sono" }}
-        />
-        <Stack.Screen
-          name="exercise"
-          options={{ headerShown: false, title: "Exercícios" }}
-        />
-        <Stack.Screen
-          name="feeding"
-          options={{ headerShown: false, title: "Alimentação" }}
-        />
-        <Stack.Screen
-          name="study"
-          options={{ headerShown: false, title: "Estudo" }}
-        />
+        <Stack.Screen name="[metric]" options={{ headerShown: false }} />
       </Stack>
     </View>
   );
