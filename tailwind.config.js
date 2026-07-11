@@ -4,6 +4,7 @@ const { Colors } = require("./constants/Colors");
 module.exports = {
   content: ["app/**/*.*", "components/**/*.*"],
   presets: [require("nativewind/preset")],
+  darkMode: "class",
   theme: {
     extend: {
       colors: {
