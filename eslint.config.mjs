@@ -1,5 +1,6 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import js from "@eslint/js";
+import globals from "globals";
 
 export default defineConfig([
   globalIgnores([
@@ -21,6 +22,14 @@ export default defineConfig([
     rules: {
       "no-unused-vars": "warn",
       "no-undef": "warn",
+    },
+  },
+  {
+    // Config plugins do Expo são tooling Node (CommonJS), não código do app.
+    files: ["plugins/**/*.js"],
+    languageOptions: {
+      sourceType: "commonjs",
+      globals: globals.node,
     },
   },
 ]);
