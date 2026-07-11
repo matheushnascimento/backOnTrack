@@ -38,14 +38,14 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 
 ---
 
-## M2 — Modelo de Dados Unificado 🟡 em andamento
+## M2 — Modelo de Dados Unificado ✅ concluído
 
 **Objetivo de saída:** as telas gravam no modelo `Registro` unificado, com CRUD completo.
 
 - ✅ Implementar o `Registro` unificado na store (#63): schema com colunas `quantity`/`unit`/`note` + `details` para os extras específicos de cada tipo (nomes de topo em inglês, seguindo a padronização da #54). Durações (sono/exercício/estudo) guardadas em minutos (number); `constants/duration.js` converte `HH:MM` ↔ minutos.
 - ✅ Mapear os campos ad-hoc (`score`, `min`/`max`/`ideal`, `observation`→`note`, `training`/`cardio`) para o formato unificado (#63), sem migração destrutiva — dados antigos continuam renderizando por fallback de nomes (`note ?? observation`, `quantity ?? duration`).
 - ✅ Ligar as telas ao `add`/`update`/`remove`/`getById`/`getAll` (#63): as 5 telas gravam e leem no modelo unificado, com **modo edição** via `?id=` na rota.
-- ⬜ **Extrair a tela de registro única:** as 5 telas viram configuração de um componente-base. É o passo que mata a duplicação de ~90 linhas por tela e fecha o risco de reboot por "arquitetura que não escala".
+- ✅ **Extrair a tela de registro única** (#80/#81): as 5 telas viraram uma rota dinâmica `app/(metrics)/[metric].jsx` dirigida por config por métrica, sobre `MetricScreen` (base) + `registry` + `fields` reutilizáveis (`components/metrics/`). Matou a duplicação (~-346 linhas) e fecha o risco de reboot por "arquitetura que não escala"; adicionar métrica = adicionar config.
 
 ---
 
@@ -53,7 +53,7 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 
 **Objetivo de saída:** o papel pode ser aposentado.
 
-- 🟡 As 5 telas de registro rápido, sobre o componente-base unificado — as 5 telas existem e já persistem, mas ainda duplicadas, não sobre um componente-base unificado
+- ✅ As 5 telas de registro rápido, sobre o componente-base unificado (#80/#81): rota dinâmica `[metric].jsx` + config por métrica sobre `MetricScreen`
 - ⬜ Tela "hoje" consolidando o progresso do dia (uma query só, graças à tabela única)
 - 🟡 Histórico navegável por data (as rotas de histórico já existem, precisam consumir a store nova) — `MyHistory` já lê a store via `get`/`getByMonth`, mas ainda falta a navegação por data e as rotas `(history)/*` são stubs
 - ✅ Editar/excluir registros (#63): o `MyHistory` tem ações **Editar** (abre a tela via `?id=`) e **Excluir** (com confirmação) por registro
