@@ -6,7 +6,7 @@ Cada milestone tem um objetivo de saída claro. Sabe-se que terminou quando esse
 
 **Legenda:** ✅ pronto · 🟡 parcial/inacabado · ⬜ ainda não feito
 
-**Nota sobre sincronização:** A ideia é: local + sync na nuvem desde o início. A arquitetura (ADR-004, TinyBase) já nasce pronta para isso, mas a milestone de _ativar e validar_ sync (M4) vem depois de o MVP local estar sólido. Isso evita empilhar duas curvas de aprendizado ao mesmo tempo (RN + sync), exatamente o tipo de gargalo que o projeto nasceu pra resolver.
+**Nota sobre sincronização:** A ideia é: local + sync na nuvem desde o início. A arquitetura (ADR-004, TinyBase) já nasce pronta para isso, mas a milestone de _ativar e validar_ sync (M5) vem depois de o MVP local estar sólido. Isso evita empilhar duas curvas de aprendizado ao mesmo tempo (RN + sync), exatamente o tipo de gargalo que o projeto nasceu pra resolver.
 
 ---
 
@@ -61,7 +61,20 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 
 ---
 
-## M4 — Sincronização em Nuvem
+## M4 — Design System & Consistência de UI
+
+**Objetivo de saída:** telas consistentes em claro/escuro e no web, sobre um conjunto único de tokens e componentes — sem estilo duplicado. É o que separa "funciona" de "parece v1".
+
+- ⬜ Auditar as inconsistências atuais (botões, cards, header, escala tipográfica, responsividade web) e registrar o alvo
+- ⬜ Tokens canônicos: espaçamento, tipografia (revisar o truque `font-size: 62.5%`), raio, sombra, cor — fonte única
+- ⬜ Componentizar o que está duplicado (`CARD`/`LABEL` repetidos em 3 telas → componente; padronizar `MyButton`/`HistoryCard`/`MyHeader`)
+- ⬜ Revisar o `MyHeader` (papel de navegação vs. chips de métrica) e o alinhamento no web
+- ⬜ Identidade visual do "Back on Track" (tema, ícones) — migrada do QoL
+- ⬜ Validar claro/escuro e layout web em cada tela
+
+---
+
+## M5 — Sincronização em Nuvem
 
 **Objetivo de saída:** os dados sobrevivem a perda/troca de aparelho.
 
@@ -72,7 +85,7 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 
 ---
 
-## M5 — Quality of Life
+## M6 — Quality of Life
 
 **Objetivo de saída:** o app é bom de usar, não só funcional.
 
@@ -80,12 +93,11 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 - ⬜ Lembretes e notificações (`expo-notifications`)
 - ⬜ Metas personalizadas por métrica
 - ⬜ **Autocuidado como 6ª métrica** (novo valor de `tipo` + config de tela; sem estrutura nova)
-- ⬜ Identidade visual do "Back on Track" (tema, ícones)
 - ⬜ Micro-interações e feedback visual ao registrar
 
 ---
 
-## M6 — Estabilização & Manutenção de Longo Prazo
+## M7 — Estabilização & Manutenção de Longo Prazo
 
 **Objetivo de saída:** o app aguenta ser usado por anos, não só semanas.
 
