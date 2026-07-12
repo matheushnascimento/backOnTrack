@@ -8,11 +8,14 @@ export default function MyInput({
   value,
   onChangeText,
   className,
+  // Wrapper estreito (self-start) por padrão, como os forms de métrica querem;
+  // telas de form largo (ex: feedback) passam "w-full" pra esticar no card.
+  containerClassName = "self-start",
   style,
   ...props
 }) {
   return (
-    <MyView safe={false} className="gap-1.5 self-start">
+    <MyView safe={false} className={`gap-1.5 ${containerClassName}`}>
       {label != null && (
         <Text className="font-bold text-base text-light-text dark:text-dark-text">
           {label}
