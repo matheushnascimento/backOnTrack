@@ -4,4 +4,15 @@
 
 * {
   font-size: 62.5%;
+  /* Web: clicar num texto não deve selecioná-lo (parece um app, não uma
+     página). No native isso já é o padrão; esta regra só vale no web. */
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Reabilita a seleção onde ela é esperada: campos de digitação. */
+input,
+textarea {
+  user-select: text;
+  -webkit-user-select: text;
 }

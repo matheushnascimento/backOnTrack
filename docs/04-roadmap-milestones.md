@@ -6,7 +6,7 @@ Cada milestone tem um objetivo de saída claro. Sabe-se que terminou quando esse
 
 **Legenda:** ✅ pronto · 🟡 parcial/inacabado · ⬜ ainda não feito
 
-**Nota sobre sincronização:** A ideia é: local + sync na nuvem desde o início. A arquitetura (ADR-004, TinyBase) já nasce pronta para isso, mas a milestone de _ativar e validar_ sync (M4) vem depois de o MVP local estar sólido. Isso evita empilhar duas curvas de aprendizado ao mesmo tempo (RN + sync), exatamente o tipo de gargalo que o projeto nasceu pra resolver.
+**Nota sobre sincronização:** A ideia é: local + sync na nuvem desde o início. A arquitetura (ADR-004, TinyBase) já nasce pronta para isso, mas a milestone de _ativar e validar_ sync (M5) vem depois de o MVP local estar sólido. Isso evita empilhar duas curvas de aprendizado ao mesmo tempo (RN + sync), exatamente o tipo de gargalo que o projeto nasceu pra resolver.
 
 ---
 
@@ -55,13 +55,26 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 
 - ✅ As 5 telas de registro rápido, sobre o componente-base unificado (#80/#81): rota dinâmica `[metric].jsx` + config por métrica sobre `MetricScreen`
 - ✅ Tela "hoje" consolidando o progresso do dia (uma query só, graças à tabela única): landing vira o resumo do dia (`app/index.jsx`), lendo `getToday()` (uma passada em `records`, agrupa por `type`); barra "N de 5 métricas" + total consolidado por métrica. Sem metas diárias ainda. Painel de roadmap movido pra `app/roadmap.jsx` (#94)
-- 🟡 Histórico navegável por data (as rotas de histórico já existem, precisam consumir a store nova) — `MyHistory` já lê a store via `get`/`getByMonth`, mas ainda falta a navegação por data e as rotas `(history)/*` são stubs
+- ✅ Histórico navegável por data: tela `app/history.jsx` que lê `getByDate()` (uma passada em `records`, agrupa por `type`) e navega dia a dia (◀/▶ + botão "Hoje", sem avançar pro futuro), reusando o `HistoryCard` (com Editar/Excluir) do `MyHistory`. O grupo-stub `(history)/*` foi removido em favor da rota única; link "Histórico" nos Utilitários da tela "hoje"
 - ✅ Editar/excluir registros (#63): o `MyHistory` tem ações **Editar** (abre a tela via `?id=`) e **Excluir** (com confirmação) por registro
 - ⬜ Primeiro dia de uso real substituindo o papel
 
 ---
 
-## M4 — Sincronização em Nuvem
+## M4 — Design System & Consistência de UI
+
+**Objetivo de saída:** telas consistentes em claro/escuro e no web, sobre um conjunto único de tokens e componentes — sem estilo duplicado. É o que separa "funciona" de "parece v1".
+
+- ⬜ Auditar as inconsistências atuais (botões, cards, header, escala tipográfica, responsividade web) e registrar o alvo
+- ⬜ Tokens canônicos: espaçamento, tipografia (revisar o truque `font-size: 62.5%`), raio, sombra, cor — fonte única
+- ⬜ Componentizar o que está duplicado (`CARD`/`LABEL` repetidos em 3 telas → componente; padronizar `MyButton`/`HistoryCard`/`MyHeader`)
+- ⬜ Revisar o `MyHeader` (papel de navegação vs. chips de métrica) e o alinhamento no web
+- ⬜ Identidade visual do "Back on Track" (tema, ícones) — migrada do QoL
+- ⬜ Validar claro/escuro e layout web em cada tela
+
+---
+
+## M5 — Sincronização em Nuvem
 
 **Objetivo de saída:** os dados sobrevivem a perda/troca de aparelho.
 
@@ -72,7 +85,7 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 
 ---
 
-## M5 — Quality of Life
+## M6 — Quality of Life
 
 **Objetivo de saída:** o app é bom de usar, não só funcional.
 
@@ -80,12 +93,11 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 - ⬜ Lembretes e notificações (`expo-notifications`)
 - ⬜ Metas personalizadas por métrica
 - ⬜ **Autocuidado como 6ª métrica** (novo valor de `tipo` + config de tela; sem estrutura nova)
-- ⬜ Identidade visual do "Back on Track" (tema, ícones)
 - ⬜ Micro-interações e feedback visual ao registrar
 
 ---
 
-## M6 — Estabilização & Manutenção de Longo Prazo
+## M7 — Estabilização & Manutenção de Longo Prazo
 
 **Objetivo de saída:** o app aguenta ser usado por anos, não só semanas.
 

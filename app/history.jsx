@@ -1,0 +1,144 @@
+// @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
+//#region imports
+import { useCallback, useMemo, useState } from "react";
+import { ScrollView, Text, View } from "react-native";
+import { useFocusEffect } from "expo-router";
+
+import MyView from "@/components/MyView";
+import MyHeader from "@/components/MyHeader";
+import MyButton from "@/components/MyButton";
+import { HistoryCard } from "@/components/MyHistory";
+
+import { getByDate } from "@/infra/database";
+import { CATEGORY_MAP, getCategoryInfo } from "@/components/categoryUtils";
+import { shadow } from "@/constants/Colors";
+//#endregion
+
+const CARD =
+  "w-full max-w-[640px] rounded-lg bg-light-backgroundCard p-4 dark:bg-dark-backgroundCard";
+const LABEL =
+  "font-bold text-xs text-light-text opacity-60 dark:text-dark-text";
+
+// Ordem canônica das métricas (mesma da tela "hoje").
+const METRICS = Object.keys(CATEGORY_MAP);
+
+// Zera a hora pra comparar/derivar dias sem ruído de fuso — getByDate compara
+// ano/mês/dia local, então o dia "cheio" é o suficiente.
+function startOfDay(input) {
+  const d = new Date(input);
+  d.setHours(0, 0, 0, 0);
+  return d;
+}
+
+function addDays(input, n) {
+  const d = startOfDay(input);
+  d.setDate(d.getDate() + n);
+  return d;
+}
+
+function isSameDay(a, b) {
+  return startOfDay(a).getTime() === startOfDay(b).getTime();
+}
+
+export default function History() {
+  const [date, setDate] = useState(() => startOfDay(new Date()));
+  const [tick, setTick] = useState(0);
+
+  // Relê ao focar (voltar de uma edição/exclusão). Segue o pull-manual do
+  // projeto — a store não notifica sozinha.
+  useFocusEffect(
+    useCallback(() => {
+      setTick((t) => t + 1);
+    }, []),
+  );
+
+  // Registros do dia agrupados por type (uma passada só, via getByDate).
+  const day = useMemo(() => getByDate(date.toISOString()), [date, tick]);
+
+  const isToday = isSameDay(date, new Date());
+  const label = date.toLocaleDateString("pt-BR", {
+    weekday: "long",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  });
+
+  // Só as métricas com registro no dia, na ordem canônica.
+  const sections = METRICS.filter((type) => (day[type]?.length ?? 0) > 0);
+
+  return (
+    <MyView
+      safe={true}
+      className="flex-1 bg-light-background dark:bg-dark-background"
+    >
+      <MyHeader />
+      <ScrollView
+        contentContainerStyle={{ padding: 16, gap: 16, alignItems: "center" }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Navegação por data */}
+        <MyView safe={false} className={`${CARD} gap-3`} style={shadow}>
+          <Text className={LABEL}>HISTÓRICO</Text>
+          <View className="flex-row items-center justify-between gap-2">
+            <MyButton
+              title="◀"
+              onPress={() => setDate((d) => addDays(d, -1))}
+            />
+            <Text className="flex-1 text-center font-bold text-base capitalize text-light-text dark:text-dark-text">
+              {label}
+            </Text>
+            <MyButton
+              title="▶"
+              disabled={isToday}
+              style={isToday ? { opacity: 0.4 } : undefined}
+              onPress={() => setDate((d) => addDays(d, 1))}
+            />
+          </View>
+          {!isToday && (
+            <MyButton
+              title="Hoje"
+              onPress={() => setDate(startOfDay(new Date()))}
+            />
+          )}
+        </MyView>
+
+        {/* Registros do dia, agrupados por métrica */}
+        {sections.length === 0 ? (
+          <MyView
+            safe={false}
+            className={`${CARD} items-center`}
+            style={shadow}
+          >
+            <Text className="text-base text-light-text opacity-60 dark:text-dark-text">
+              Nenhum registro neste dia.
+            </Text>
+          </MyView>
+        ) : (
+          sections.map((type) => {
+            const { displayName, unit } = getCategoryInfo(type);
+            return (
+              <MyView
+                key={type}
+                safe={false}
+                className="w-full items-center gap-2.5"
+              >
+                {day[type].map((obj) => (
+                  <HistoryCard
+                    key={obj.id}
+                    obj={obj}
+                    tableName={type}
+                    displayName={displayName}
+                    unit={unit}
+                    exercise={type === "exercise"}
+                    hideDate
+                    onChanged={() => setTick((t) => t + 1)}
+                  />
+                ))}
+              </MyView>
+            );
+          })
+        )}
+      </ScrollView>
+    </MyView>
+  );
+}
