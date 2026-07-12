@@ -73,6 +73,9 @@ export default function Home() {
           <Text className="font-bold text-2xl text-light-text dark:text-dark-text">
             Back on Track
           </Text>
+          <Text className="text-sm text-light-text opacity-70 dark:text-dark-text">
+            De volta aos trilhos, um registro por vez.
+          </Text>
           <Text className="font-bold text-base text-light-text opacity-60 dark:text-dark-text">
             {milestonesDone} de {milestonesTotal} milestones concluídas
           </Text>
