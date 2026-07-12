@@ -1,10 +1,12 @@
-// Card "Obter o app" — versão web (Ciclo 3, #74).
+// Card "Obter o app" — versão web (Ciclo 3, #74; distribuição via EAS #90).
 //
 // Só existe no bundle web (o Metro resolve este .web.jsx na web e o
 // InstallApp.jsx no nativo). Detecta o navegador:
-//  - desktop  -> QR code apontando pro APK, pra escanear com o celular e não
-//               baixar o .apk no PC;
-//  - celular  -> botão de download/instalação direta.
+//  - desktop  -> QR code da página de instalação do EAS, pra escanear com o
+//               celular;
+//  - celular  -> botão que abre a página de instalação do EAS.
+// Aponta pro EAS (não pro APK direto do GitHub) porque o Chrome do Android
+// bloqueia download de APK de URL pública; a página do EAS instala no Chrome.
 // O QR é gerado offline (react-native-qrcode-svg sobre react-native-svg), sem
 // nenhuma chamada a serviço externo.
 
@@ -15,7 +17,7 @@ import QRCode from "react-native-qrcode-svg";
 import MyView from "@/components/MyView";
 import MyButtonRaw from "@/components/MyButton";
 import { shadow } from "@/constants/Colors";
-import { APK_URL } from "@/constants/distribution";
+import { EAS_INSTALL_URL } from "@/constants/distribution";
 
 // MyButton é legado (@ts-nocheck, ADR-002): sua assinatura inferida marca as
 // props como obrigatórias, o que quebra consumidores tipados. Tratamos como
@@ -48,20 +50,22 @@ export default function InstallApp() {
       <Text className={`${LABEL} self-start`}>OBTER O APP</Text>
       {mobile ? (
         <>
-          <Text className={TEXT}>Baixe o APK e instale no seu Android.</Text>
+          <Text className={TEXT}>
+            Abra a página de instalação e toque em Install.
+          </Text>
           <MyButton
-            title="Baixar APK"
-            onPress={() => Linking.openURL(APK_URL)}
+            title="Instalar o app"
+            onPress={() => Linking.openURL(EAS_INSTALL_URL)}
           />
         </>
       ) : (
         <>
           <Text className={TEXT}>
-            Aponte a câmera do celular pra baixar o APK no Android.
+            Aponte a câmera do celular pra abrir a instalação no Android.
           </Text>
           <View className="rounded-lg bg-white p-3">
             <QRCode
-              value={APK_URL}
+              value={EAS_INSTALL_URL}
               size={180}
               backgroundColor="#ffffff"
               color="#000000"
