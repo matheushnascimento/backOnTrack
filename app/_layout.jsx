@@ -22,7 +22,8 @@ export default function RootLayout() {
           headerTintColor: theme.text,
         }}
       >
-        <Stack.Screen name="index" options={{ title: "Home" }} />
+        <Stack.Screen name="index" options={{ title: "Hoje" }} />
+        <Stack.Screen name="roadmap" options={{ title: "Roadmap" }} />
         <Stack.Screen name="export" options={{ title: "Exportação" }} />
         <Stack.Screen name="(history)" />
         <Stack.Screen name="(metrics)" />

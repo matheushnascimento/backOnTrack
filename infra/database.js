@@ -96,6 +96,32 @@ export function getByMonth(type, month) {
   });
 }
 
+// Todos os registros de um dia, agrupados por type. Uma passada única na tabela
+// (a "uma query só" da tela hoje), reusando hidratar. Compara ano/mês/dia local
+// de `date` (ISO string) — mesma convenção de getByMonth.
+export function getByDate(isoDate) {
+  const alvo = new Date(isoDate);
+  const linhas = store.getTable(TABLE);
+  const porTipo = {};
+  for (const [id, linha] of Object.entries(linhas)) {
+    if (!linha.date) continue;
+    const d = new Date(linha.date);
+    if (
+      d.getFullYear() === alvo.getFullYear() &&
+      d.getMonth() === alvo.getMonth() &&
+      d.getDate() === alvo.getDate()
+    ) {
+      if (!porTipo[linha.type]) porTipo[linha.type] = [];
+      porTipo[linha.type].push(hidratar(id, linha));
+    }
+  }
+  return porTipo;
+}
+
+export function getToday() {
+  return getByDate(new Date().toISOString());
+}
+
 export function clearAll() {
   store.delTables();
 }
