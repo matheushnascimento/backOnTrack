@@ -36,7 +36,7 @@ function formatQuantity(obj, unit) {
   return String(raw);
 }
 
-function HistoryCard({
+export function HistoryCard({
   obj,
   tableName,
   displayName,

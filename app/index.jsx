@@ -142,6 +142,10 @@ export default function Home() {
         <MyView safe={false} className={`${CARD} gap-2`} style={shadow}>
           <Text className={LABEL}>UTILITÁRIOS</Text>
           <MyButton title="Alternar tema" onPress={() => toggleColorScheme()} />
+          <MyButton
+            title="Histórico"
+            onPress={() => router.navigate("/history")}
+          />
           <MyButton title="Limpar todos os dados" onPress={handleClear} />
           <MyButton
             title="Roadmap do projeto"
