@@ -32,13 +32,17 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
 
       - name: Build APK no EAS
+        id: build
         run: |
-          APK_URL=$(eas build --platform android --profile preview --non-interactive --wait --json \
-            | jq -r '.[0].artifacts.applicationArchiveUrl')
-          if [ -z "$APK_URL" ] || [ "$APK_URL" = "null" ]; then
-            echo "Não foi possível obter a URL do APK do build." >&2
+          BUILD_JSON=$(eas build --platform android --profile preview --non-interactive --wait --json)
+          APK_URL=$(echo "$BUILD_JSON" | jq -r '.[0].artifacts.applicationArchiveUrl')
+          BUILD_ID=$(echo "$BUILD_JSON" | jq -r '.[0].id')
+          if [ -z "$APK_URL" ] || [ "$APK_URL" = "null" ] \
+            || [ -z "$BUILD_ID" ] || [ "$BUILD_ID" = "null" ]; then
+            echo "Não foi possível obter URL/ID do build EAS." >&2
             exit 1
           fi
+          echo "build_id=$BUILD_ID" >> "$GITHUB_OUTPUT"
           curl -sSL -o backOnTrack.apk "$APK_URL"
 
       - name: Publicar release no GitHub
@@ -49,3 +53,34 @@ jobs:
             "backOnTrack.apk#backOnTrack.apk" \
             --title "Back on Track ${{ inputs.tag }}" \
             --notes "${{ inputs.notes }}"
+
+      # Aponta a EAS_INSTALL_URL pro build recém-criado. Não commita na main
+      # (ruleset exige PR) nem abre o PR via API (PR do GITHUB_TOKEN não dispara
+      # o linting.yaml `on: pull_request`, travando os checks). Empurra a branch
+      # e deixa um link pro humano abrir o PR — aí o CI roda normal. Issue #92.
+      - name: Atualiza EAS_INSTALL_URL (branch + link de PR)
+        env:
+          BUILD_ID: ${{ steps.build.outputs.build_id }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          EAS_URL="https://expo.dev/accounts/matheushnascimento/projects/backOnTrack/builds/${BUILD_ID}"
+          sed -i -E "s#(projects/backOnTrack/builds/)[a-f0-9-]+#\1${BUILD_ID}#" constants/distribution.js
+          if git diff --quiet constants/distribution.js; then
+            echo "EAS_INSTALL_URL já aponta pro build atual — nada a fazer." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          BRANCH="chore/eas-install-url-${TAG}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git add constants/distribution.js
+          git commit -m "chore(install): aponta a instalação pro build ${TAG}"
+          git push -u origin "$BRANCH"
+          PR_URL="https://github.com/matheushnascimento/backOnTrack/compare/main...${BRANCH}?expand=1"
+          {
+            echo "## EAS_INSTALL_URL do novo build"
+            echo ""
+            echo "Build \`${TAG}\` → ${EAS_URL}"
+            echo ""
+            echo "Branch \`${BRANCH}\` empurrada. **[Abrir o PR](${PR_URL})** e mergear pra atualizar o card \"Obter o app\"."
+          } >> "$GITHUB_STEP_SUMMARY"
