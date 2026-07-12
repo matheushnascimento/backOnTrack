@@ -43,6 +43,7 @@ export function HistoryCard({
   unit,
   cardStyle,
   exercise,
+  hideDate,
   onChanged,
 }) {
   const id = obj.id;
@@ -74,8 +75,8 @@ export function HistoryCard({
     >
       <Text className="w-full flex-row justify-between">
         <Text className="font-bold text-lg text-light-text dark:text-dark-text">
-          {formatDate(obj.date)}
-          {exercise && obj.trainingTime ? ` ${obj.trainingTime}` : ""}{" "}
+          {hideDate ? "" : `${formatDate(obj.date)} `}
+          {exercise && obj.trainingTime ? `${obj.trainingTime} ` : ""}
           {displayName}
         </Text>
         <Text

@@ -130,6 +130,7 @@ export default function History() {
                     displayName={displayName}
                     unit={unit}
                     exercise={type === "exercise"}
+                    hideDate
                     onChanged={() => setTick((t) => t + 1)}
                   />
                 ))}
