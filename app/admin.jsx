@@ -6,7 +6,7 @@
 // esta tela aparece vazia; só o aparelho do admin popula.
 //#region imports
 import { useCallback, useState } from "react";
-import { ScrollView, Share, Text, View } from "react-native";
+import { Platform, ScrollView, Share, Text, View } from "react-native";
 import { useFocusEffect } from "expo-router";
 
 import MyView from "@/components/MyView";
@@ -66,9 +66,17 @@ export default function Admin() {
       2,
     );
     try {
+      // No web o destino é a máquina de dev (colar no scripts/testers.json), e a
+      // Web Share API nem existe em boa parte do desktop — clipboard é o certo.
+      // No native, o share sheet é o caminho natural pra tirar o JSON do device.
+      if (Platform.OS === "web") {
+        await globalThis.navigator.clipboard.writeText(json);
+        notify("Lista copiada", "Cole em scripts/testers.json.");
+        return;
+      }
       await Share.share({ message: json });
     } catch (e) {
-      notify("Não deu pra compartilhar", String(e?.message ?? e));
+      notify("Não deu pra exportar", String(e?.message ?? e));
     }
   }
 
