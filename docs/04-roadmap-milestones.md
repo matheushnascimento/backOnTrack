@@ -57,7 +57,8 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 - ✅ Tela "hoje" consolidando o progresso do dia (uma query só, graças à tabela única): landing vira o resumo do dia (`app/index.jsx`), lendo `getToday()` (uma passada em `records`, agrupa por `type`); barra "N de 5 métricas" + total consolidado por métrica. Sem metas diárias ainda. Painel de roadmap movido pra `app/roadmap.jsx` (#94)
 - ✅ Histórico navegável por data: tela `app/history.jsx` que lê `getByDate()` (uma passada em `records`, agrupa por `type`) e navega dia a dia (◀/▶ + botão "Hoje", sem avançar pro futuro), reusando o `HistoryCard` (com Editar/Excluir) do `MyHistory`. O grupo-stub `(history)/*` foi removido em favor da rota única; link "Histórico" nos Utilitários da tela "hoje"
 - ✅ Editar/excluir registros (#63): o `MyHistory` tem ações **Editar** (abre a tela via `?id=`) e **Excluir** (com confirmação) por registro
-- ⬜ Primeiro dia de uso real substituindo o papel
+- 🟡 Primeiro dia de uso real substituindo o papel — habilitadores prontos, falta o dogfooding em si. Os testers reportam **de dentro do app**: tela `app/feedback.jsx` que POSTa numa função serverless (`api/feedback.js`, na Vercel) e abre a issue no GitHub sozinha, com label `tester-feedback` — sem exigir conta no GitHub de ninguém (#101). Para avisá-los, tela de admin de testers (`app/admin.jsx`, tabela TinyBase local + exportação da lista) (#109), instância Evolution API em `/projects/evolution_api` e `notify-testers.mjs --send`, que dispara um DM por tester com delay (a Evolution API não suporta lista de transmissão) (#111). Falta: escrever o convite, disparar e rodar o dia
+- ⬜ Triar e resolver as issues reportadas pelos testers no dia de uso real (label `tester-feedback`, abertas pela tela de feedback do app)
 
 ---
 
