@@ -6,7 +6,7 @@
 // esta tela aparece vazia; só o aparelho do admin popula.
 //#region imports
 import { useCallback, useState } from "react";
-import { Alert, ScrollView, Share, Text, View } from "react-native";
+import { ScrollView, Share, Text, View } from "react-native";
 import { useFocusEffect } from "expo-router";
 
 import MyView from "@/components/MyView";
@@ -15,6 +15,7 @@ import MyButton from "@/components/MyButton";
 import MyInput from "@/components/MyInput";
 
 import { shadow } from "@/constants/Colors";
+import { confirmAction, notify } from "@/constants/dialogs";
 import { getTesters, addTester, removeTester } from "@/infra/database";
 //#endregion
 
@@ -42,25 +43,20 @@ export default function Admin() {
   }
 
   function handleRemove(tester) {
-    Alert.alert("Remover tester", `Remover ${tester.name} da lista?`, [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Remover",
-        style: "destructive",
-        onPress: () => {
-          removeTester(tester.id);
-          reload();
-        },
+    confirmAction({
+      title: "Remover tester",
+      message: `Remover ${tester.name} da lista?`,
+      confirmLabel: "Remover",
+      onConfirm: () => {
+        removeTester(tester.id);
+        reload();
       },
-    ]);
+    });
   }
 
   async function handleExport() {
     if (testers.length === 0) {
-      Alert.alert(
-        "Lista vazia",
-        "Adicione ao menos um tester antes de exportar.",
-      );
+      notify("Lista vazia", "Adicione ao menos um tester antes de exportar.");
       return;
     }
     // Formato consumido pelo sender (scripts/testers.json): array de {name, phone}.
@@ -72,7 +68,7 @@ export default function Admin() {
     try {
       await Share.share({ message: json });
     } catch (e) {
-      Alert.alert("Não deu pra compartilhar", String(e?.message ?? e));
+      notify("Não deu pra compartilhar", String(e?.message ?? e));
     }
   }
 
