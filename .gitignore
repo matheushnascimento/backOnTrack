@@ -35,3 +35,6 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# Lista de testers exportada do app (PII) — nunca versionar.
+scripts/testers.json
