@@ -32,4 +32,12 @@ export default defineConfig([
       globals: globals.node,
     },
   },
+  {
+    // Funções serverless (Vercel) rodam em Node (ESM), não no app.
+    files: ["api/**/*.js"],
+    languageOptions: {
+      sourceType: "module",
+      globals: globals.node,
+    },
+  },
 ]);

@@ -148,6 +148,10 @@ export default function Home() {
           />
           <MyButton title="Limpar todos os dados" onPress={handleClear} />
           <MyButton
+            title="Enviar feedback"
+            onPress={() => router.navigate("/feedback")}
+          />
+          <MyButton
             title="Roadmap do projeto"
             onPress={() => router.navigate("/roadmap")}
           />

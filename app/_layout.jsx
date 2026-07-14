@@ -26,6 +26,7 @@ export default function RootLayout() {
         <Stack.Screen name="roadmap" options={{ title: "Roadmap" }} />
         <Stack.Screen name="export" options={{ title: "Exportação" }} />
         <Stack.Screen name="history" options={{ title: "Histórico" }} />
+        <Stack.Screen name="feedback" options={{ title: "Feedback" }} />
         <Stack.Screen name="(metrics)" />
       </Stack>
     </SafeAreaProvider>
