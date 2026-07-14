@@ -2,6 +2,7 @@
 import { createStore } from "tinybase";
 
 const TABLE = "records";
+const TESTERS = "testers";
 
 export const store = createStore().setTablesSchema({
   [TABLE]: {
@@ -11,6 +12,13 @@ export const store = createStore().setTablesSchema({
     unit: { type: "string" },
     note: { type: "string" },
     details: { type: "string", default: "{}" },
+    createdAt: { type: "number" },
+  },
+  // Lista de testers da tela de admin (Track A do M3-5). Local por-device;
+  // só o aparelho do admin popula. Ver app/admin.jsx.
+  [TESTERS]: {
+    name: { type: "string" },
+    phone: { type: "string" },
     createdAt: { type: "number" },
   },
 });
@@ -123,5 +131,34 @@ export function getToday() {
 }
 
 export function clearAll() {
-  store.delTables();
+  // Só os registros — a lista de testers (admin) sobrevive ao "limpar dados".
+  store.delTable(TABLE);
+}
+
+// --- Testers (tela de admin, Track A do M3-5) ---
+
+// Normaliza o número pra algo próximo de E.164: mantém dígitos e um "+" inicial.
+function normalizePhone(phone) {
+  const raw = String(phone ?? "").trim();
+  const plus = raw.startsWith("+") ? "+" : "";
+  return plus + raw.replace(/\D/g, "");
+}
+
+export function getTesters() {
+  const linhas = store.getTable(TESTERS);
+  return Object.entries(linhas)
+    .map(([id, linha]) => ({ id, ...linha }))
+    .sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0));
+}
+
+export function addTester({ name, phone }) {
+  return store.addRow(TESTERS, {
+    name: String(name ?? "").trim(),
+    phone: normalizePhone(phone),
+    createdAt: Date.now(),
+  });
+}
+
+export function removeTester(id) {
+  store.delRow(TESTERS, id);
 }
