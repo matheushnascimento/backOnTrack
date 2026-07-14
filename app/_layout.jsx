@@ -27,6 +27,8 @@ export default function RootLayout() {
         <Stack.Screen name="export" options={{ title: "Exportação" }} />
         <Stack.Screen name="history" options={{ title: "Histórico" }} />
         <Stack.Screen name="feedback" options={{ title: "Feedback" }} />
+        {/* Rota de admin (testers) — acesso só por deep link backontrack://admin */}
+        <Stack.Screen name="admin" options={{ title: "Admin" }} />
         <Stack.Screen name="(metrics)" />
       </Stack>
     </SafeAreaProvider>
