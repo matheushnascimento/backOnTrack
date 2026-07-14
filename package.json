@@ -10,6 +10,7 @@
     "web": "BROWSER=none expo start --web --port 8081 --host lan",
     "vercel-build": "expo export",
     "notify:testers": "node scripts/notify-testers.mjs",
+    "notify:testers:send": "node scripts/notify-testers.mjs --send",
     "lint:prettier:check": "prettier --check .",
     "lint:prettier:fix": "prettier --write .",
     "lint:eslint:check": "eslint .",
