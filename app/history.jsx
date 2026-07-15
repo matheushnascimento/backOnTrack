@@ -127,7 +127,8 @@ export default function History() {
                     unit={unit}
                     exercise={type === "exercise"}
                     hideDate
-                    onChanged={() => setTick((t) => t + 1)}
+                    // Sem onChanged de propósito: o useTable acima já assina a
+                    // store e re-renderiza quando um registro é excluído.
                   />
                 ))}
               </MyView>
