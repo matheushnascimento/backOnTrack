@@ -50,6 +50,11 @@ export default async function handler(req, res) {
 
   const category = String(payload.category ?? "").trim();
   const appVersion = String(payload.appVersion ?? "").trim();
+  const environment = String(payload.environment ?? "").trim();
+  const userAgent = String(payload.userAgent ?? "").trim();
+  const bundle = String(payload.bundle ?? "").trim();
+  // Legado: bundles anteriores ao #116 mandam `device` ("android 36"). Enquanto
+  // o OTA não alcança todos os testers, os dois formatos convivem.
   const device = String(payload.device ?? "").trim();
 
   const title = (
@@ -63,8 +68,11 @@ export default async function handler(req, res) {
     "_Enviado pela tela de feedback do app._",
   ];
   if (category) bodyLines.push(`- Categoria: ${category}`);
+  if (environment) bodyLines.push(`- Ambiente: ${environment}`);
+  else if (device) bodyLines.push(`- Dispositivo: ${device}`);
   if (appVersion) bodyLines.push(`- Versão do app: ${appVersion}`);
-  if (device) bodyLines.push(`- Dispositivo: ${device}`);
+  if (bundle) bodyLines.push(`- Bundle: ${bundle}`);
+  if (userAgent) bodyLines.push(`- User agent: ${userAgent}`);
   const body = bodyLines.join("\n").slice(0, MAX_BODY);
 
   const gh = await fetch(`https://api.github.com/repos/${repo}/issues`, {
