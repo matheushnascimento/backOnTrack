@@ -1,7 +1,7 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //#region imports
 import { useMemo } from "react";
-import { Alert, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { useColorScheme } from "nativewind";
 import { router } from "expo-router";
 import { useTable } from "tinybase/ui-react";
@@ -12,6 +12,7 @@ import MyHeader from "@/components/MyHeader";
 import InstallApp from "@/components/InstallApp";
 
 import { clearAll, getToday, store } from "@/infra/database";
+import { confirmAction } from "@/constants/dialogs";
 import { CATEGORY_MAP } from "@/components/categoryUtils";
 import { minutesToHHMM } from "@/constants/duration";
 import { shadow } from "@/constants/Colors";
@@ -60,19 +61,13 @@ export default function Home() {
   const today = useMemo(() => getToday(), [records]);
 
   function handleClear() {
-    Alert.alert(
-      "Limpar todos os dados",
-      "Isso apaga todos os registros. Tem certeza?",
-      [
-        { text: "Cancelar", style: "cancel" },
-        {
-          text: "Limpar",
-          style: "destructive",
-          // A assinatura da store cuida do re-render; não precisa reler na mão.
-          onPress: clearAll,
-        },
-      ],
-    );
+    confirmAction({
+      title: "Limpar todos os dados",
+      message: "Isso apaga todos os registros. Tem certeza?",
+      confirmLabel: "Limpar",
+      // A assinatura da store cuida do re-render; não precisa reler na mão.
+      onConfirm: clearAll,
+    });
   }
 
   const rows = METRICS.map((type) => {

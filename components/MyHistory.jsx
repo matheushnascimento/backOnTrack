@@ -2,7 +2,7 @@
 //#region imports
 import { useEffect, useState } from "react";
 
-import { Alert, Text, View } from "react-native";
+import { Text, View } from "react-native";
 
 import MyView from "./MyView";
 import MyButton from "./MyButton";
@@ -11,6 +11,7 @@ import { getCategoryInfo } from "./categoryUtils";
 import { Colors, shadow } from "@/constants/Colors";
 
 import { get, getByMonth, remove } from "@/infra/database";
+import { confirmAction } from "@/constants/dialogs";
 import { minutesToHHMM } from "@/constants/duration";
 import Checkbox from "expo-checkbox";
 import { router } from "expo-router";
@@ -54,17 +55,15 @@ export function HistoryCard({
   }
 
   function handleDelete() {
-    Alert.alert("Excluir registro", "Quer mesmo excluir este registro?", [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Excluir",
-        style: "destructive",
-        onPress: () => {
-          remove(id);
-          onChanged?.();
-        },
+    confirmAction({
+      title: "Excluir registro",
+      message: "Quer mesmo excluir este registro?",
+      confirmLabel: "Excluir",
+      onConfirm: () => {
+        remove(id);
+        onChanged?.();
       },
-    ]);
+    });
   }
 
   return (
