@@ -1,9 +1,8 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //#region imports
 import { useState } from "react";
-import { Linking, Platform, ScrollView, Text, View } from "react-native";
+import { Linking, ScrollView, Text, View } from "react-native";
 import { router } from "expo-router";
-import Constants from "expo-constants";
 
 import MyView from "@/components/MyView";
 import MyHeader from "@/components/MyHeader";
@@ -12,6 +11,7 @@ import MyInput from "@/components/MyInput";
 
 import { shadow } from "@/constants/Colors";
 import { FEEDBACK_ENDPOINT, FEEDBACK_KEY } from "@/constants/feedback";
+import { getEnvironmentInfo } from "@/constants/environment";
 //#endregion
 
 const CARD =
@@ -23,8 +23,7 @@ const INPUT = "w-full";
 const CATEGORIES = ["Bug", "Sugestão", "Outro"];
 
 // Contexto que ajuda a triar a issue depois, coletado sem o tester digitar.
-const APP_VERSION = Constants.expoConfig?.version ?? "?";
-const DEVICE = `${Platform.OS} ${Platform.Version ?? ""}`.trim();
+const ENV = getEnvironmentInfo();
 
 export default function Feedback() {
   const [category, setCategory] = useState("");
@@ -52,8 +51,7 @@ export default function Feedback() {
           title: title.trim(),
           body: description.trim(),
           category,
-          appVersion: APP_VERSION,
-          device: DEVICE,
+          ...ENV,
         }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
