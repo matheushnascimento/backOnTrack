@@ -5,9 +5,9 @@
 // A lista vive em TinyBase local (por-device), então numa instalação de tester
 // esta tela aparece vazia; só o aparelho do admin popula.
 //#region imports
-import { useCallback, useState } from "react";
+import { useMemo, useState } from "react";
 import { Platform, ScrollView, Share, Text, View } from "react-native";
-import { useFocusEffect } from "expo-router";
+import { useTable } from "tinybase/ui-react";
 
 import MyView from "@/components/MyView";
 import MyHeader from "@/components/MyHeader";
@@ -16,7 +16,7 @@ import MyInput from "@/components/MyInput";
 
 import { shadow } from "@/constants/Colors";
 import { confirmAction, notify } from "@/constants/dialogs";
-import { getTesters, addTester, removeTester } from "@/infra/database";
+import { getTesters, addTester, removeTester, store } from "@/infra/database";
 //#endregion
 
 const CARD =
@@ -25,12 +25,14 @@ const LABEL =
   "font-bold text-xs text-light-text opacity-60 dark:text-dark-text";
 
 export default function Admin() {
-  const [testers, setTesters] = useState([]);
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
 
-  const reload = useCallback(() => setTesters(getTesters()), []);
-  useFocusEffect(reload);
+  // Assina a tabela: re-renderiza a cada mudança — inclusive quando o
+  // `startAutoLoad()` da persistência termina. Ler só no foco fazia a lista
+  // nascer vazia no primeiro load (mesma causa do #108).
+  const testersTable = useTable("testers", store);
+  const testers = useMemo(() => getTesters(), [testersTable]);
 
   const canAdd = name.trim() !== "" && phone.trim() !== "";
 
@@ -39,7 +41,6 @@ export default function Admin() {
     addTester({ name, phone });
     setName("");
     setPhone("");
-    reload();
   }
 
   function handleRemove(tester) {
@@ -47,10 +48,7 @@ export default function Admin() {
       title: "Remover tester",
       message: `Remover ${tester.name} da lista?`,
       confirmLabel: "Remover",
-      onConfirm: () => {
-        removeTester(tester.id);
-        reload();
-      },
+      onConfirm: () => removeTester(tester.id),
     });
   }
 

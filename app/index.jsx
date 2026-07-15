@@ -1,16 +1,17 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //#region imports
-import { useCallback, useState } from "react";
+import { useMemo } from "react";
 import { Alert, ScrollView, Text, View } from "react-native";
 import { useColorScheme } from "nativewind";
-import { router, useFocusEffect } from "expo-router";
+import { router } from "expo-router";
+import { useTable } from "tinybase/ui-react";
 
 import MyButton from "@/components/MyButton";
 import MyView from "@/components/MyView";
 import MyHeader from "@/components/MyHeader";
 import InstallApp from "@/components/InstallApp";
 
-import { clearAll, getToday } from "@/infra/database";
+import { clearAll, getToday, store } from "@/infra/database";
 import { CATEGORY_MAP } from "@/components/categoryUtils";
 import { minutesToHHMM } from "@/constants/duration";
 import { shadow } from "@/constants/Colors";
@@ -49,15 +50,14 @@ function MetricRow({ done, name, detail }) {
 
 export default function Home() {
   const { toggleColorScheme } = useColorScheme();
-  const [today, setToday] = useState({});
 
-  // Relê o resumo sempre que a tela ganha foco (ex: voltando de um registro).
-  // Segue o padrão pull-manual do projeto — a store não notifica sozinha.
-  useFocusEffect(
-    useCallback(() => {
-      setToday(getToday());
-    }, []),
-  );
+  // Assina a tabela: `useTable` re-renderiza a cada mudança nos registros —
+  // inclusive quando o `startAutoLoad()` da persistência termina de carregar.
+  // Ler só no foco (o padrão anterior) perdia essa carga: no primeiro load a
+  // tela lia a store ainda vazia e nunca era avisada quando os dados chegavam,
+  // então a Home só mostrava algo depois de ir a outra tela e voltar (#108).
+  const records = useTable("records", store);
+  const today = useMemo(() => getToday(), [records]);
 
   function handleClear() {
     Alert.alert(
@@ -68,10 +68,8 @@ export default function Home() {
         {
           text: "Limpar",
           style: "destructive",
-          onPress: () => {
-            clearAll();
-            setToday(getToday());
-          },
+          // A assinatura da store cuida do re-render; não precisa reler na mão.
+          onPress: clearAll,
         },
       ],
     );

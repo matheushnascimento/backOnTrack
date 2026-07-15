@@ -1,15 +1,15 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //#region imports
-import { useCallback, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
-import { useFocusEffect } from "expo-router";
+import { useTable } from "tinybase/ui-react";
 
 import MyView from "@/components/MyView";
 import MyHeader from "@/components/MyHeader";
 import MyButton from "@/components/MyButton";
 import { HistoryCard } from "@/components/MyHistory";
 
-import { getByDate } from "@/infra/database";
+import { getByDate, store } from "@/infra/database";
 import { CATEGORY_MAP, getCategoryInfo } from "@/components/categoryUtils";
 import { shadow } from "@/constants/Colors";
 //#endregion
@@ -42,18 +42,14 @@ function isSameDay(a, b) {
 
 export default function History() {
   const [date, setDate] = useState(() => startOfDay(new Date()));
-  const [tick, setTick] = useState(0);
 
-  // Relê ao focar (voltar de uma edição/exclusão). Segue o pull-manual do
-  // projeto — a store não notifica sozinha.
-  useFocusEffect(
-    useCallback(() => {
-      setTick((t) => t + 1);
-    }, []),
-  );
+  // Assina a tabela: re-renderiza a cada mudança nos registros (edição, exclusão
+  // e também o fim do `startAutoLoad()` da persistência). Ler só no foco perdia
+  // a carga inicial assíncrona — ver #108.
+  const records = useTable("records", store);
 
   // Registros do dia agrupados por type (uma passada só, via getByDate).
-  const day = useMemo(() => getByDate(date.toISOString()), [date, tick]);
+  const day = useMemo(() => getByDate(date.toISOString()), [date, records]);
 
   const isToday = isSameDay(date, new Date());
   const label = date.toLocaleDateString("pt-BR", {
