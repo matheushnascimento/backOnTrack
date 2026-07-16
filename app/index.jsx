@@ -62,6 +62,10 @@ export default function Home() {
   // tela lia a store ainda vazia e nunca era avisada quando os dados chegavam,
   // então a Home só mostrava algo depois de ir a outra tela e voltar (#108).
   const records = useTable("records", store);
+  // `records` é gatilho de propósito: muda quando a tabela muda (inclui o fim do
+  // autoLoad) e força o getToday a reler. O exhaustive-deps não vê que os dois
+  // olham os mesmos dados e sugere remover — o que reintroduziria o #108.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = useMemo(() => getToday(), [records]);
 
   function handleClear() {

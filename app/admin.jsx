@@ -32,6 +32,9 @@ export default function Admin() {
   // `startAutoLoad()` da persistência termina. Ler só no foco fazia a lista
   // nascer vazia no primeiro load (mesma causa do #108).
   const testersTable = useTable("testers", store);
+  // `testersTable` é gatilho de propósito (ver #108); remover a dep faria a
+  // lista não atualizar ao adicionar/remover tester.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const testers = useMemo(() => getTesters(), [testersTable]);
 
   const canAdd = name.trim() !== "" && phone.trim() !== "";
