@@ -13,6 +13,7 @@ import InstallApp from "@/components/InstallApp";
 
 import { clearAll, getToday, store } from "@/infra/database";
 import { confirmAction } from "@/constants/dialogs";
+import { getEnvironmentInfo } from "@/constants/environment";
 import { CATEGORY_MAP } from "@/components/categoryUtils";
 import { minutesToHHMM } from "@/constants/duration";
 import { shadow } from "@/constants/Colors";
@@ -22,6 +23,9 @@ const CARD =
   "w-full max-w-[640px] rounded-lg bg-light-backgroundCard p-4 dark:bg-dark-backgroundCard";
 const LABEL =
   "font-bold text-xs text-light-text opacity-60 dark:text-dark-text";
+
+// Versão/bundle exibidos nos Utilitários (#131).
+const ENV = getEnvironmentInfo();
 
 const METRICS = Object.keys(CATEGORY_MAP);
 const TOTAL = METRICS.length;
@@ -148,6 +152,12 @@ export default function Home() {
             title="Roadmap do projeto"
             onPress={() => router.navigate("/roadmap")}
           />
+          {/* Versão visível pro tester saber (e reportar) em qual bundle está —
+              o OTA troca o JS sem mudar a versão do app (#131). */}
+          <Text className="pt-1 text-center text-xs text-light-text opacity-50 dark:text-dark-text">
+            v{ENV.appVersion}
+            {ENV.bundle ? ` · ${ENV.bundle}` : ""}
+          </Text>
         </MyView>
       </ScrollView>
     </MyView>
