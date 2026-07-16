@@ -6,7 +6,7 @@ Cada milestone tem um objetivo de saída claro. Sabe-se que terminou quando esse
 
 **Legenda:** ✅ pronto · 🟡 parcial/inacabado · ⬜ ainda não feito
 
-**Nota sobre sincronização:** A ideia é: local + sync na nuvem desde o início. A arquitetura (ADR-004, TinyBase) já nasce pronta para isso, mas a milestone de _ativar e validar_ sync (M5) vem depois de o MVP local estar sólido. Isso evita empilhar duas curvas de aprendizado ao mesmo tempo (RN + sync), exatamente o tipo de gargalo que o projeto nasceu pra resolver.
+**Nota sobre sincronização:** A ideia é: local + sync na nuvem desde o início. A arquitetura (ADR-004, TinyBase) já nasce pronta para isso, mas a milestone de _ativar e validar_ sync (M6) vem depois de o MVP local estar sólido. Isso evita empilhar duas curvas de aprendizado ao mesmo tempo (RN + sync), exatamente o tipo de gargalo que o projeto nasceu pra resolver.
 
 ---
 
@@ -62,7 +62,22 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 
 ---
 
-## M4 — Design System & Consistência de UI
+## M4 — Rede de Segurança: Testes Automatizados
+
+**Objetivo de saída:** uma regressão como a do #126 quebra o CI **antes** do merge — não chega no tester.
+
+**Dívida reconhecida (atrasada).** Teste estava agendado no M7, atrás de Design System, Sync e QoL, com E2E marcado como "opcional" — na prática, teste nunca. Enquanto isso os gates são cegos justamente pro código do app: o eslint cobre `**/*.js` e o app é 22 `.jsx` (#128); o `tsc` esbarra no `@ts-nocheck` de todo arquivo (ADR-002); o jest está instalado mas sem config, sem script e sem job. **O CI hoje verifica formatação e mensagem de commit — nada sobre o app funcionar.** Isso já cobrou o preço: o #108 (corrida com o `startAutoLoad()` assíncrono) é comportamental e nenhum linter pegaria; e o #126, introduzido ao corrigi-lo, passou por CI verde e foi pra produção via OTA — só apareceu quando um humano testou. Sem teste, "corrigido" é opinião.
+
+- ⬜ Infra: `jest-expo` configurado, script `test` e job no CI — hoje o jest está instalado sem config, sem script e sem job, e o `tests/test.js` só confere que 1+1 dá 2
+- ⬜ Fazer o eslint enxergar o app (#128): cobrir `.jsx` — um `no-undef` teria barrado o #126 antes do commit
+- ⬜ Testes das funções de domínio: `infra/database.js` (`getToday`/`getByDate`/`add`/`remove`/testers), `constants/duration.js`, o parser do roadmap
+- ⬜ Teste da corrida da persistência (#108): store que carrega assíncrono → a tela precisa atualizar sozinha. É o teste que teria pego o bug original **e** a regressão
+- ⬜ Teste da função serverless `api/feedback.js`: payload novo e legado → corpo da issue
+- ⬜ Registrar o alvo: o que exige teste e o que não, pra evitar teatro de cobertura
+
+---
+
+## M5 — Design System & Consistência de UI
 
 **Objetivo de saída:** telas consistentes em claro/escuro e no web, sobre um conjunto único de tokens e componentes — sem estilo duplicado. É o que separa "funciona" de "parece v1".
 
@@ -75,7 +90,7 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 
 ---
 
-## M5 — Sincronização em Nuvem
+## M6 — Sincronização em Nuvem
 
 **Objetivo de saída:** os dados sobrevivem a perda/troca de aparelho.
 
@@ -86,7 +101,7 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 
 ---
 
-## M6 — Quality of Life
+## M7 — Quality of Life
 
 **Objetivo de saída:** o app é bom de usar, não só funcional.
 
@@ -98,12 +113,11 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 
 ---
 
-## M7 — Estabilização & Manutenção de Longo Prazo
+## M8 — Estabilização & Manutenção de Longo Prazo
 
 **Objetivo de saída:** o app aguenta ser usado por anos, não só semanas.
 
 - ⬜ Tratamento de erros e estados vazios
-- ⬜ Testes nas funções de domínio (unitários); E2E opcional
 - ⬜ Exportação/backup de dados (JSON/CSV) — a rota de exportação já está prevista
 - 🟡 Build via EAS, instalado fora do Expo Go — perfil `preview` gera **APK** instalável (`buildType: apk`, #71/#72); primeiro APK `preview` gerado e **validado num Android real**. Falta o build de **produção** (`.aab` + submit à loja).
 - ⬜ Documentação de manutenção (como rodar, como publicar updates)
