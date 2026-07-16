@@ -72,7 +72,7 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 - ✅ Fazer o eslint enxergar o app (#128): cobre `.jsx` com `no-undef` como erro (teria barrado o #126) + `eslint-plugin-react-hooks`
 - 🟡 Testes das funções de domínio: `infra/database.js` coberto (add/getToday/getByDate/remove/testers, #134); falta `constants/duration.js` e o parser do roadmap
 - ✅ Teste da corrida da persistência (#108): monta vazio, a store enche depois do mount, o consumidor via `useTable` atualiza sozinho — provado que falha contra o padrão antigo (#134)
-- ⬜ Teste da função serverless `api/feedback.js`: payload novo e legado → corpo da issue
+- ✅ Teste da função serverless `api/feedback.js` (#137): guardas, montagem do corpo e compat do #116 (payload legado `device` vs novo `environment`), com o `fetch` mockado — provado que pega a regressão
 - ⬜ Registrar o alvo: o que exige teste e o que não, pra evitar teatro de cobertura
 
 ---
