@@ -66,12 +66,12 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 
 **Objetivo de saída:** uma regressão como a do #126 quebra o CI **antes** do merge — não chega no tester.
 
-**Dívida reconhecida (atrasada).** Teste estava agendado no M7, atrás de Design System, Sync e QoL, com E2E marcado como "opcional" — na prática, teste nunca. Enquanto isso os gates são cegos justamente pro código do app: o eslint cobre `**/*.js` e o app é 22 `.jsx` (#128); o `tsc` esbarra no `@ts-nocheck` de todo arquivo (ADR-002); o jest está instalado mas sem config, sem script e sem job. **O CI hoje verifica formatação e mensagem de commit — nada sobre o app funcionar.** Isso já cobrou o preço: o #108 (corrida com o `startAutoLoad()` assíncrono) é comportamental e nenhum linter pegaria; e o #126, introduzido ao corrigi-lo, passou por CI verde e foi pra produção via OTA — só apareceu quando um humano testou. Sem teste, "corrigido" é opinião.
+**Dívida reconhecida (atrasada), em pagamento.** Teste estava agendado no M7, atrás de Design System, Sync e QoL, com E2E marcado como "opcional" — na prática, teste nunca. E os gates eram cegos justamente pro código do app: o eslint cobria `**/*.js` e o app é 22 `.jsx`; o `tsc` esbarra no `@ts-nocheck` de todo arquivo (ADR-002); o jest estava instalado mas sem config, sem script e sem job. **O CI verificava formatação e mensagem de commit — nada sobre o app funcionar.** Isso cobrou o preço: o #108 (corrida com o `startAutoLoad()` assíncrono) é comportamental e nenhum linter pegaria; e o #126, introduzido ao corrigi-lo, passou por CI verde e foi pra produção via OTA — só apareceu quando um humano testou. Sem teste, "corrigido" é opinião. O eslint já enxerga o app (#128) e a infra de teste já roda no CI, com o próprio #108 coberto (#134); o resto segue abaixo.
 
-- ⬜ Infra: `jest-expo` configurado, script `test` e job no CI — hoje o jest está instalado sem config, sem script e sem job, e o `tests/test.js` só confere que 1+1 dá 2
-- ⬜ Fazer o eslint enxergar o app (#128): cobrir `.jsx` — um `no-undef` teria barrado o #126 antes do commit
-- ⬜ Testes das funções de domínio: `infra/database.js` (`getToday`/`getByDate`/`add`/`remove`/testers), `constants/duration.js`, o parser do roadmap
-- ⬜ Teste da corrida da persistência (#108): store que carrega assíncrono → a tela precisa atualizar sozinha. É o teste que teria pego o bug original **e** a regressão
+- ✅ Infra: `jest-expo` + `@testing-library/react-native` configurados, script `test` e job `Test` no CI (#134). jest fixado no 29 (jest-expo 57 não roda no 30)
+- ✅ Fazer o eslint enxergar o app (#128): cobre `.jsx` com `no-undef` como erro (teria barrado o #126) + `eslint-plugin-react-hooks`
+- 🟡 Testes das funções de domínio: `infra/database.js` coberto (add/getToday/getByDate/remove/testers, #134); falta `constants/duration.js` e o parser do roadmap
+- ✅ Teste da corrida da persistência (#108): monta vazio, a store enche depois do mount, o consumidor via `useTable` atualiza sozinho — provado que falha contra o padrão antigo (#134)
 - ⬜ Teste da função serverless `api/feedback.js`: payload novo e legado → corpo da issue
 - ⬜ Registrar o alvo: o que exige teste e o que não, pra evitar teatro de cobertura
 
