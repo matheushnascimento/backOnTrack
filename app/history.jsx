@@ -49,6 +49,9 @@ export default function History() {
   const records = useTable("records", store);
 
   // Registros do dia agrupados por type (uma passada só, via getByDate).
+  // `records` é gatilho de propósito (ver #108); remover a dep, como o
+  // exhaustive-deps sugere, faria o histórico não atualizar ao excluir.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const day = useMemo(() => getByDate(date.toISOString()), [date, records]);
 
   const isToday = isSameDay(date, new Date());
