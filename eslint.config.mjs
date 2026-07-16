@@ -56,4 +56,15 @@ export default defineConfig([
       globals: globals.node,
     },
   },
+  {
+    // Testes (jest): globals describe/test/expect/…; e os callbacks de
+    // renderHook chamam hooks fora de componente de propósito.
+    files: ["tests/**/*.{js,jsx}"],
+    languageOptions: {
+      globals: { ...globals.browser, ...globals.jest },
+    },
+    rules: {
+      "react-hooks/rules-of-hooks": "off",
+    },
+  },
 ]);
