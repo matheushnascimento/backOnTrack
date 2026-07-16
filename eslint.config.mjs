@@ -61,7 +61,8 @@ export default defineConfig([
     // renderHook chamam hooks fora de componente de propósito.
     files: ["tests/**/*.{js,jsx}"],
     languageOptions: {
-      globals: { ...globals.browser, ...globals.jest },
+      // browser (fetch/navigator) + node (process/global) + jest.
+      globals: { ...globals.browser, ...globals.node, ...globals.jest },
     },
     rules: {
       "react-hooks/rules-of-hooks": "off",
