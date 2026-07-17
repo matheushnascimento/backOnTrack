@@ -73,7 +73,7 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 - ✅ Testes das funções de domínio: `infra/database.js` (#134), `constants/duration.js` e o parser do roadmap `constants/roadmap.js` (#140) — a armadilha dos parênteses aninhados travada por teste
 - ✅ Teste da corrida da persistência (#108): monta vazio, a store enche depois do mount, o consumidor via `useTable` atualiza sozinho — provado que falha contra o padrão antigo (#134)
 - ✅ Teste da função serverless `api/feedback.js` (#137): guardas, montagem do corpo e compat do #116 (payload legado `device` vs novo `environment`), com o `fetch` mockado — provado que pega a regressão
-- ⬜ Registrar o alvo: o que exige teste e o que não, pra evitar teatro de cobertura
+- ✅ Registrar o alvo (#143): `docs/06-guia-testes.md` com o critério "custo do bug > custo do teste", "teste isto"/"não teste isto" ancorados nos bugs desta rodada (#108/#116/#126), padrões técnicos do projeto e a decisão consciente sobre E2E
 
 ---
 
