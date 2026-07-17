@@ -1,0 +1,93 @@
+// @ts-nocheck -- teste; globals do jest não são tipados (ADR-002)
+// Parser do roadmap (M4, #140). É ele que alimenta a tela /roadmap a partir do
+// docs/04-roadmap-milestones.md — se quebrar, a tela mente ou some.
+import { parseRoadmap, cleanText, getDigest } from "../constants/roadmap";
+
+const MD = `
+## M0: Fundamentos ✅ concluído
+
+- ✅ Ambiente configurado
+- ✅ Navegação entre telas
+
+## M1 — Trabalho real
+
+- ✅ Persistência integrada
+- 🟡 Migração de estilo
+- ⬜ Documentação de manutenção
+`;
+
+describe("parseRoadmap", () => {
+  test("extrai milestones na ordem, com id e título limpos", () => {
+    const ms = parseRoadmap(MD);
+    expect(ms.map((m) => m.id)).toEqual(["M0", "M1"]);
+    expect(ms[0].title).toBe("Fundamentos");
+    expect(ms[1].title).toBe("Trabalho real");
+  });
+
+  test("extrai os itens com status", () => {
+    const [, m1] = parseRoadmap(MD);
+    expect(m1.items).toEqual([
+      { status: "done", text: "Persistência integrada" },
+      { status: "partial", text: "Migração de estilo" },
+      { status: "todo", text: "Documentação de manutenção" },
+    ]);
+  });
+
+  test("status da milestone: header manda; senão, infere dos itens", () => {
+    const [m0, m1] = parseRoadmap(MD);
+    expect(m0.status).toBe("done"); // "✅ concluído" no header
+    expect(m1.status).toBe("partial"); // itens mistos → parcial
+  });
+
+  test("tolerante: linhas fora do padrão não quebram nem viram item", () => {
+    const ms = parseRoadmap("## M9 Teste\n\ntexto solto\n- ✅ item real\n");
+    expect(ms).toHaveLength(1);
+    expect(ms[0].items).toEqual([{ status: "done", text: "item real" }]);
+  });
+});
+
+describe("cleanText", () => {
+  test("remove link markdown, mantendo o rótulo", () => {
+    expect(cleanText("Histórico [#63](https://x)")).toBe("Histórico");
+  });
+
+  test("remove `code`, **bold** e parênteses simples", () => {
+    expect(cleanText("Tela `app/index.jsx` (#94)")).toBe("Tela app/index.jsx");
+    expect(cleanText("**Editar** registros")).toBe("Editar registros");
+  });
+
+  test("corta na manchete (primeiro ':' depois do 15º caractere)", () => {
+    expect(
+      cleanText("Histórico navegável por data: tela app/history.jsx"),
+    ).toBe("Histórico navegável por data");
+  });
+
+  test("LIMITAÇÃO conhecida: parênteses aninhados deixam ')' órfão", () => {
+    // O regex remove de '(' até o PRIMEIRO ')', então aninhado sobra lixo.
+    // Documentado de propósito: se alguém consertar o parser, este teste avisa
+    // (é o que motivou reescrever o item do M4 sem parênteses aninhados).
+    expect(cleanText("roda (expect(1+1).toEqual(2)) no CI")).toContain(
+      "toEqual)",
+    );
+  });
+});
+
+describe("getDigest", () => {
+  test("contagem de milestones e milestone atual", () => {
+    const d = getDigest(parseRoadmap(MD));
+    expect(d.milestonesDone).toBe(1);
+    expect(d.milestonesTotal).toBe(2);
+    expect(d.current.id).toBe("M1"); // primeira parcial
+    expect(d.currentProgress).toEqual({ done: 1, total: 3 });
+  });
+
+  test("recentDone completa com a milestone anterior quando há poucos", () => {
+    const d = getDigest(parseRoadmap(MD));
+    // M1 só tem 1 ✅; completa com os 2 ✅ do M0.
+    expect(d.recentDone.map((i) => i.text)).toEqual([
+      "Ambiente configurado",
+      "Navegação entre telas",
+      "Persistência integrada",
+    ]);
+  });
+});
