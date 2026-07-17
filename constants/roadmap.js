@@ -119,11 +119,13 @@ export function getDigest(milestones) {
   const total = milestones.length;
   const done = milestones.filter((m) => m.status === "done").length;
 
+  // "Atual" = a próxima milestone que ainda tem trabalho, na ordem do
+  // roadmap. Não usa "primeiro parcial" porque uma dívida pendente lá no fim
+  // (ex: build de produção/loja no M8) apareceria como "atual" mesmo depois
+  // de milestones inteiras ⬜ à frente. #147.
   const currentIndex = (() => {
-    const partial = milestones.findIndex((m) => m.status === "partial");
-    if (partial !== -1) return partial;
-    const todo = milestones.findIndex((m) => m.status === "todo");
-    return todo !== -1 ? todo : Math.max(0, milestones.length - 1);
+    const next = milestones.findIndex((m) => m.status !== "done");
+    return next !== -1 ? next : Math.max(0, milestones.length - 1);
   })();
 
   const current = milestones[currentIndex] ?? null;

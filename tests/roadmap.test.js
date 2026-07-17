@@ -73,12 +73,29 @@ describe("cleanText", () => {
 });
 
 describe("getDigest", () => {
-  test("contagem de milestones e milestone atual", () => {
+  test("contagem de milestones e milestone atual (primeira não-done)", () => {
     const d = getDigest(parseRoadmap(MD));
     expect(d.milestonesDone).toBe(1);
     expect(d.milestonesTotal).toBe(2);
-    expect(d.current.id).toBe("M1"); // primeira parcial
+    expect(d.current.id).toBe("M1"); // primeira não-done
     expect(d.currentProgress).toEqual({ done: 1, total: 3 });
+  });
+
+  test("current pula milestones ⬜ do meio pra pegar a próxima na ordem (#147)", () => {
+    // Cenário do #147: dívida pendente lá no fim (partial) NÃO deve ganhar de
+    // milestones ⬜ que vêm antes. "Atual" = próximo trabalho na ordem.
+    const md = `
+## M0 Feito
+- ✅ x
+## M1 Próximo
+- ⬜ a
+## M2 Também aberto
+- ⬜ b
+## M3 Dívida pendente do fim
+- 🟡 c
+- ⬜ d
+`;
+    expect(getDigest(parseRoadmap(md)).current.id).toBe("M1");
   });
 
   test("recentDone completa com a milestone anterior quando há poucos", () => {
