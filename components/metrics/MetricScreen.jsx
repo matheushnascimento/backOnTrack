@@ -16,6 +16,7 @@ import MyHeaderRaw from "@/components/MyHeader";
 
 import { getCategoryInfo } from "@/components/categoryUtils";
 import getDate from "@/constants/getDate";
+import { shadow } from "@/constants/Colors";
 import { add, getById, update } from "@/infra/database";
 import { getMetricConfig } from "./registry";
 
@@ -98,6 +99,7 @@ export default function MetricScreen({ metric, recordId }) {
         <MyView
           safe={false}
           className={`max-w-[640px] gap-8 rounded-lg bg-light-backgroundCard p-3 dark:bg-dark-backgroundCard ${config.cardClass ?? ""}`}
+          style={shadow}
         >
           <Text className={FIELD_LABEL}>
             {date.displayDate} {displayName}

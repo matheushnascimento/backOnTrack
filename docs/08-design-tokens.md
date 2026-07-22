@@ -148,7 +148,49 @@ Deve retornar vazio.
 
 ---
 
+## Sombra (`shadow`) — fatia 4
+
+**Regra:** um único nível de elevação, aplicado por `style`. Não há hierarquia de sombra hoje.
+
+| Token                                         | Definição                                                                                               | Papel                                        |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| `shadow` (objeto RN em `constants/Colors.js`) | `elevation: 4`, `shadowColor: "#000"`, `shadowOffset: {0, 4}`, `shadowOpacity: 0.25`, `shadowRadius: 4` | Elevação padrão: top-level cards e controles |
+
+Uso: `style={shadow}` ou `style={[shadow, otherStyle]}`.
+
+### Regras de aplicação
+
+1. **Top-level card** (direto no `ScrollView`, topo do conteúdo da tela) → aplica `shadow`.
+2. **Nested card** (dentro de outro card, tipo `DurationField` dentro do form) → **sem** shadow. Evita dupla elevação.
+3. **Controle** (`MyButton`, `MyIconButton`) → shadow embutido no componente — quem usa não precisa lembrar.
+
+### Rationale
+
+- **Um nível é o mínimo útil hoje.** O app não tem modal, dropdown, popover ou drawer flutuante — o único plano acima do fundo é "card + botão". Adicionar níveis (ex: `shadow-sm`, `shadow-lg`) só ganha valor quando houver hierarquia visual pedindo.
+- **Objeto RN, não Tailwind class.** `shadow-*` do Tailwind gera `box-shadow` CSS — no web funciona, no native o NativeWind traduz mas com semântica diferente (elevation Android vs shadowX iOS). Manter em objeto RN é explícito e portável entre plataformas.
+- **`style={shadow}` como pattern.** Consistente com `Snackbar`/inputs que já usam `style` inline pra props RN puras.
+
+### O que a fatia mudou (#163)
+
+- `components/metrics/MetricScreen.jsx` — adiciona `import { shadow }` e aplica `style={shadow}` no card top-level do form. Alinha com as 6 telas topo-nível que já tinham (index, history, admin, feedback, roadmap, InstallApp.web). Miss de quando `MetricScreen` foi montado (M2, #80).
+
+### Como validar
+
+Todos os cards top-level do repo têm `style={shadow}`:
+
+```bash
+git grep -B1 -A2 '${CARD}\|max-w-\[640px\].*rounded-lg' -- '*.jsx'
+```
+
+Deve mostrar `style={shadow}` acompanhando cada card top-level (com exceção dos cards nested como `DurationField` — regra 2).
+
+### O que NÃO está resolvido aqui
+
+- **Migrar pra `tailwind.config.js` `boxShadow`** — requer validar NativeWind renderizando igual em native (elevation/shadowX). Fora de escopo; hoje o objeto RN é a fonte da verdade.
+- **Segundo nível de elevação** (`shadow-lg` pra modal, `shadow-sm` pra chip) — só faz sentido quando o app ganhar esses componentes; fatia própria.
+
+---
+
 ## Próximas fatias
 
-- **Sombra** — hoje `shadow` (objeto RN em `constants/Colors.js`) é aplicado como `style={shadow}` em cada card; virou de fato um token, só falta documentar aqui.
 - **Cor** — separar semântica (`selected`, `success`, `danger`) do papel visual atual do `bg-secondary`, e criar `border`/`placeholder` tokens que respondam ao dark mode.
