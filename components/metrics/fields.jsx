@@ -16,7 +16,7 @@ const MyIconButton = /** @type {any} */ (MyIconButtonRaw);
 
 const LABEL = "font-bold text-lg text-light-text dark:text-dark-text";
 const INPUT_LG =
-  "h-[51px] w-20 max-w-[160px] rounded-lg bg-light-backgroundCard dark:bg-dark-backgroundCard p-1.5 text-center text-[26px] font-bold text-light-text dark:text-dark-text";
+  "h-[51px] w-20 max-w-[160px] rounded-md bg-light-backgroundCard dark:bg-dark-backgroundCard p-1.5 text-center text-[26px] font-bold text-light-text dark:text-dark-text";
 const CARD =
   "items-center gap-8 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard";
 
@@ -32,7 +32,7 @@ const CARD =
  */
 export function MinMaxIdealField({ min, max, ideal, onMin, onMax, onIdeal }) {
   const inputClass =
-    "max-w-[160px] rounded-lg bg-light-backgroundCard p-1.5 text-[26px] font-bold text-light-text dark:bg-dark-backgroundCard dark:text-dark-text";
+    "max-w-[160px] rounded-md bg-light-backgroundCard p-1.5 text-[26px] font-bold text-light-text dark:bg-dark-backgroundCard dark:text-dark-text";
   const cols = [
     { label: "MIN", value: min, onChange: onMin },
     { label: "MAX", value: max, onChange: onMax },
@@ -128,7 +128,7 @@ export function QuantityField({ label, value, unit, onChange }) {
         {label} hoje
       </Text>
       <TextInput
-        className="h-[51px] w-20 rounded-lg bg-light-backgroundCard p-1.5 text-center text-[26px] font-bold text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
+        className="h-[51px] w-20 rounded-md bg-light-backgroundCard p-1.5 text-center text-[26px] font-bold text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
         placeholder="--"
         value={value}
         onChangeText={onChange}

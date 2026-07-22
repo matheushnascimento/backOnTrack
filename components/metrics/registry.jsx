@@ -26,7 +26,7 @@ const MyCheckbox = /** @type {any} */ (MyCheckboxRaw);
 
 const LABEL = "font-bold text-lg text-light-text dark:text-dark-text";
 const INPUT_LG =
-  "h-[51px] w-20 max-w-[160px] rounded-lg bg-light-backgroundCard dark:bg-dark-backgroundCard p-1.5 text-center text-[26px] font-bold text-light-text dark:text-dark-text";
+  "h-[51px] w-20 max-w-[160px] rounded-md bg-light-backgroundCard dark:bg-dark-backgroundCard p-1.5 text-center text-[26px] font-bold text-light-text dark:text-dark-text";
 
 /**
  * @typedef {Object} SlotProps

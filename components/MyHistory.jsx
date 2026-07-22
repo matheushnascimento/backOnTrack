@@ -69,7 +69,7 @@ export function HistoryCard({
   return (
     <MyView
       safe={false}
-      className="w-full max-w-[640px] gap-2.5 rounded-md bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
+      className="w-full max-w-[640px] gap-2.5 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
       style={[cardStyle, shadow]}
     >
       <View className="w-full flex-row items-center justify-between">
