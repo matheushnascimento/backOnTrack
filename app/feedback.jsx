@@ -156,7 +156,7 @@ export default function Feedback() {
               />
 
               {status === "error" && (
-                <Text className="text-sm text-red-500">
+                <Text className="text-sm text-danger">
                   Não consegui enviar ({errorMsg}). Tenta de novo em instantes.
                 </Text>
               )}

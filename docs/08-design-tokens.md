@@ -191,6 +191,63 @@ Deve mostrar `style={shadow}` acompanhando cada card top-level (com exceção do
 
 ---
 
-## Próximas fatias
+## Cor (`bg-*` / `text-*`) — fatia 5
 
-- **Cor** — separar semântica (`selected`, `success`, `danger`) do papel visual atual do `bg-secondary`, e criar `border`/`placeholder` tokens que respondam ao dark mode.
+**Regra:** paleta base em `constants/Colors.js`, exposta em `tailwind.config.js`. Um token por papel semântico. Zero uso da paleta Tailwind default pra sinal (`text-red-*`, `bg-green-*`, etc).
+
+### Paleta base
+
+| Token       | Valor     | Papel                                                            |
+| ----------- | --------- | ---------------------------------------------------------------- |
+| `primary`   | `#2E5A88` | Botão padrão, elementos-chave da marca                           |
+| `secondary` | `#4CAF50` | Selecionado/ativo/positivo (verde da marca — Material green-500) |
+| `danger`    | `#F44336` | Ação destrutiva ou erro visível (Material red-500)               |
+
+### Tokens de superfície (por tema)
+
+Continuam em `Colors.light` / `Colors.dark`, expostos como `light-*` / `dark-*` no Tailwind. Usados sempre com `dark:` pra alternar (`bg-light-background dark:bg-dark-background`).
+
+| Token            | Light                 | Dark                        |
+| ---------------- | --------------------- | --------------------------- |
+| `background`     | `#F8F9FA`             | `#333333`                   |
+| `text`           | `#333333`             | `#F8F9FA`                   |
+| `outerText`      | `#F8F9FA`             | `#333333`                   |
+| `backgroundCard` | `rgba(0, 0, 0, 0.08)` | `rgba(255, 255, 255, 0.15)` |
+
+### Regras semânticas
+
+- `bg-primary` — botão padrão (marca).
+- `bg-secondary` — selecionado, ativo, nota máxima, progresso positivo. É o verde da marca; mesmo papel visual serve os 4 usos.
+- `bg-danger` / `text-danger` — só onde é **destrutivo** (excluir/remover) ou **erro** visível ao usuário.
+
+Nunca reciclar um token pra um papel diferente do declarado. Se um novo papel semântico aparecer (`warning`, `info`), ele ganha token próprio — não pega carona no `secondary`.
+
+### Rationale
+
+- **Nome do papel importa mais que a cor.** A auditoria pegou `bg-secondary` sendo usado com 3 significados diferentes: chip selecionado, badge de nota máxima, e botão "Remover" tester (§3.1). Os dois primeiros compartilham "positivo/verde-da-marca"; o "Remover" é destrutivo e precisa de cor própria.
+- **Material green-500 + Material red-500** — o `secondary` já era Material green-500 (`#4CAF50`), então o `danger` como Material red-500 (`#F44336`) casa em saturação e peso visual, sem precisar reafinar o `secondary`.
+- **Não temos `success`, `warning`, `info` — de propósito.** O app não tem sinal semântico que exija cores próprias hoje. Se surgir, entra em fatia própria com token semântico próprio, sem sobrescrever nenhum existente.
+
+### O que a fatia mudou (#166)
+
+- `constants/Colors.js` — adiciona `Colors.danger = "#F44336"` no topo (paralelo a `primary` e `secondary`).
+- `tailwind.config.js` — expõe `danger: Colors.danger` no `colors.extend`.
+- `app/admin.jsx` — botão "Remover" tester: `bg-secondary` → `bg-danger`. O fix real: hoje o "Remover" tá verde, mesma cor do "está selecionado".
+- `app/feedback.jsx` — mensagem de erro do submit: `text-red-500` → `text-danger`. Traz o único uso da paleta Tailwind default pra dentro do sistema.
+
+### Como validar
+
+Todo `bg-secondary` restante é semantica "selecionado/positivo" (chip do `MyButton`, badge score-5 do `MyHistory`, barra de progresso da Home/Roadmap, banner de update). Zero uso da paleta Tailwind default pra sinal:
+
+```bash
+git grep -nE 'text-red-|bg-red-|text-green-|bg-green-|text-yellow-|bg-yellow-' -- '*.jsx'
+```
+
+Deve retornar vazio.
+
+### O que NÃO está resolvido aqui
+
+- **Cor de borda** (`border-[#333]` / `dark:border-[#888]` inline em `MyInput` e `MyIconButton`) — funciona nos dois temas depois do fix funcional (#153). Virar token exigiria redesenho de `MyInput`/`MyIconButton` (props ou variantes); fatia própria se aparecer segunda cor de borda semântica.
+- **Cor de placeholder** (`placeholderTextColor="#888"` em `MyInput`) — hex cru mas funcional em ambos os temas. Vira token quando componentizarmos `MyInput`.
+- **Ícone hex fixo** (`color="#333"` em `MyButton`) — cosmético, sem trigger claro.
+- **Cor de ripple** (`android_ripple={{ color: "#00000022" }}`) — detalhe de plataforma Android, não vira token.
