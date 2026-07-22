@@ -113,7 +113,7 @@ export default function MetricScreen({ metric, recordId }) {
             <TextInput
               value={observation}
               onChangeText={setObservation}
-              className="h-16 rounded-lg bg-light-backgroundCard p-1.5 text-lg font-normal text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
+              className="h-16 rounded-lg bg-light-backgroundCard p-1.5 text-base font-normal text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
               placeholder={config.obsPlaceholder}
             />
           </MyView>

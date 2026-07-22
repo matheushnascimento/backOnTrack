@@ -51,26 +51,30 @@ Deve retornar apenas `rounded-full`, `rounded-lg` e `rounded-md`.
 
 ## Tipografia (`text-*`) — fatia 2
 
-**Regra:** só a escala Tailwind, um valor por papel. Zero uso de `text-[Npx]` (pixel cru fora da escala).
+**Regra:** escala custom em `tailwind.config.js`, em px direto, ergonômica pra mobile. Zero uso de `text-[Npx]` (pixel cru fora da escala).
 
-| Token       | Papel                                              | Onde usar                                                                                 |
-| ----------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------- |
-| `text-xs`   | Rótulo de seção (SECTION LABEL)                    | "MÉTRICAS DE HOJE", "UTILITÁRIOS", "HISTÓRICO"… nos cards das telas topo-nível            |
-| `text-base` | Corpo                                              | Linhas de métrica na Home, texto de item de histórico, descrições secundárias             |
-| `text-lg`   | Rótulo de campo (FIELD LABEL) e valores destacados | "MIN"/"MAX"/"IDEAL", "OBS:", "Nota", "Hora do treino", input de observação, badge da nota |
-| `text-2xl`  | Título de card                                     | "Hoje", "Enviar feedback", "Testers", inputs grandes de métrica                           |
+| Token       | px  | Papel                                              | Onde usar                                                                      |
+| ----------- | --- | -------------------------------------------------- | ------------------------------------------------------------------------------ |
+| `text-xs`   | 13  | Rótulo de seção (SECTION LABEL)                    | "MÉTRICAS DE HOJE", "UTILITÁRIOS", "HISTÓRICO"… nos cards das telas topo-nível |
+| `text-sm`   | 15  | Secondary                                          | Detalhe do item, texto de rodapé menor                                         |
+| `text-base` | 17  | Corpo — iOS body                                   | Linhas de métrica, item de histórico, input de observação, descrições          |
+| `text-lg`   | 19  | Rótulo de campo (FIELD LABEL) e valores destacados | "MIN"/"MAX"/"IDEAL", "OBS:", "Nota", "Hora do treino", badge da nota           |
+| `text-xl`   | 22  | Subtitle                                           | reservado (sem uso ainda)                                                      |
+| `text-2xl`  | 28  | Título de card                                     | "Hoje", "Enviar feedback", "Testers", inputs grandes de métrica                |
 
 ### Rationale
 
-- **A escala Tailwind já é canônica** — `text-xs`, `text-base`, `text-lg` e `text-2xl` cobrem os papéis do app hoje. `text-sm`, `text-xl` e `text-3xl` estão disponíveis se aparecer um degrau a mais adiante, mas até lá ficam sem uso.
-- **Pixel cru é sintoma, não escolha.** Todo `text-[Npx]` no repo vinha de "queria um pouco maior/menor" — sinal de que faltava um degrau. Alinhar com a escala do Tailwind mata a arbitrariedade e mantém a proporção coerente.
-- **Nome do papel importa mais que o número.** `LABEL` estava sendo usado com dois significados diferentes (rótulo de seção `text-xs opacity-60` × rótulo de campo `text-lg`) — a fatia adota `FIELD_LABEL` nos arquivos de métrica pra desambiguar. O `LABEL` das telas topo-nível fica como está até a fatia de componentização, quando vira `SectionLabel` como componente.
+- **Body = 17px alinha com o padrão iOS** (`system body` = 17pt) e sente confortável em web também. Tailwind default de 16px estava ficando apertado, sobretudo em telas maiores.
+- **Escala custom em px direto** — resolve a raiz do §4 da auditoria: o `font-size: 62.5%` mal aplicado tentava fazer `rem` virar "1 = 10px", mas comportamento não era previsível. Definindo em px, cortamos a dependência do `font-size` do html e do NativeWind gerar rem/px.
+- **Um valor por papel.** Nome do papel importa mais que o número — `LABEL` estava sendo usado com dois significados diferentes (rótulo de seção `text-xs opacity-60` × rótulo de campo `text-lg`) e a fatia adota `FIELD_LABEL` nos arquivos de métrica pra desambiguar. O `LABEL` das telas topo-nível fica como está até a fatia de componentização, quando vira `SectionLabel` como componente.
+- **Escala Tailwind, valores custom.** Manter os nomes canônicos (`text-xs`, `text-base`, `text-lg`, `text-2xl`) permite trocar valores num único arquivo (`tailwind.config.js`) sem caçar pixel cru pelo repo depois — decisão fica em um lugar só.
 
 ### O que a fatia mudou (#157)
 
-- `global.css` — remove `font-size: 62.5%`. Aplicado em `*`, o valor efetivo compõe a cada nível de aninhamento (§4 da auditoria); NativeWind gera px direto sem depender de `rem`, então era **dead code no web e ignorado no native**.
-- `components/metrics/fields.jsx` (3×) e `components/metrics/registry.jsx` (1×) — `text-[26px]` → `text-2xl` (24px). Diferença de 2px, imperceptível na prática.
-- `components/metrics/MetricScreen.jsx` — `text-[19px]` → `text-lg` (18px) no `TextInput` de observação. Diferença de 1px.
+- `tailwind.config.js` — nova escala `fontSize` custom (xs 13, sm 15, base 17, lg 19, xl 22, 2xl 28) sobrescrevendo a default do Tailwind.
+- `global.css` — remove `font-size: 62.5%` aplicado em `*` (compunha por nível de aninhamento — §4 da auditoria).
+- `components/metrics/fields.jsx` (3×) e `components/metrics/registry.jsx` (1×) — `text-[26px]` → `text-2xl` (agora 28px).
+- `components/metrics/MetricScreen.jsx` — `text-[19px]` → `text-base` (17px) no `TextInput` de observação. Bate com o corpo, sem mais mismatch input/corpo.
 - `components/metrics/MetricScreen.jsx`, `components/metrics/fields.jsx`, `components/metrics/registry.jsx` — `LABEL` → `FIELD_LABEL`. Escopo local (constantes por arquivo), não afeta consumidores.
 
 ### Como validar
@@ -82,6 +86,8 @@ git grep -nE 'text-\[[0-9]+px\]' -- '*.jsx' '*.js' '*.css'
 ```
 
 Deve retornar vazio.
+
+Ajustar a escala depois: só editar `theme.extend.fontSize` no `tailwind.config.js` — todo o repo herda o novo valor.
 
 ### O que NÃO está resolvido aqui
 
