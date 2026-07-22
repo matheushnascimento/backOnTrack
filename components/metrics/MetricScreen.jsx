@@ -12,6 +12,7 @@ import { Snackbar } from "react-native-paper";
 
 import ScoreRaw from "@/components/Score";
 import MyViewRaw from "@/components/MyView";
+import MyHeaderRaw from "@/components/MyHeader";
 
 import { getCategoryInfo } from "@/components/categoryUtils";
 import getDate from "@/constants/getDate";
@@ -20,6 +21,7 @@ import { getMetricConfig } from "./registry";
 
 const MyView = /** @type {any} */ (MyViewRaw);
 const Score = /** @type {any} */ (ScoreRaw);
+const MyHeader = /** @type {any} */ (MyHeaderRaw);
 
 const LABEL = "font-bold text-lg text-light-text dark:text-dark-text";
 
@@ -73,8 +75,9 @@ export default function MetricScreen({ metric, recordId }) {
   return (
     <MyView
       safe={true}
-      className="flex-1 items-center gap-4 bg-light-background p-4 dark:bg-dark-background"
+      className="flex-1 bg-light-background dark:bg-dark-background"
     >
+      <MyHeader />
       <Snackbar
         visible={visible}
         onDismiss={() => setVisible(false)}
@@ -85,8 +88,9 @@ export default function MetricScreen({ metric, recordId }) {
       <ScrollView
         style={{ width: "100%" }}
         contentContainerStyle={{
-          alignItems: "center",
+          padding: 16,
           gap: 16,
+          alignItems: "center",
           paddingBottom: 24,
         }}
         showsVerticalScrollIndicator={false}

@@ -2,29 +2,19 @@
 import "@/global.css";
 
 import { Stack } from "expo-router";
-import { useColorScheme, View } from "react-native";
+import { View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import { Colors } from "@/constants/Colors";
 import { useRegistrosPersistencia } from "@/infra/persistence";
 import UpdateBanner from "@/components/UpdateBanner";
 
 export default function RootLayout() {
-  const colorScheme = useColorScheme();
-  const theme = Colors[colorScheme] ?? Colors.light;
-
   useRegistrosPersistencia();
 
   return (
     <SafeAreaProvider>
       {/* View de raiz só pra ancorar o UpdateBanner sobre a rota atual. */}
       <View className="flex-1">
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            headerStyle: { backgroundColor: theme.background },
-            headerTintColor: theme.text,
-          }}
-        >
+        <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" options={{ title: "Hoje" }} />
           <Stack.Screen name="roadmap" options={{ title: "Roadmap" }} />
           <Stack.Screen name="export" options={{ title: "Exportação" }} />

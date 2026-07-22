@@ -7,7 +7,7 @@ import { Text } from "react-native";
 
 export default function MyCheckbox({ label, onValueChange, value }) {
   return (
-    <MyView className="flex-row items-center gap-1.5">
+    <MyView safe={false} className="flex-row items-center gap-1.5">
       <Checkbox
         color={value ? Colors.primary : "gray"}
         value={value}
