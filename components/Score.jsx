@@ -9,7 +9,7 @@ export default function Score({ onPress, value, ...props }) {
   return (
     <MyView
       safe={false}
-      className="flex-row flex-wrap items-center justify-start gap-2.5 p-1.5"
+      className="flex-row flex-wrap items-center justify-start gap-3 p-2"
     >
       {Array.from({ length: scoreRange + 1 }).map((_, index) => (
         <MyButton

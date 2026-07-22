@@ -15,7 +15,7 @@ export default function MyInput({
   ...props
 }) {
   return (
-    <MyView safe={false} className={`gap-1.5 ${containerClassName}`}>
+    <MyView safe={false} className={`gap-2 ${containerClassName}`}>
       {label != null && (
         <Text className="font-bold text-base text-light-text dark:text-dark-text">
           {label}
