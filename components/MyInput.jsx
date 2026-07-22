@@ -22,7 +22,7 @@ export default function MyInput({
         </Text>
       )}
       <TextInput
-        className={`rounded border border-[#333] px-2 py-1 text-light-text dark:text-dark-text ${
+        className={`rounded border border-[#333] px-2 py-1 text-light-text dark:border-[#888] dark:text-dark-text ${
           className ?? ""
         }`}
         style={style}

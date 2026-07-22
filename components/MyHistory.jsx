@@ -72,7 +72,7 @@ export function HistoryCard({
       className="w-full max-w-[640px] gap-2.5 rounded-md bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
       style={[cardStyle, shadow]}
     >
-      <Text className="w-full flex-row justify-between">
+      <View className="w-full flex-row items-center justify-between">
         <Text className="font-bold text-lg text-light-text dark:text-dark-text">
           {hideDate ? "" : `${formatDate(obj.date)} `}
           {exercise && obj.trainingTime ? `${obj.trainingTime} ` : ""}
@@ -85,7 +85,7 @@ export function HistoryCard({
         >
           {obj.score}
         </Text>
-      </Text>
+      </View>
 
       {exercise && (
         <MyView safe={false} className="flex-row gap-4">
