@@ -4,8 +4,9 @@ import { ScrollView, Text, View } from "react-native";
 
 import MyView from "@/components/MyView";
 import MyHeader from "@/components/MyHeader";
+import Card from "@/components/Card";
+import SectionLabel from "@/components/SectionLabel";
 
-import { shadow } from "@/constants/Colors";
 import { parseRoadmap, getDigest } from "@/constants/roadmap";
 // Caminho relativo de propósito: o babel-plugin-inline-import resolve pelo
 // arquivo, não pelo alias @/. Editar o roadmap exige reiniciar com --clear.
@@ -15,10 +16,6 @@ import roadmapMd from "../docs/04-roadmap-milestones.md";
 const STATUS_ICON = { done: "✅", partial: "🟡", todo: "⬜" };
 const digest = getDigest(parseRoadmap(roadmapMd));
 
-const CARD =
-  "w-full max-w-[640px] rounded-lg bg-light-backgroundCard p-4 dark:bg-dark-backgroundCard";
-const LABEL =
-  "font-bold text-xs text-light-text opacity-60 dark:text-dark-text";
 const ITEM_TEXT = "flex-1 text-base text-light-text dark:text-dark-text";
 
 function ItemRow({ status, text }) {
@@ -53,7 +50,7 @@ export default function Roadmap() {
         showsVerticalScrollIndicator={false}
       >
         {/* Progresso geral */}
-        <MyView safe={false} className={`${CARD} gap-2`} style={shadow}>
+        <Card className="gap-2">
           <Text className="font-bold text-2xl text-light-text dark:text-dark-text">
             Back on Track
           </Text>
@@ -69,12 +66,12 @@ export default function Roadmap() {
               style={{ width: `${pct}%` }}
             />
           </View>
-        </MyView>
+        </Card>
 
         {/* Milestone atual */}
         {current && (
-          <MyView safe={false} className={`${CARD} gap-3`} style={shadow}>
-            <Text className={LABEL}>EM ANDAMENTO</Text>
+          <Card className="gap-3">
+            <SectionLabel>EM ANDAMENTO</SectionLabel>
             <Text className="font-bold text-lg text-light-text dark:text-dark-text">
               {current.id} · {current.title} ({currentProgress.done}/
               {currentProgress.total})
@@ -84,19 +81,19 @@ export default function Roadmap() {
                 <ItemRow key={i} status={item.status} text={item.text} />
               ))}
             </MyView>
-          </MyView>
+          </Card>
         )}
 
         {/* Concluído recentemente */}
         {recentDone.length > 0 && (
-          <MyView safe={false} className={`${CARD} gap-3`} style={shadow}>
-            <Text className={LABEL}>CONCLUÍDO RECENTEMENTE</Text>
+          <Card className="gap-3">
+            <SectionLabel>CONCLUÍDO RECENTEMENTE</SectionLabel>
             <MyView safe={false} className="gap-2">
               {recentDone.map((item, i) => (
                 <ItemRow key={i} status="done" text={item.text} />
               ))}
             </MyView>
-          </MyView>
+          </Card>
         )}
       </ScrollView>
     </MyView>

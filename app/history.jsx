@@ -7,17 +7,13 @@ import { useTable } from "tinybase/ui-react";
 import MyView from "@/components/MyView";
 import MyHeader from "@/components/MyHeader";
 import MyButton from "@/components/MyButton";
+import Card from "@/components/Card";
+import SectionLabel from "@/components/SectionLabel";
 import { HistoryCard } from "@/components/MyHistory";
 
 import { getByDate, store } from "@/infra/database";
 import { CATEGORY_MAP, getCategoryInfo } from "@/components/categoryUtils";
-import { shadow } from "@/constants/Colors";
 //#endregion
-
-const CARD =
-  "w-full max-w-[640px] rounded-lg bg-light-backgroundCard p-4 dark:bg-dark-backgroundCard";
-const LABEL =
-  "font-bold text-xs text-light-text opacity-60 dark:text-dark-text";
 
 // Ordem canônica das métricas (mesma da tela "hoje").
 const METRICS = Object.keys(CATEGORY_MAP);
@@ -76,8 +72,8 @@ export default function History() {
         showsVerticalScrollIndicator={false}
       >
         {/* Navegação por data */}
-        <MyView safe={false} className={`${CARD} gap-3`} style={shadow}>
-          <Text className={LABEL}>HISTÓRICO</Text>
+        <Card className="gap-3">
+          <SectionLabel>HISTÓRICO</SectionLabel>
           <View className="flex-row items-center justify-between gap-2">
             <MyButton
               title="◀"
@@ -99,19 +95,15 @@ export default function History() {
               onPress={() => setDate(startOfDay(new Date()))}
             />
           )}
-        </MyView>
+        </Card>
 
         {/* Registros do dia, agrupados por métrica */}
         {sections.length === 0 ? (
-          <MyView
-            safe={false}
-            className={`${CARD} items-center`}
-            style={shadow}
-          >
+          <Card className="items-center">
             <Text className="text-base text-light-text opacity-60 dark:text-dark-text">
               Nenhum registro neste dia.
             </Text>
-          </MyView>
+          </Card>
         ) : (
           sections.map((type) => {
             const { displayName, unit } = getCategoryInfo(type);

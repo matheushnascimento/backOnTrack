@@ -251,3 +251,55 @@ Deve retornar vazio.
 - **Cor de placeholder** (`placeholderTextColor="#888"` em `MyInput`) — hex cru mas funcional em ambos os temas. Vira token quando componentizarmos `MyInput`.
 - **Ícone hex fixo** (`color="#333"` em `MyButton`) — cosmético, sem trigger claro.
 - **Cor de ripple** (`android_ripple={{ color: "#00000022" }}`) — detalhe de plataforma Android, não vira token.
+
+---
+
+## Componentes derivados dos tokens
+
+Não são tokens em si; são **componentes-base** que juntam vários tokens num único uso comum. Ficam em `components/*.jsx` e servem pra três coisas: (a) matar a duplicação byte a byte que a auditoria (§1, §4) pegou; (b) transformar a decisão "qual token nesse papel?" em "importa o componente certo"; (c) barrar drift — mexer no token muda todo o app, não só o arquivo aberto.
+
+### `Card` — [components/Card.jsx](../components/Card.jsx)
+
+Container top-level das telas topo-nível. Composição:
+
+- Raio: `rounded-lg` (papel "card")
+- Superfície: `bg-light-backgroundCard dark:bg-dark-backgroundCard`
+- Padding: `p-4` (comfortable)
+- Largura: `w-full max-w-[640px]` (único breakpoint do app)
+- Sombra: `style={shadow}` embutida (regra top-level card → shadow)
+- Wrapper: `<MyView safe={false}>`
+
+Aceita `className` (pra `gap-N` interno) e `style` (mesclado com `shadow`). Nested cards do form de métrica NÃO usam `Card` — são estruturas próprias, sem shadow, fora do papel canônico.
+
+### `SectionLabel` — [components/SectionLabel.jsx](../components/SectionLabel.jsx)
+
+Rótulo de seção dentro de card. Composição:
+
+- Tipografia: `text-xs` (13px)
+- Peso: `font-bold`
+- Cor: `text-light-text dark:text-dark-text` com `opacity-60`
+
+Uso: "MÉTRICAS DE HOJE", "UTILITÁRIOS", "HISTÓRICO", "CATEGORIA (OPCIONAL)"…
+
+### `FieldLabel` — [components/FieldLabel.jsx](../components/FieldLabel.jsx)
+
+Rótulo de campo de formulário. Composição:
+
+- Tipografia: `text-lg` (19px)
+- Peso: `font-bold`
+- Cor: `text-light-text dark:text-dark-text` (sem opacity)
+
+Uso: "MIN"/"MAX"/"IDEAL", "OBS:", "Nota", "Hora do treino", `h`/`min` de duração, unidade em `QuantityField`.
+
+### O que a fatia mudou (#169)
+
+- Cria `components/Card.jsx`, `components/SectionLabel.jsx`, `components/FieldLabel.jsx`.
+- Migra 6 telas topo-nível — `app/{index,history,admin,feedback,roadmap}.jsx` e `components/InstallApp.web.jsx` — pra usar `Card` + `SectionLabel`. Remove os constantes locais `CARD` e `LABEL` (que estavam byte a byte iguais em cada arquivo).
+- Migra `components/metrics/{MetricScreen,fields,registry}.jsx` pra usar `FieldLabel`. Remove os constantes locais `FIELD_LABEL`.
+
+### O que NÃO está resolvido aqui
+
+- **Card do form de métrica** (`MetricScreen.jsx:100`) + cards nested em `fields.jsx` e `registry.jsx` — largura, padding e estrutura diferentes; casam com o follow-up "padronizar largura dos forms de métrica" e viram fatia própria.
+- **`HistoryCard`** — já é componente próprio com estrutura interna própria (badge de nota, botões editar/excluir, exercício); segue como está.
+- **`MyButton` disabled state** (§7 da auditoria) — cada tela reinventa `opacity-40` vs `opacity-50` na mão; fatia própria.
+- **Revisar `MyHeader`** (papel de navegação vs. chips) — item próprio do M5.

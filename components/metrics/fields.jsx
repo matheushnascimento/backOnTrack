@@ -9,12 +9,13 @@
 import { Text, TextInput } from "react-native";
 
 import MyViewRaw from "@/components/MyView";
+import FieldLabelRaw from "@/components/FieldLabel";
 import { MyIconButton as MyIconButtonRaw } from "@/components/MyButton";
 
 const MyView = /** @type {any} */ (MyViewRaw);
 const MyIconButton = /** @type {any} */ (MyIconButtonRaw);
+const FieldLabel = /** @type {any} */ (FieldLabelRaw);
 
-const FIELD_LABEL = "font-bold text-lg text-light-text dark:text-dark-text";
 const INPUT_LG =
   "h-[51px] w-20 max-w-[160px] rounded-md bg-light-backgroundCard dark:bg-dark-backgroundCard p-2 text-center text-2xl font-bold text-light-text dark:text-dark-text";
 const CARD =
@@ -42,7 +43,7 @@ export function MinMaxIdealField({ min, max, ideal, onMin, onMax, onIdeal }) {
     <MyView safe={false} className="flex-row justify-between">
       {cols.map((col) => (
         <MyView key={col.label} safe={false} className="gap-3">
-          <Text className={FIELD_LABEL}>{col.label}</Text>
+          <FieldLabel>{col.label}</FieldLabel>
           <TextInput
             className={inputClass}
             placeholder="--"
@@ -66,7 +67,7 @@ export function MinMaxIdealField({ min, max, ideal, onMin, onMax, onIdeal }) {
 export function DurationField({ label, hour, minute, onHour, onMinute }) {
   return (
     <MyView safe={false} className={CARD}>
-      <Text className={FIELD_LABEL}>{label}</Text>
+      <FieldLabel>{label}</FieldLabel>
       <MyView safe={false} className="flex-row items-end gap-1">
         <TextInput
           className={INPUT_LG}
@@ -74,14 +75,14 @@ export function DurationField({ label, hour, minute, onHour, onMinute }) {
           value={hour}
           onChangeText={onHour}
         />
-        <Text className={FIELD_LABEL}>h</Text>
+        <FieldLabel>h</FieldLabel>
         <TextInput
           className={INPUT_LG}
           placeholder="--"
           value={minute}
           onChangeText={onMinute}
         />
-        <Text className={FIELD_LABEL}>min</Text>
+        <FieldLabel>min</FieldLabel>
       </MyView>
     </MyView>
   );
@@ -133,7 +134,7 @@ export function QuantityField({ label, value, unit, onChange }) {
         value={value}
         onChangeText={onChange}
       />
-      <Text className={FIELD_LABEL}>{unit}</Text>
+      <FieldLabel>{unit}</FieldLabel>
     </MyView>
   );
 }
