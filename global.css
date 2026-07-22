@@ -3,7 +3,6 @@
 @tailwind utilities;
 
 * {
-  font-size: 62.5%;
   /* Web: clicar num texto não deve selecioná-lo (parece um app, não uma
      página). No native isso já é o padrão; esta regra só vale no web. */
   user-select: none;
