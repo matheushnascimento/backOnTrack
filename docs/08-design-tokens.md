@@ -49,9 +49,49 @@ Deve retornar apenas `rounded-full`, `rounded-lg` e `rounded-md`.
 
 ---
 
+## Tipografia (`text-*`) — fatia 2
+
+**Regra:** só a escala Tailwind, um valor por papel. Zero uso de `text-[Npx]` (pixel cru fora da escala).
+
+| Token       | Papel                                              | Onde usar                                                                                 |
+| ----------- | -------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| `text-xs`   | Rótulo de seção (SECTION LABEL)                    | "MÉTRICAS DE HOJE", "UTILITÁRIOS", "HISTÓRICO"… nos cards das telas topo-nível            |
+| `text-base` | Corpo                                              | Linhas de métrica na Home, texto de item de histórico, descrições secundárias             |
+| `text-lg`   | Rótulo de campo (FIELD LABEL) e valores destacados | "MIN"/"MAX"/"IDEAL", "OBS:", "Nota", "Hora do treino", input de observação, badge da nota |
+| `text-2xl`  | Título de card                                     | "Hoje", "Enviar feedback", "Testers", inputs grandes de métrica                           |
+
+### Rationale
+
+- **A escala Tailwind já é canônica** — `text-xs`, `text-base`, `text-lg` e `text-2xl` cobrem os papéis do app hoje. `text-sm`, `text-xl` e `text-3xl` estão disponíveis se aparecer um degrau a mais adiante, mas até lá ficam sem uso.
+- **Pixel cru é sintoma, não escolha.** Todo `text-[Npx]` no repo vinha de "queria um pouco maior/menor" — sinal de que faltava um degrau. Alinhar com a escala do Tailwind mata a arbitrariedade e mantém a proporção coerente.
+- **Nome do papel importa mais que o número.** `LABEL` estava sendo usado com dois significados diferentes (rótulo de seção `text-xs opacity-60` × rótulo de campo `text-lg`) — a fatia adota `FIELD_LABEL` nos arquivos de métrica pra desambiguar. O `LABEL` das telas topo-nível fica como está até a fatia de componentização, quando vira `SectionLabel` como componente.
+
+### O que a fatia mudou (#157)
+
+- `global.css` — remove `font-size: 62.5%`. Aplicado em `*`, o valor efetivo compõe a cada nível de aninhamento (§4 da auditoria); NativeWind gera px direto sem depender de `rem`, então era **dead code no web e ignorado no native**.
+- `components/metrics/fields.jsx` (3×) e `components/metrics/registry.jsx` (1×) — `text-[26px]` → `text-2xl` (24px). Diferença de 2px, imperceptível na prática.
+- `components/metrics/MetricScreen.jsx` — `text-[19px]` → `text-lg` (18px) no `TextInput` de observação. Diferença de 1px.
+- `components/metrics/MetricScreen.jsx`, `components/metrics/fields.jsx`, `components/metrics/registry.jsx` — `LABEL` → `FIELD_LABEL`. Escopo local (constantes por arquivo), não afeta consumidores.
+
+### Como validar
+
+Zero pixel cru de fonte no repo:
+
+```bash
+git grep -nE 'text-\[[0-9]+px\]' -- '*.jsx' '*.js' '*.css'
+```
+
+Deve retornar vazio.
+
+### O que NÃO está resolvido aqui
+
+- **Constante `LABEL` das telas topo-nível** (6 arquivos, mesma string byte a byte) — vai virar `SectionLabel` na fatia de componentização, junto com `CardLabel`/`Card` (§1 da auditoria).
+- **Peso e altura de linha** (`font-bold`, `leading-*`) — hoje `font-bold` é aplicado direto onde aparece; se um dia virar decisão de token, fica pra fatia própria.
+
+---
+
 ## Próximas fatias
 
-- **Tipografia** — resolver `text-[26px]`/`text-[19px]` e o `font-size: 62.5%` mal aplicado; papéis: heading, body, label de seção, label de campo.
 - **Espaçamento** — hoje mistura `p-4`/`p-2.5`/`gap-8`/`gap-2.5` sem critério; escolher 2-3 valores canônicos.
 - **Sombra** — hoje `shadow` (objeto RN em `constants/Colors.js`) é aplicado como `style={shadow}` em cada card; virou de fato um token, só falta documentar aqui.
 - **Cor** — separar semântica (`selected`, `success`, `danger`) do papel visual atual do `bg-secondary`, e criar `border`/`placeholder` tokens que respondam ao dark mode.

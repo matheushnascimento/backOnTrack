@@ -23,7 +23,7 @@ const MyView = /** @type {any} */ (MyViewRaw);
 const Score = /** @type {any} */ (ScoreRaw);
 const MyHeader = /** @type {any} */ (MyHeaderRaw);
 
-const LABEL = "font-bold text-lg text-light-text dark:text-dark-text";
+const FIELD_LABEL = "font-bold text-lg text-light-text dark:text-dark-text";
 
 /**
  * @param {{ metric: string, recordId?: string }} props
@@ -99,21 +99,21 @@ export default function MetricScreen({ metric, recordId }) {
           safe={false}
           className={`max-w-[640px] gap-8 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard ${config.cardClass ?? ""}`}
         >
-          <Text className={LABEL}>
+          <Text className={FIELD_LABEL}>
             {date.displayDate} {displayName}
           </Text>
 
           {Top && <Top extra={extra} setField={setField} />}
 
-          <Text className={LABEL}>Nota</Text>
+          <Text className={FIELD_LABEL}>Nota</Text>
           <Score value={score} onPress={setScore} />
 
           <MyView safe={false} className="gap-1">
-            <Text className={LABEL}>OBS:</Text>
+            <Text className={FIELD_LABEL}>OBS:</Text>
             <TextInput
               value={observation}
               onChangeText={setObservation}
-              className="h-16 rounded-lg bg-light-backgroundCard p-1.5 text-[19px] font-normal text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
+              className="h-16 rounded-lg bg-light-backgroundCard p-1.5 text-lg font-normal text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
               placeholder={config.obsPlaceholder}
             />
           </MyView>

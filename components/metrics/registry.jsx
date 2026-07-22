@@ -24,9 +24,9 @@ const MyView = /** @type {any} */ (MyViewRaw);
 const MyButton = /** @type {any} */ (MyButtonRaw);
 const MyCheckbox = /** @type {any} */ (MyCheckboxRaw);
 
-const LABEL = "font-bold text-lg text-light-text dark:text-dark-text";
+const FIELD_LABEL = "font-bold text-lg text-light-text dark:text-dark-text";
 const INPUT_LG =
-  "h-[51px] w-20 max-w-[160px] rounded-md bg-light-backgroundCard dark:bg-dark-backgroundCard p-1.5 text-center text-[26px] font-bold text-light-text dark:text-dark-text";
+  "h-[51px] w-20 max-w-[160px] rounded-md bg-light-backgroundCard dark:bg-dark-backgroundCard p-1.5 text-center text-2xl font-bold text-light-text dark:text-dark-text";
 
 /**
  * @typedef {Object} SlotProps
@@ -134,14 +134,14 @@ const REGISTRY = {
             value={extra.hour}
             onChangeText={(v) => setField("hour", v)}
           />
-          <Text className={LABEL}>h</Text>
+          <Text className={FIELD_LABEL}>h</Text>
           <TextInput
             className="h-[37px] max-w-[38px] rounded-md bg-light-backgroundCard dark:bg-dark-backgroundCard px-1 text-center text-xl font-normal text-light-text dark:text-dark-text"
             placeholder="--"
             value={extra.minute}
             onChangeText={(v) => setField("minute", v)}
           />
-          <Text className={LABEL}>min</Text>
+          <Text className={FIELD_LABEL}>min</Text>
         </MyView>
         <MyButton title="Salvar" onPress={onSubmit} />
       </MyView>
@@ -215,7 +215,7 @@ const REGISTRY = {
             safe={false}
             className="items-center gap-8 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
           >
-            <Text className={LABEL}>Hora do treino</Text>
+            <Text className={FIELD_LABEL}>Hora do treino</Text>
             <MyView
               safe={false}
               className="flex-row items-center justify-center gap-1"
@@ -226,7 +226,7 @@ const REGISTRY = {
                 value={extra.timeHour}
                 onChangeText={(v) => setField("timeHour", v)}
               />
-              <Text className={LABEL}>:</Text>
+              <Text className={FIELD_LABEL}>:</Text>
               <TextInput
                 className={INPUT_LG}
                 placeholder="--"

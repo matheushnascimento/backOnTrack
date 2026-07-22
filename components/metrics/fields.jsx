@@ -14,9 +14,9 @@ import { MyIconButton as MyIconButtonRaw } from "@/components/MyButton";
 const MyView = /** @type {any} */ (MyViewRaw);
 const MyIconButton = /** @type {any} */ (MyIconButtonRaw);
 
-const LABEL = "font-bold text-lg text-light-text dark:text-dark-text";
+const FIELD_LABEL = "font-bold text-lg text-light-text dark:text-dark-text";
 const INPUT_LG =
-  "h-[51px] w-20 max-w-[160px] rounded-md bg-light-backgroundCard dark:bg-dark-backgroundCard p-1.5 text-center text-[26px] font-bold text-light-text dark:text-dark-text";
+  "h-[51px] w-20 max-w-[160px] rounded-md bg-light-backgroundCard dark:bg-dark-backgroundCard p-1.5 text-center text-2xl font-bold text-light-text dark:text-dark-text";
 const CARD =
   "items-center gap-8 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard";
 
@@ -32,7 +32,7 @@ const CARD =
  */
 export function MinMaxIdealField({ min, max, ideal, onMin, onMax, onIdeal }) {
   const inputClass =
-    "max-w-[160px] rounded-md bg-light-backgroundCard p-1.5 text-[26px] font-bold text-light-text dark:bg-dark-backgroundCard dark:text-dark-text";
+    "max-w-[160px] rounded-md bg-light-backgroundCard p-1.5 text-2xl font-bold text-light-text dark:bg-dark-backgroundCard dark:text-dark-text";
   const cols = [
     { label: "MIN", value: min, onChange: onMin },
     { label: "MAX", value: max, onChange: onMax },
@@ -42,7 +42,7 @@ export function MinMaxIdealField({ min, max, ideal, onMin, onMax, onIdeal }) {
     <MyView safe={false} className="flex-row justify-between">
       {cols.map((col) => (
         <MyView key={col.label} safe={false} className="gap-2.5">
-          <Text className={LABEL}>{col.label}</Text>
+          <Text className={FIELD_LABEL}>{col.label}</Text>
           <TextInput
             className={inputClass}
             placeholder="--"
@@ -66,7 +66,7 @@ export function MinMaxIdealField({ min, max, ideal, onMin, onMax, onIdeal }) {
 export function DurationField({ label, hour, minute, onHour, onMinute }) {
   return (
     <MyView safe={false} className={CARD}>
-      <Text className={LABEL}>{label}</Text>
+      <Text className={FIELD_LABEL}>{label}</Text>
       <MyView safe={false} className="flex-row items-end gap-1">
         <TextInput
           className={INPUT_LG}
@@ -74,14 +74,14 @@ export function DurationField({ label, hour, minute, onHour, onMinute }) {
           value={hour}
           onChangeText={onHour}
         />
-        <Text className={LABEL}>h</Text>
+        <Text className={FIELD_LABEL}>h</Text>
         <TextInput
           className={INPUT_LG}
           placeholder="--"
           value={minute}
           onChangeText={onMinute}
         />
-        <Text className={LABEL}>min</Text>
+        <Text className={FIELD_LABEL}>min</Text>
       </MyView>
     </MyView>
   );
@@ -128,12 +128,12 @@ export function QuantityField({ label, value, unit, onChange }) {
         {label} hoje
       </Text>
       <TextInput
-        className="h-[51px] w-20 rounded-md bg-light-backgroundCard p-1.5 text-center text-[26px] font-bold text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
+        className="h-[51px] w-20 rounded-md bg-light-backgroundCard p-1.5 text-center text-2xl font-bold text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
         placeholder="--"
         value={value}
         onChangeText={onChange}
       />
-      <Text className={LABEL}>{unit}</Text>
+      <Text className={FIELD_LABEL}>{unit}</Text>
     </MyView>
   );
 }
