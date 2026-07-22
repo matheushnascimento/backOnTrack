@@ -145,7 +145,7 @@ export default function Admin() {
                   <MyButton
                     title="Remover"
                     onPress={() => handleRemove(t)}
-                    className="bg-secondary px-3 py-1"
+                    className="bg-danger px-3 py-1"
                   />
                 </View>
               ))}
