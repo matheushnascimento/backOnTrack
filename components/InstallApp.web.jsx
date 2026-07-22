@@ -14,20 +14,18 @@ import { useEffect, useState } from "react";
 import { Linking, Text, View } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 
-import MyView from "@/components/MyView";
 import MyButtonRaw from "@/components/MyButton";
-import { shadow } from "@/constants/Colors";
+import CardRaw from "@/components/Card";
+import SectionLabelRaw from "@/components/SectionLabel";
 import { EAS_INSTALL_URL } from "@/constants/distribution";
 
 // MyButton é legado (@ts-nocheck, ADR-002): sua assinatura inferida marca as
 // props como obrigatórias, o que quebra consumidores tipados. Tratamos como
 // any até ele ser tipado de fato.
 const MyButton = /** @type {any} */ (MyButtonRaw);
+const Card = /** @type {any} */ (CardRaw);
+const SectionLabel = /** @type {any} */ (SectionLabelRaw);
 
-const CARD =
-  "w-full max-w-[640px] rounded-lg bg-light-backgroundCard p-4 dark:bg-dark-backgroundCard";
-const LABEL =
-  "font-bold text-xs text-light-text opacity-60 dark:text-dark-text";
 const TEXT = "text-center text-base text-light-text dark:text-dark-text";
 
 function isMobileBrowser() {
@@ -42,12 +40,8 @@ export default function InstallApp() {
   useEffect(() => setMobile(isMobileBrowser()), []);
 
   return (
-    <MyView
-      safe={false}
-      className={`${CARD} items-center gap-3`}
-      style={shadow}
-    >
-      <Text className={`${LABEL} self-start`}>OBTER O APP</Text>
+    <Card className="items-center gap-3">
+      <SectionLabel className="self-start">OBTER O APP</SectionLabel>
       {mobile ? (
         <>
           <Text className={TEXT}>
@@ -73,6 +67,6 @@ export default function InstallApp() {
           </View>
         </>
       )}
-    </MyView>
+    </Card>
   );
 }

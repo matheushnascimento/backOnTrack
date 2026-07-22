@@ -13,16 +13,12 @@ import MyView from "@/components/MyView";
 import MyHeader from "@/components/MyHeader";
 import MyButton from "@/components/MyButton";
 import MyInput from "@/components/MyInput";
+import Card from "@/components/Card";
+import SectionLabel from "@/components/SectionLabel";
 
-import { shadow } from "@/constants/Colors";
 import { confirmAction, notify } from "@/constants/dialogs";
 import { getTesters, addTester, removeTester, store } from "@/infra/database";
 //#endregion
-
-const CARD =
-  "w-full max-w-[640px] rounded-lg bg-light-backgroundCard p-4 dark:bg-dark-backgroundCard";
-const LABEL =
-  "font-bold text-xs text-light-text opacity-60 dark:text-dark-text";
 
 export default function Admin() {
   const [name, setName] = useState("");
@@ -93,7 +89,7 @@ export default function Admin() {
         keyboardShouldPersistTaps="handled"
       >
         {/* Adicionar tester */}
-        <MyView safe={false} className={`${CARD} gap-4`} style={shadow}>
+        <Card className="gap-4">
           <Text className="font-bold text-2xl text-light-text dark:text-dark-text">
             Testers
           </Text>
@@ -121,11 +117,11 @@ export default function Admin() {
             disabled={!canAdd}
             className={canAdd ? "" : "opacity-50"}
           />
-        </MyView>
+        </Card>
 
         {/* Lista */}
-        <MyView safe={false} className={`${CARD} gap-3`} style={shadow}>
-          <Text className={LABEL}>NA LISTA ({testers.length})</Text>
+        <Card className="gap-3">
+          <SectionLabel>NA LISTA ({testers.length})</SectionLabel>
           {testers.length === 0 ? (
             <Text className="text-base text-light-text opacity-60 dark:text-dark-text">
               Nenhum tester ainda.
@@ -151,16 +147,16 @@ export default function Admin() {
               ))}
             </MyView>
           )}
-        </MyView>
+        </Card>
 
         {/* Exportar */}
-        <MyView safe={false} className={`${CARD} gap-2`} style={shadow}>
-          <Text className={LABEL}>SENDER</Text>
+        <Card className="gap-2">
+          <SectionLabel>SENDER</SectionLabel>
           <Text className="text-sm text-light-text opacity-70 dark:text-dark-text">
             Exporta a lista em JSON pra colar em `scripts/testers.json`.
           </Text>
           <MyButton title="Exportar lista" onPress={handleExport} />
-        </MyView>
+        </Card>
       </ScrollView>
     </MyView>
   );

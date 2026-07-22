@@ -8,16 +8,13 @@ import MyView from "@/components/MyView";
 import MyHeader from "@/components/MyHeader";
 import MyButton from "@/components/MyButton";
 import MyInput from "@/components/MyInput";
+import Card from "@/components/Card";
+import SectionLabel from "@/components/SectionLabel";
 
-import { shadow } from "@/constants/Colors";
 import { FEEDBACK_ENDPOINT, FEEDBACK_KEY } from "@/constants/feedback";
 import { getEnvironmentInfo } from "@/constants/environment";
 //#endregion
 
-const CARD =
-  "w-full max-w-[640px] rounded-lg bg-light-backgroundCard p-4 dark:bg-dark-backgroundCard";
-const LABEL =
-  "font-bold text-xs text-light-text opacity-60 dark:text-dark-text";
 const INPUT = "w-full";
 
 const CATEGORIES = ["Bug", "Sugestão", "Outro"];
@@ -85,7 +82,7 @@ export default function Feedback() {
         keyboardShouldPersistTaps="handled"
       >
         {status === "ok" ? (
-          <MyView safe={false} className={`${CARD} gap-3`} style={shadow}>
+          <Card className="gap-3">
             <Text className="font-bold text-2xl text-light-text dark:text-dark-text">
               Recebido! 🙌
             </Text>
@@ -104,10 +101,10 @@ export default function Feedback() {
               title="Voltar ao início"
               onPress={() => router.navigate("/")}
             />
-          </MyView>
+          </Card>
         ) : (
           <>
-            <MyView safe={false} className={`${CARD} gap-1`} style={shadow}>
+            <Card className="gap-1">
               <Text className="font-bold text-2xl text-light-text dark:text-dark-text">
                 Enviar feedback
               </Text>
@@ -115,12 +112,12 @@ export default function Feedback() {
                 Achou um problema ou tem uma sugestão? Conta aqui — abrimos o
                 chamado pra você automaticamente.
               </Text>
-            </MyView>
+            </Card>
 
-            <MyView safe={false} className={`${CARD} gap-4`} style={shadow}>
+            <Card className="gap-4">
               {/* Categoria (opcional) */}
               <MyView safe={false} className="gap-2">
-                <Text className={LABEL}>CATEGORIA (OPCIONAL)</Text>
+                <SectionLabel>CATEGORIA (OPCIONAL)</SectionLabel>
                 <View className="flex-row flex-wrap gap-2">
                   {CATEGORIES.map((c) => (
                     <MyButton
@@ -167,7 +164,7 @@ export default function Feedback() {
                 disabled={!canSend}
                 className={canSend ? "" : "opacity-50"}
               />
-            </MyView>
+            </Card>
           </>
         )}
       </ScrollView>

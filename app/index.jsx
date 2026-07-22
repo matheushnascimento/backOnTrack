@@ -10,19 +10,15 @@ import MyButton from "@/components/MyButton";
 import MyView from "@/components/MyView";
 import MyHeader from "@/components/MyHeader";
 import InstallApp from "@/components/InstallApp";
+import Card from "@/components/Card";
+import SectionLabel from "@/components/SectionLabel";
 
 import { clearAll, getToday, store } from "@/infra/database";
 import { confirmAction } from "@/constants/dialogs";
 import { getEnvironmentInfo } from "@/constants/environment";
 import { CATEGORY_MAP } from "@/components/categoryUtils";
 import { minutesToHHMM } from "@/constants/duration";
-import { shadow } from "@/constants/Colors";
 //#endregion
-
-const CARD =
-  "w-full max-w-[640px] rounded-lg bg-light-backgroundCard p-4 dark:bg-dark-backgroundCard";
-const LABEL =
-  "font-bold text-xs text-light-text opacity-60 dark:text-dark-text";
 
 // Versão/bundle exibidos nos Utilitários (#131).
 const ENV = getEnvironmentInfo();
@@ -106,7 +102,7 @@ export default function Home() {
         showsVerticalScrollIndicator={false}
       >
         {/* Resumo do dia */}
-        <MyView safe={false} className={`${CARD} gap-2`} style={shadow}>
+        <Card className="gap-2">
           <Text className="font-bold text-2xl text-light-text dark:text-dark-text">
             Hoje
           </Text>
@@ -119,11 +115,11 @@ export default function Home() {
               style={{ width: `${pct}%` }}
             />
           </View>
-        </MyView>
+        </Card>
 
         {/* Métricas do dia */}
-        <MyView safe={false} className={`${CARD} gap-3`} style={shadow}>
-          <Text className={LABEL}>MÉTRICAS DE HOJE</Text>
+        <Card className="gap-3">
+          <SectionLabel>MÉTRICAS DE HOJE</SectionLabel>
           <MyView safe={false} className="gap-2">
             {rows.map((r) => (
               <MetricRow
@@ -134,14 +130,14 @@ export default function Home() {
               />
             ))}
           </MyView>
-        </MyView>
+        </Card>
 
         {/* Obter o app (só web: QR no desktop, download no celular) */}
         <InstallApp />
 
         {/* Utilitários */}
-        <MyView safe={false} className={`${CARD} gap-2`} style={shadow}>
-          <Text className={LABEL}>UTILITÁRIOS</Text>
+        <Card className="gap-2">
+          <SectionLabel>UTILITÁRIOS</SectionLabel>
           <MyButton title="Alternar tema" onPress={() => toggleColorScheme()} />
           <MyButton
             title="Histórico"
@@ -162,7 +158,7 @@ export default function Home() {
             v{ENV.appVersion}
             {ENV.bundle ? ` · ${ENV.bundle}` : ""}
           </Text>
-        </MyView>
+        </Card>
       </ScrollView>
     </MyView>
   );

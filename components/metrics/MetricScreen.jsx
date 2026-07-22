@@ -7,12 +7,13 @@
 // (loadExtra). Adicionar uma métrica = adicionar uma config.
 
 import { useEffect, useState } from "react";
-import { ScrollView, Text, TextInput } from "react-native";
+import { ScrollView, TextInput } from "react-native";
 import { Snackbar } from "react-native-paper";
 
 import ScoreRaw from "@/components/Score";
 import MyViewRaw from "@/components/MyView";
 import MyHeaderRaw from "@/components/MyHeader";
+import FieldLabelRaw from "@/components/FieldLabel";
 
 import { getCategoryInfo } from "@/components/categoryUtils";
 import getDate from "@/constants/getDate";
@@ -23,8 +24,7 @@ import { getMetricConfig } from "./registry";
 const MyView = /** @type {any} */ (MyViewRaw);
 const Score = /** @type {any} */ (ScoreRaw);
 const MyHeader = /** @type {any} */ (MyHeaderRaw);
-
-const FIELD_LABEL = "font-bold text-lg text-light-text dark:text-dark-text";
+const FieldLabel = /** @type {any} */ (FieldLabelRaw);
 
 /**
  * @param {{ metric: string, recordId?: string }} props
@@ -101,17 +101,17 @@ export default function MetricScreen({ metric, recordId }) {
           className={`max-w-[640px] gap-8 rounded-lg bg-light-backgroundCard p-3 dark:bg-dark-backgroundCard ${config.cardClass ?? ""}`}
           style={shadow}
         >
-          <Text className={FIELD_LABEL}>
+          <FieldLabel>
             {date.displayDate} {displayName}
-          </Text>
+          </FieldLabel>
 
           {Top && <Top extra={extra} setField={setField} />}
 
-          <Text className={FIELD_LABEL}>Nota</Text>
+          <FieldLabel>Nota</FieldLabel>
           <Score value={score} onPress={setScore} />
 
           <MyView safe={false} className="gap-1">
-            <Text className={FIELD_LABEL}>OBS:</Text>
+            <FieldLabel>OBS:</FieldLabel>
             <TextInput
               value={observation}
               onChangeText={setObservation}
