@@ -82,7 +82,7 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 **Objetivo de saída:** telas consistentes em claro/escuro e no web, sobre um conjunto único de tokens e componentes — sem estilo duplicado. É o que separa "funciona" de "parece v1".
 
 - ✅ Auditar as inconsistências atuais (botões, cards, header, escala tipográfica, responsividade web) e registrar o alvo: `docs/07-auditoria-ui.md` (#149) — 10 achados com arquivo/linha, dos quais 5 funcionais (borda invisível do `MyInput` no dark, divergência `useColorScheme` RN vs NativeWind, padding duplicado nas telas de métrica, `MyView safe` default vazando em `MyCheckbox`/`Score`, `flex-row` num `<Text>`) que servem de entrada pros próximos itens
-- ⬜ Tokens canônicos: espaçamento, tipografia (revisar o truque `font-size: 62.5%`), raio, sombra, cor — fonte única
+- 🟡 Tokens canônicos: espaçamento, tipografia (revisar o truque `font-size: 62.5%`), raio, sombra, cor — fonte única. Sendo entregue em fatias, uma por eixo, sobre `docs/08-design-tokens.md`. Feito: **raio** (#154) — escala `rounded-full`/`rounded-lg`/`rounded-md` por papel (pill/card/control), zero uso do `rounded` default; grep valida. Antes de virar em código, saíram os 5 **fixes funcionais** (#152) que a auditoria destacou — chão sem ruído pras próximas fatias. Faltam: tipografia, espaçamento, sombra e cor
 - ⬜ Componentizar o que está duplicado (`CARD`/`LABEL` repetidos em 3 telas → componente; padronizar `MyButton`/`HistoryCard`/`MyHeader`)
 - ⬜ Revisar o `MyHeader` (papel de navegação vs. chips de métrica) e o alinhamento no web
 - ⬜ Identidade visual do "Back on Track" (tema, ícones) — migrada do QoL
