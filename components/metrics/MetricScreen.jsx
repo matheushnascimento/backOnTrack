@@ -97,7 +97,7 @@ export default function MetricScreen({ metric, recordId }) {
       >
         <MyView
           safe={false}
-          className={`max-w-[640px] gap-8 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard ${config.cardClass ?? ""}`}
+          className={`max-w-[640px] gap-8 rounded-lg bg-light-backgroundCard p-3 dark:bg-dark-backgroundCard ${config.cardClass ?? ""}`}
         >
           <Text className={FIELD_LABEL}>
             {date.displayDate} {displayName}
@@ -113,7 +113,7 @@ export default function MetricScreen({ metric, recordId }) {
             <TextInput
               value={observation}
               onChangeText={setObservation}
-              className="h-16 rounded-lg bg-light-backgroundCard p-1.5 text-base font-normal text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
+              className="h-16 rounded-lg bg-light-backgroundCard p-2 text-base font-normal text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
               placeholder={config.obsPlaceholder}
             />
           </MyView>

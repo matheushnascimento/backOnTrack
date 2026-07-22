@@ -119,7 +119,7 @@ export default function History() {
               <MyView
                 key={type}
                 safe={false}
-                className="w-full items-center gap-2.5"
+                className="w-full items-center gap-3"
               >
                 {day[type].map((obj) => (
                   <HistoryCard

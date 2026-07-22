@@ -69,7 +69,7 @@ export function HistoryCard({
   return (
     <MyView
       safe={false}
-      className="w-full max-w-[640px] gap-2.5 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
+      className="w-full max-w-[640px] gap-3 rounded-lg bg-light-backgroundCard p-3 dark:bg-dark-backgroundCard"
       style={[cardStyle, shadow]}
     >
       <View className="w-full flex-row items-center justify-between">
@@ -89,13 +89,13 @@ export function HistoryCard({
 
       {exercise && (
         <MyView safe={false} className="flex-row gap-4">
-          <MyView safe={false} className="flex-row items-center gap-1.5">
+          <MyView safe={false} className="flex-row items-center gap-2">
             <Checkbox color={Colors.primary} value={!!obj.training} />
             <Text className="font-bold text-lg text-light-text dark:text-dark-text">
               Treino
             </Text>
           </MyView>
-          <MyView safe={false} className="flex-row items-center gap-1.5">
+          <MyView safe={false} className="flex-row items-center gap-2">
             <Checkbox color={Colors.primary} value={!!obj.cardio} />
             <Text className="font-bold text-lg text-light-text dark:text-dark-text">
               Cardio
@@ -135,7 +135,7 @@ function HistoryList({
   onChanged,
 }) {
   return (
-    <MyView safe={false} className="w-full items-center gap-2.5">
+    <MyView safe={false} className="w-full items-center gap-3">
       {Object.values(data).map((obj) => (
         <HistoryCard
           key={obj.id}

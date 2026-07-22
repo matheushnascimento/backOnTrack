@@ -16,9 +16,9 @@ const MyIconButton = /** @type {any} */ (MyIconButtonRaw);
 
 const FIELD_LABEL = "font-bold text-lg text-light-text dark:text-dark-text";
 const INPUT_LG =
-  "h-[51px] w-20 max-w-[160px] rounded-md bg-light-backgroundCard dark:bg-dark-backgroundCard p-1.5 text-center text-2xl font-bold text-light-text dark:text-dark-text";
+  "h-[51px] w-20 max-w-[160px] rounded-md bg-light-backgroundCard dark:bg-dark-backgroundCard p-2 text-center text-2xl font-bold text-light-text dark:text-dark-text";
 const CARD =
-  "items-center gap-8 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard";
+  "items-center gap-8 rounded-lg bg-light-backgroundCard p-3 dark:bg-dark-backgroundCard";
 
 /**
  * Bloco MIN / MAX / IDEAL (água, sono). Os três campos são editáveis — isso
@@ -32,7 +32,7 @@ const CARD =
  */
 export function MinMaxIdealField({ min, max, ideal, onMin, onMax, onIdeal }) {
   const inputClass =
-    "max-w-[160px] rounded-md bg-light-backgroundCard p-1.5 text-2xl font-bold text-light-text dark:bg-dark-backgroundCard dark:text-dark-text";
+    "max-w-[160px] rounded-md bg-light-backgroundCard p-2 text-2xl font-bold text-light-text dark:bg-dark-backgroundCard dark:text-dark-text";
   const cols = [
     { label: "MIN", value: min, onChange: onMin },
     { label: "MAX", value: max, onChange: onMax },
@@ -41,7 +41,7 @@ export function MinMaxIdealField({ min, max, ideal, onMin, onMax, onIdeal }) {
   return (
     <MyView safe={false} className="flex-row justify-between">
       {cols.map((col) => (
-        <MyView key={col.label} safe={false} className="gap-2.5">
+        <MyView key={col.label} safe={false} className="gap-3">
           <Text className={FIELD_LABEL}>{col.label}</Text>
           <TextInput
             className={inputClass}
@@ -95,7 +95,7 @@ export function DurationField({ label, hour, minute, onHour, onMinute }) {
 export function CounterField({ count, onAdd, onRemove }) {
   return (
     <MyView safe={false} className="gap-4">
-      <MyView safe={false} className="flex-row gap-5">
+      <MyView safe={false} className="flex-row gap-4">
         {Array.from({ length: count }).map((_, index) => (
           <MyIconButton
             key={index}
@@ -122,13 +122,13 @@ export function QuantityField({ label, value, unit, onChange }) {
   return (
     <MyView
       safe={false}
-      className="w-1/2 grow flex-row items-center justify-center gap-8 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
+      className="w-1/2 grow flex-row items-center justify-center gap-8 rounded-lg bg-light-backgroundCard p-3 dark:bg-dark-backgroundCard"
     >
       <Text className="font-bold text-2xl text-light-text dark:text-dark-text">
         {label} hoje
       </Text>
       <TextInput
-        className="h-[51px] w-20 rounded-md bg-light-backgroundCard p-1.5 text-center text-2xl font-bold text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
+        className="h-[51px] w-20 rounded-md bg-light-backgroundCard p-2 text-center text-2xl font-bold text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
         placeholder="--"
         value={value}
         onChangeText={onChange}

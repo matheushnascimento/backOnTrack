@@ -96,8 +96,59 @@ Ajustar a escala depois: só editar `theme.extend.fontSize` no `tailwind.config.
 
 ---
 
+## Espaçamento (`gap-*` / `p-*`) — fatia 3
+
+**Regra:** escala default do Tailwind (grid de 4px), zero fracionários. Um valor por papel.
+
+| Token | px  | Papel                                                                 |
+| ----- | --- | --------------------------------------------------------------------- |
+| `-1`  | 4   | tight — só quando `-2` sente exagerado (raro)                         |
+| `-2`  | 8   | dense — itens adjacentes numa linha (checkbox + label, ícone + texto) |
+| `-3`  | 12  | medium — cards compactos, gap entre itens numa lista                  |
+| `-4`  | 16  | comfortable — padding padrão de card, gap entre linhas de seção       |
+| `-6`  | 24  | spacious — reservado; sem uso hoje, disponível se aparecer o degrau   |
+| `-8`  | 32  | big — separação vertical entre seções grandes de form                 |
+
+Serve pra `gap-*` (entre filhos) e `p-*` (dentro do container). `gap-*` e `p-*` **usam a mesma escala** — se dois cards vizinhos estão com padding `p-3` e o espaço entre eles é `gap-3`, o ritmo visual fecha.
+
+### Rationale
+
+- **Grid de 4px é padrão de mercado** (iOS 8pt/4pt subgrid, Material 4dp/8dp). Todo múltiplo de 4 fica alinhado a qualquer coisa que a plataforma render em cima; múltiplos de 2 (`gap-1.5`, `gap-2.5`) quebram esse alinhamento sem ganhar nada.
+- **Escala do Tailwind default já é o grid** — `-1`/`-2`/`-3`/`-4`/`-6`/`-8` mapeiam pra 4/8/12/16/24/32px. Não vale customizar em `tailwind.config.js` como fizemos com tipografia; aqui a default já é a decisão.
+- **Um valor por papel.** A auditoria pegou `p-4`/`p-2.5`/`gap-8`/`gap-2.5` misturados sem critério — a diferença entre `p-3` (12px) e `p-2.5` (10px) não é uma decisão de design, é um pixel arbitrário.
+
+### O que a fatia mudou (#160)
+
+Substituições em ~10 arquivos (`app/*.jsx`, `components/*.jsx`, `components/metrics/*.jsx`):
+
+- `gap-1.5` → `gap-2` (6×)
+- `gap-2.5` → `gap-3` (5×)
+- `gap-5` → `gap-4` (1×, CounterField — único off-grid)
+- `p-1.5` → `p-2` (5×)
+- `p-2.5` → `p-3` (6×)
+
+Efeito visual: +2px na maioria dos casos (imperceptível), -4px no CounterField.
+
+Nada muda no `tailwind.config.js` — a decisão é usar a escala default como-é. O `px-*`/`py-*` assimétrico de botões e inputs (`px-2 py-1`, `px-4 py-2`) fica como está — a assimetria horizontal/vertical é intencional pra esse tipo de controle.
+
+### Como validar
+
+Zero valor off-grid no repo:
+
+```bash
+git grep -nE '\b(gap|p|px|py|pt|pb|pl|pr)-(1\.5|2\.5|5|7|9|10)\b' -- '*.jsx' '*.js'
+```
+
+Deve retornar vazio.
+
+### O que NÃO está resolvido aqui
+
+- **`px-*`/`py-*` de botões/inputs** — hoje `MyButton` usa `px-4 py-2`, `MyInput` usa `px-2 py-1`. São decisões de forma do controle, não de layout — ficam pra fatia de componentização, quando componentes ganharem forma canônica.
+- **Marginação por classe** (`mx-`, `my-`, `mt-`, `mb-`) — o repo mal usa margin (o layout é quase todo `gap-*` em flex). Se aparecer, cai na mesma escala.
+
+---
+
 ## Próximas fatias
 
-- **Espaçamento** — hoje mistura `p-4`/`p-2.5`/`gap-8`/`gap-2.5` sem critério; escolher 2-3 valores canônicos.
 - **Sombra** — hoje `shadow` (objeto RN em `constants/Colors.js`) é aplicado como `style={shadow}` em cada card; virou de fato um token, só falta documentar aqui.
 - **Cor** — separar semântica (`selected`, `success`, `danger`) do papel visual atual do `bg-secondary`, e criar `border`/`placeholder` tokens que respondam ao dark mode.

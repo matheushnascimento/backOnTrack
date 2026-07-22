@@ -119,7 +119,7 @@ export default function Feedback() {
 
             <MyView safe={false} className={`${CARD} gap-4`} style={shadow}>
               {/* Categoria (opcional) */}
-              <MyView safe={false} className="gap-1.5">
+              <MyView safe={false} className="gap-2">
                 <Text className={LABEL}>CATEGORIA (OPCIONAL)</Text>
                 <View className="flex-row flex-wrap gap-2">
                   {CATEGORIES.map((c) => (

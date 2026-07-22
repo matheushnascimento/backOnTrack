@@ -26,7 +26,7 @@ const MyCheckbox = /** @type {any} */ (MyCheckboxRaw);
 
 const FIELD_LABEL = "font-bold text-lg text-light-text dark:text-dark-text";
 const INPUT_LG =
-  "h-[51px] w-20 max-w-[160px] rounded-md bg-light-backgroundCard dark:bg-dark-backgroundCard p-1.5 text-center text-2xl font-bold text-light-text dark:text-dark-text";
+  "h-[51px] w-20 max-w-[160px] rounded-md bg-light-backgroundCard dark:bg-dark-backgroundCard p-2 text-center text-2xl font-bold text-light-text dark:text-dark-text";
 
 /**
  * @typedef {Object} SlotProps
@@ -123,7 +123,7 @@ const REGISTRY = {
       >
         <MyView
           safe={false}
-          className="w-full grow flex-row items-center justify-center gap-4 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
+          className="w-full grow flex-row items-center justify-center gap-4 rounded-lg bg-light-backgroundCard p-3 dark:bg-dark-backgroundCard"
         >
           <Text className="font-bold text-2xl text-light-text dark:text-dark-text">
             {displayName} hoje
@@ -213,7 +213,7 @@ const REGISTRY = {
         <MyView safe={false} className="flex-row flex-wrap items-center gap-4">
           <MyView
             safe={false}
-            className="items-center gap-8 rounded-lg bg-light-backgroundCard p-2.5 dark:bg-dark-backgroundCard"
+            className="items-center gap-8 rounded-lg bg-light-backgroundCard p-3 dark:bg-dark-backgroundCard"
           >
             <Text className={FIELD_LABEL}>Hora do treino</Text>
             <MyView
