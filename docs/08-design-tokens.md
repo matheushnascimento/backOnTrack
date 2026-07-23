@@ -338,3 +338,60 @@ Uso:
 ```
 
 Rationale: `opacity-40` (0.4) alinha com convenção iOS e resolve §7 da auditoria — antes cada tela reinventava (`0.4` vs `opacity-50`), com o visual e o bloqueio de `onPress` desconectados. Agora é um contrato só.
+
+---
+
+## Identidade visual
+
+O sistema até aqui é técnico (tokens de raio, tipografia, cor por papel). Esta seção fecha a parte **de marca**: nome, tagline, metáfora, tom de voz — e como esses tokens já são também escolhas de identidade.
+
+### Nome e slug
+
+- **Nome (display):** "Back on Track" — o que aparece no launcher/browser tab, no wordmark da UI, na documentação e na comunicação com testers.
+- **Slug técnico:** `backOnTrack` — identificador interno do Expo/EAS (`app.json`, `bundleIdentifier`, `package`, `projectId`). **Não mexer** — mudar quebra deploy/OTA/store.
+
+### Tagline
+
+> **De volta aos trilhos, um registro por vez.**
+
+A promessa é a **retomada**: o app é pra quem já saiu da rotina e quer voltar, não pra quem quer otimizar. Usado no wordmark do rodapé da Home e no Roadmap. Quando aparecer em novo contexto, essa é a versão canônica.
+
+### Metáfora
+
+**Trilhos, estrada, sinalização de trânsito.** O nome sugere caminho de volta; `assets/trecho-em-obras.png` (placa laranja de "trecho em obras") já sinaliza a direção. Qualquer ilustração/ícone/motivo gráfico futuro deve conversar com esse universo — sem forçar (não precisa de trilhos literais em tudo).
+
+### Tom de voz
+
+- **Gentileza da retomada**, não exigência. "Registrado", "hoje", "métricas do dia". Nunca "meta cumprida", "falhou", "streak quebrado".
+- Verbos no infinitivo pra ação do usuário ("Alternar tema", "Limpar todos os dados", "Enviar feedback") — não imperativo pesado ("ALTERE TUDO").
+- Erro é conversado, não julgado: "Não consegui enviar (…). Tenta de novo em instantes." (feedback.jsx).
+
+### Paleta como marca
+
+Os tokens de cor já são decisões semânticas ([seção Cor](#cor-bg--text----fatia-5)); ganham aqui também um significado de identidade:
+
+| Token       | Hex       | Marca                                                            |
+| ----------- | --------- | ---------------------------------------------------------------- |
+| `primary`   | `#2E5A88` | Navy da **confiança/estabilidade** — o "chão firme" da retomada  |
+| `secondary` | `#4CAF50` | Verde da **retomada positiva** — selecionado, ativo, nota máxima |
+| `danger`    | `#F44336` | Vermelho da **exceção** — só destrutivo/erro, reservado          |
+
+Superfícies (`light-background`, `dark-background`) são neutras por design — o protagonismo visual fica pros dados, não pra decoração.
+
+### Onde a marca aparece na UI
+
+- Launcher / browser tab: nome "Back on Track" (`app.json`)
+- Splash: fundo `#F8F9FA` (mesmo do app light) + splash-icon (Parte B — placeholder do Expo hoje)
+- **Home:** wordmark discreto no rodapé da tela ("Back on Track · de volta aos trilhos, um registro por vez"), abaixo do card Utilitários
+- **Roadmap:** título + tagline no primeiro card ("Back on Track" + "De volta aos trilhos, um registro por vez.")
+
+### Parte B — pendente
+
+Assets visuais ainda são template default do Expo:
+
+- `assets/icon.png` — ícone do app (iOS, launcher)
+- `assets/adaptive-icon.png` — foreground do adaptive icon Android
+- `assets/splash-icon.png` — logo/ícone do splash
+- `assets/favicon.png` — favicon web
+
+Substituir cada um exige arte real (design tool / IA generativa consciente / designer). Card no ambiente rastreia. Enquanto Parte B não pousa, o splash mostra o template Expo sobre fundo `#F8F9FA` — legível, sem estranheza, mas ainda não é a marca.
