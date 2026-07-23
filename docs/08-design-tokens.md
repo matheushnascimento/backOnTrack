@@ -269,7 +269,9 @@ Container top-level das telas topo-nível. Composição:
 - Sombra: `style={shadow}` embutida (regra top-level card → shadow)
 - Wrapper: `<MyView safe={false}>`
 
-Aceita `className` (pra `gap-N` interno) e `style` (mesclado com `shadow`). Nested cards do form de métrica NÃO usam `Card` — são estruturas próprias, sem shadow, fora do papel canônico.
+Aceita `className` (pra `gap-N` interno) e `style` (mesclado com `shadow`). Também é o card outer do form de métrica (`MetricScreen`), que passa `cardClass` custom (ex.: `overflow-hidden` pra alimentação) via `className`.
+
+**Cards nested** (dentro de outro `Card` — o form de métrica é o único caso hoje): usam a mesma superfície + raio, mas sem shadow (regra 2 da fatia sombra: evita dupla elevação) e **sempre com `w-full`** — assim o filho estica pra largura do outer e o ritmo visual fecha entre as 5 telas de métrica. Não são componentizados porque ainda são poucos e a composição interna varia (input + label × card com múltiplos inputs); se aparecerem 3+ variantes iguais, vira `<CardNested>`.
 
 ### `SectionLabel` — [components/SectionLabel.jsx](../components/SectionLabel.jsx)
 

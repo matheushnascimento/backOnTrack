@@ -19,7 +19,7 @@ const FieldLabel = /** @type {any} */ (FieldLabelRaw);
 const INPUT_LG =
   "h-[51px] w-20 max-w-[160px] rounded-md bg-light-backgroundCard dark:bg-dark-backgroundCard p-2 text-center text-2xl font-bold text-light-text dark:text-dark-text";
 const CARD =
-  "items-center gap-8 rounded-lg bg-light-backgroundCard p-3 dark:bg-dark-backgroundCard";
+  "w-full items-center gap-8 rounded-lg bg-light-backgroundCard p-3 dark:bg-dark-backgroundCard";
 
 /**
  * Bloco MIN / MAX / IDEAL (água, sono). Os três campos são editáveis — isso
@@ -123,7 +123,7 @@ export function QuantityField({ label, value, unit, onChange }) {
   return (
     <MyView
       safe={false}
-      className="w-1/2 grow flex-row items-center justify-center gap-8 rounded-lg bg-light-backgroundCard p-3 dark:bg-dark-backgroundCard"
+      className="w-full flex-row items-center justify-center gap-8 rounded-lg bg-light-backgroundCard p-3 dark:bg-dark-backgroundCard"
     >
       <Text className="font-bold text-2xl text-light-text dark:text-dark-text">
         {label} hoje
