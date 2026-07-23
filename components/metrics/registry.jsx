@@ -84,7 +84,7 @@ const REGISTRY = {
     }),
     Top: MinMaxIdealTop,
     Bottom: ({ extra, setField, onSubmit, displayName, unit }) => (
-      <MyView safe={false} className="flex-row flex-wrap items-center gap-4">
+      <MyView safe={false} className="gap-4">
         <QuantityField
           label={displayName ?? ""}
           value={extra.quantity}
@@ -118,13 +118,10 @@ const REGISTRY = {
     }),
     Top: MinMaxIdealTop,
     Bottom: ({ extra, setField, onSubmit, displayName }) => (
-      <MyView
-        safe={false}
-        className="flex-row flex-wrap items-center justify-center gap-4"
-      >
+      <MyView safe={false} className="gap-4">
         <MyView
           safe={false}
-          className="w-full grow flex-row items-center justify-center gap-4 rounded-lg bg-light-backgroundCard p-3 dark:bg-dark-backgroundCard"
+          className="w-full flex-row items-center justify-center gap-4 rounded-lg bg-light-backgroundCard p-3 dark:bg-dark-backgroundCard"
         >
           <Text className="font-bold text-2xl text-light-text dark:text-dark-text">
             {displayName} hoje
@@ -210,42 +207,40 @@ const REGISTRY = {
       </MyView>
     ),
     Bottom: ({ extra, setField, onSubmit }) => (
-      <>
-        <MyView safe={false} className="flex-row flex-wrap items-center gap-4">
+      <MyView safe={false} className="gap-4">
+        <MyView
+          safe={false}
+          className="w-full items-center gap-8 rounded-lg bg-light-backgroundCard p-3 dark:bg-dark-backgroundCard"
+        >
+          <FieldLabel>Hora do treino</FieldLabel>
           <MyView
             safe={false}
-            className="items-center gap-8 rounded-lg bg-light-backgroundCard p-3 dark:bg-dark-backgroundCard"
+            className="flex-row items-center justify-center gap-1"
           >
-            <FieldLabel>Hora do treino</FieldLabel>
-            <MyView
-              safe={false}
-              className="flex-row items-center justify-center gap-1"
-            >
-              <TextInput
-                className={INPUT_LG}
-                placeholder="--"
-                value={extra.timeHour}
-                onChangeText={(v) => setField("timeHour", v)}
-              />
-              <FieldLabel>:</FieldLabel>
-              <TextInput
-                className={INPUT_LG}
-                placeholder="--"
-                value={extra.timeMinute}
-                onChangeText={(v) => setField("timeMinute", v)}
-              />
-            </MyView>
+            <TextInput
+              className={INPUT_LG}
+              placeholder="--"
+              value={extra.timeHour}
+              onChangeText={(v) => setField("timeHour", v)}
+            />
+            <FieldLabel>:</FieldLabel>
+            <TextInput
+              className={INPUT_LG}
+              placeholder="--"
+              value={extra.timeMinute}
+              onChangeText={(v) => setField("timeMinute", v)}
+            />
           </MyView>
-          <DurationField
-            label="Tempo de treino"
-            hour={extra.durHour}
-            minute={extra.durMinute}
-            onHour={(v) => setField("durHour", v)}
-            onMinute={(v) => setField("durMinute", v)}
-          />
         </MyView>
+        <DurationField
+          label="Tempo de treino"
+          hour={extra.durHour}
+          minute={extra.durMinute}
+          onHour={(v) => setField("durHour", v)}
+          onMinute={(v) => setField("durMinute", v)}
+        />
         <MyButton title="Salvar" onPress={onSubmit} />
-      </>
+      </MyView>
     ),
   },
 
@@ -271,7 +266,7 @@ const REGISTRY = {
       </MyView>
     ),
     Bottom: ({ extra, setField, onSubmit }) => (
-      <MyView safe={false} className="flex-row items-end justify-between gap-4">
+      <MyView safe={false} className="gap-4">
         <DurationField
           label="Tempo de estudo"
           hour={extra.durHour}

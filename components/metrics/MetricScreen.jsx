@@ -14,10 +14,10 @@ import ScoreRaw from "@/components/Score";
 import MyViewRaw from "@/components/MyView";
 import MyHeaderRaw from "@/components/MyHeader";
 import FieldLabelRaw from "@/components/FieldLabel";
+import CardRaw from "@/components/Card";
 
 import { getCategoryInfo } from "@/components/categoryUtils";
 import getDate from "@/constants/getDate";
-import { shadow } from "@/constants/Colors";
 import { add, getById, update } from "@/infra/database";
 import { getMetricConfig } from "./registry";
 
@@ -25,6 +25,7 @@ const MyView = /** @type {any} */ (MyViewRaw);
 const Score = /** @type {any} */ (ScoreRaw);
 const MyHeader = /** @type {any} */ (MyHeaderRaw);
 const FieldLabel = /** @type {any} */ (FieldLabelRaw);
+const Card = /** @type {any} */ (CardRaw);
 
 /**
  * @param {{ metric: string, recordId?: string }} props
@@ -96,11 +97,7 @@ export default function MetricScreen({ metric, recordId }) {
         }}
         showsVerticalScrollIndicator={false}
       >
-        <MyView
-          safe={false}
-          className={`max-w-[640px] gap-8 rounded-lg bg-light-backgroundCard p-3 dark:bg-dark-backgroundCard ${config.cardClass ?? ""}`}
-          style={shadow}
-        >
+        <Card className={`gap-8 ${config.cardClass ?? ""}`}>
           <FieldLabel>
             {date.displayDate} {displayName}
           </FieldLabel>
@@ -129,7 +126,7 @@ export default function MetricScreen({ metric, recordId }) {
               unit={unit}
             />
           )}
-        </MyView>
+        </Card>
         <History tableName={metric} reload={reloadKey} />
       </ScrollView>
     </MyView>
