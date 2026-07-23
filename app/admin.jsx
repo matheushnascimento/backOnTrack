@@ -10,7 +10,6 @@ import { Platform, ScrollView, Share, Text, View } from "react-native";
 import { useTable } from "tinybase/ui-react";
 
 import MyView from "@/components/MyView";
-import MyHeader from "@/components/MyHeader";
 import MyButton from "@/components/MyButton";
 import MyInput from "@/components/MyInput";
 import Card from "@/components/Card";
@@ -82,7 +81,6 @@ export default function Admin() {
       safe={true}
       className="flex-1 bg-light-background dark:bg-dark-background"
     >
-      <MyHeader />
       <ScrollView
         contentContainerStyle={{ padding: 16, gap: 16, alignItems: "center" }}
         showsVerticalScrollIndicator={false}

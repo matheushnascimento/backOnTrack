@@ -3,7 +3,6 @@
 import { ScrollView, Text, View } from "react-native";
 
 import MyView from "@/components/MyView";
-import MyHeader from "@/components/MyHeader";
 import Card from "@/components/Card";
 import SectionLabel from "@/components/SectionLabel";
 
@@ -44,7 +43,6 @@ export default function Roadmap() {
       safe={true}
       className="flex-1 bg-light-background dark:bg-dark-background"
     >
-      <MyHeader />
       <ScrollView
         contentContainerStyle={{ padding: 16, gap: 16, alignItems: "center" }}
         showsVerticalScrollIndicator={false}

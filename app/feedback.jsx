@@ -5,7 +5,6 @@ import { Linking, ScrollView, Text, View } from "react-native";
 import { router } from "expo-router";
 
 import MyView from "@/components/MyView";
-import MyHeader from "@/components/MyHeader";
 import MyButton from "@/components/MyButton";
 import MyInput from "@/components/MyInput";
 import Card from "@/components/Card";
@@ -75,7 +74,6 @@ export default function Feedback() {
       safe={true}
       className="flex-1 bg-light-background dark:bg-dark-background"
     >
-      <MyHeader />
       <ScrollView
         contentContainerStyle={{ padding: 16, gap: 16, alignItems: "center" }}
         showsVerticalScrollIndicator={false}
