@@ -111,12 +111,7 @@ export default function Admin() {
             className="w-full"
             keyboardType="phone-pad"
           />
-          <MyButton
-            title="Adicionar"
-            onPress={handleAdd}
-            disabled={!canAdd}
-            className={canAdd ? "" : "opacity-50"}
-          />
+          <MyButton title="Adicionar" onPress={handleAdd} disabled={!canAdd} />
         </Card>
 
         {/* Lista */}

@@ -5,6 +5,7 @@ import { Pressable, Text } from "react-native";
 
 export default function MyButton({
   isSelected = false,
+  disabled = false,
   title,
   Icon,
   titleClassName,
@@ -16,9 +17,10 @@ export default function MyButton({
     <Pressable
       className={`flex-row items-center justify-center rounded-full px-4 py-2 ${
         isSelected ? "bg-secondary" : "bg-primary"
-      } ${className ?? ""}`}
+      } ${disabled ? "opacity-40" : ""} ${className ?? ""}`}
       style={[shadow, style]}
       android_ripple={{ color: "#00000022" }}
+      disabled={disabled}
       {...props}
     >
       {title != null && (
@@ -38,6 +40,7 @@ export default function MyButton({
 export function MyIconButton({
   Icon,
   isSelected = false,
+  disabled = false,
   className,
   style,
   ...props
@@ -52,9 +55,10 @@ export function MyIconButton({
         isSelected
           ? "border-0 bg-secondary"
           : "border border-[#333] bg-transparent"
-      } ${className ?? ""}`}
+      } ${disabled ? "opacity-40" : ""} ${className ?? ""}`}
       style={[shadow, style]}
       android_ripple={{ color: "#00000022" }}
+      disabled={disabled}
       {...props}
     >
       {Icon && (
