@@ -162,7 +162,6 @@ export default function Feedback() {
                 title={status === "sending" ? "Enviando…" : "Enviar"}
                 onPress={handleSend}
                 disabled={!canSend}
-                className={canSend ? "" : "opacity-50"}
               />
             </Card>
           </>

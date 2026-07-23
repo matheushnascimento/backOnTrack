@@ -301,5 +301,22 @@ Uso: "MIN"/"MAX"/"IDEAL", "OBS:", "Nota", "Hora do treino", `h`/`min` de duraç�
 
 - **Card do form de métrica** (`MetricScreen.jsx:100`) + cards nested em `fields.jsx` e `registry.jsx` — largura, padding e estrutura diferentes; casam com o follow-up "padronizar largura dos forms de métrica" e viram fatia própria.
 - **`HistoryCard`** — já é componente próprio com estrutura interna própria (badge de nota, botões editar/excluir, exercício); segue como está.
-- **`MyButton` disabled state** (§7 da auditoria) — cada tela reinventa `opacity-40` vs `opacity-50` na mão; fatia própria.
 - **Revisar `MyHeader`** (papel de navegação vs. chips) — item próprio do M5.
+
+## Estados canônicos
+
+Contratos de estado embutidos nos componentes-base — o consumidor passa a **intenção** (`disabled`, `isSelected`, etc.), não a implementação visual.
+
+### `disabled` — [`MyButton`](../components/MyButton.jsx) / `MyIconButton`
+
+- **Prop:** `disabled` (boolean, default `false`).
+- **Visual:** aplica `opacity-40` internamente.
+- **Comportamento:** `Pressable` recebe `disabled` explícito e bloqueia `onPress` nativamente.
+
+Uso:
+
+```jsx
+<MyButton title="Enviar" onPress={send} disabled={!canSend} />
+```
+
+Rationale: `opacity-40` (0.4) alinha com convenção iOS e resolve §7 da auditoria — antes cada tela reinventava (`0.4` vs `opacity-50`), com o visual e o bloqueio de `onPress` desconectados. Agora é um contrato só.

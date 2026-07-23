@@ -85,7 +85,6 @@ export default function History() {
             <MyButton
               title="▶"
               disabled={isToday}
-              style={isToday ? { opacity: 0.4 } : undefined}
               onPress={() => setDate((d) => addDays(d, 1))}
             />
           </View>
