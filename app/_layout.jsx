@@ -16,12 +16,24 @@ export default function RootLayout() {
       <View className="flex-1">
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" options={{ title: "Hoje" }} />
-          <Stack.Screen name="roadmap" options={{ title: "Roadmap" }} />
+          {/* Roadmap/Feedback/Admin não têm relação com registro de métrica,
+              então não usam o MyHeader (faixa de chips). Ativam o header
+              nativo do Expo Router pra ganhar título + back arrow (#178). */}
+          <Stack.Screen
+            name="roadmap"
+            options={{ title: "Roadmap", headerShown: true }}
+          />
           <Stack.Screen name="export" options={{ title: "Exportação" }} />
           <Stack.Screen name="history" options={{ title: "Histórico" }} />
-          <Stack.Screen name="feedback" options={{ title: "Feedback" }} />
+          <Stack.Screen
+            name="feedback"
+            options={{ title: "Feedback", headerShown: true }}
+          />
           {/* Rota de admin (testers) — acesso só por deep link backontrack://admin */}
-          <Stack.Screen name="admin" options={{ title: "Admin" }} />
+          <Stack.Screen
+            name="admin"
+            options={{ title: "Admin", headerShown: true }}
+          />
           <Stack.Screen name="(metrics)" />
         </Stack>
         <UpdateBanner />

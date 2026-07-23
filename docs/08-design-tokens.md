@@ -283,6 +283,22 @@ Rótulo de seção dentro de card. Composição:
 
 Uso: "MÉTRICAS DE HOJE", "UTILITÁRIOS", "HISTÓRICO", "CATEGORIA (OPCIONAL)"…
 
+### `MyHeader` — [components/MyHeader.jsx](../components/MyHeader.jsx)
+
+Faixa horizontal de **chips das 5 métricas** (água, sono, alimentação, exercício, estudo). Clicar num chip navega pra tela de registro daquela métrica; clicar num chip já selecionado volta pra Home.
+
+**Papel semântico:** atalho pra registrar métrica. Só faz sentido em contextos onde o usuário está prestes a registrar uma métrica ou já registrou uma.
+
+**Onde usar:**
+
+- `app/index.jsx` (Home — hub de acesso rápido)
+- `app/history.jsx` (do histórico se pula direto pra registrar)
+- `components/metrics/MetricScreen.jsx` (switch entre métricas)
+
+**Onde NÃO usar** (chips seriam ruído sem contexto):
+
+- `app/admin.jsx`, `app/feedback.jsx`, `app/roadmap.jsx` — essas telas ativam o header nativo do Expo Router (`headerShown: true` na `Stack.Screen` do `app/_layout.jsx`) que fornece título + back arrow.
+
 ### `FieldLabel` — [components/FieldLabel.jsx](../components/FieldLabel.jsx)
 
 Rótulo de campo de formulário. Composição:
