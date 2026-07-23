@@ -34,11 +34,19 @@ export default function MyHeader() {
   return (
     <ScrollView
       horizontal={true}
-      className="grow-0 bg-light-background p-3 dark:bg-dark-background"
+      // Altura fixa evita o stretch visual durante a transição entre rotas:
+      // sem `h-16`, o ScrollView herdava altura intrínseca dos filhos (chip +
+      // shadow) e reflowava a cada re-render/navigate.
+      // `shrink-0` impede que telas com muito conteúdo (Home) espremam o header
+      // via flex-shrink default e invadam a área dos chips.
+      className="h-16 shrink-0 grow-0 bg-light-background p-3 dark:bg-dark-background"
     >
       {Object.entries(CATEGORY_MAP).map(([index, category]) => (
         <Button
-          className="mx-4"
+          // `h-10` trava a altura do chip: sem isso, o RN Web re-mede o
+          // Pressable ao trocar bg-primary ↔ bg-secondary e o chip pisca de
+          // tamanho a cada seleção. 40px casa com `text-base` + `py-2`.
+          className="mx-4 h-10"
           key={index}
           title={category.displayName}
           isSelected={selectedButton === index}

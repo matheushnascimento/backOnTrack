@@ -299,6 +299,14 @@ Faixa horizontal de **chips das 5 métricas** (água, sono, alimentação, exerc
 
 - `app/admin.jsx`, `app/feedback.jsx`, `app/roadmap.jsx` — essas telas ativam o header nativo do Expo Router (`headerShown: true` na `Stack.Screen` do `app/_layout.jsx`) que fornece título + back arrow.
 
+**Altura travada em três camadas:** o `ScrollView` horizontal usa `h-16 shrink-0` (64px, não cede) e o chip usa `h-10` (40px) — os dois casam com o `p-3` (24px) vertical do ScrollView (`64 - 24 = 40`). Sem essas fixações, três bugs visuais aconteciam:
+
+- Sem `h-16` no ScrollView, a faixa herdava a altura intrínseca dos filhos e reflowava a cada re-render/`router.navigate`, esticando visualmente durante a transição de rota.
+- Sem `h-10` no chip, o RN Web re-media o `Pressable` ao trocar `bg-primary ↔ bg-secondary` e o chip piscava de tamanho a cada seleção — mesmo sem qualquer mudança de padding/tipografia.
+- Sem `shrink-0` no ScrollView, telas com muito conteúdo (Home) espremiam o header via `flex-shrink: 1` default do flex column pai, e o padding do primeiro card visualmente invadia a área dos chips. Formulários curtos (MetricScreen) não expunham o bug.
+
+Se um dia mudar o padding do ScrollView ou a tipografia do chip, revisitar os três juntos.
+
 ### `FieldLabel` — [components/FieldLabel.jsx](../components/FieldLabel.jsx)
 
 Rótulo de campo de formulário. Composição:
