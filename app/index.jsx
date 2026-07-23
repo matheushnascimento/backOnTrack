@@ -159,6 +159,12 @@ export default function Home() {
             {ENV.bundle ? ` · ${ENV.bundle}` : ""}
           </Text>
         </Card>
+
+        {/* Wordmark discreto — marca presente na tela principal sem competir
+            com o conteúdo. Ver docs/08-design-tokens.md § Identidade visual. */}
+        <Text className="text-center text-xs text-light-text opacity-50 dark:text-dark-text">
+          Back on Track · de volta aos trilhos, um registro por vez
+        </Text>
       </ScrollView>
     </MyView>
   );
