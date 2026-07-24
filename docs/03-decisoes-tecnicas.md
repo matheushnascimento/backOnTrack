@@ -145,6 +145,38 @@ Campo flexível:
 
 ---
 
+## ADR-009 — Transporte de sincronização: WebSocket próprio no homeserver
+
+**Status:** decidido. Fecha o ponto que o ADR-004 deixou explicitamente em aberto ("transporte específico de sync fica em aberto até a milestone de sincronização"). Escrito na fatia 1 do M6 (#192).
+
+**Contexto:** o M6 quer que os dados sobrevivam a perda/troca de aparelho. A camada de dados (TinyBase) já suporta sync via `MergeableStore` (CRDT nativo) — o que falta é escolher o **transporte** (o que carrega bytes entre client e server) e onde ele mora. Contexto do projeto que pesa:
+
+- **Escala pequena**: single-user hoje, 5-6 testers, longo prazo dezenas — não milhares.
+- **Homeserver com Docker rodando** e ops estabelecidas (`docker-ce 29.6.1`, Evolution API já em produção lá — [[docker-snap-apparmor-broken]], [[evolution-api-testers-stack]]).
+- **Objetivo:** minimizar ops de longo prazo. O app é pra durar anos.
+- **Sync eventual (minutos) é aceitável** — realtime não é requisito.
+- **Modelo de dados** (ADR-007/008): uma tabela `records` + `details` JSON, pouca superfície pra conflito de merge.
+
+**Decisão:** WebSocket próprio no homeserver via `createWsSynchronizer` (client) + `createWsServer` (server) do TinyBase. Client migra de `Store` pra `MergeableStore` (pré-requisito de qualquer sync). Server roda em Node.js dentro do Docker do homeserver, atrás do reverse proxy que já existe, com persistência em arquivo (via `createFilePersister`) ou SQLite (via `createSqlite3Persister`) — decisão adiada pra próxima fatia, quando implementarmos.
+
+**Alternativas consideradas:**
+
+- **PowerSync** (SaaS ou self-hosted com Postgres). Sync engine maduro, backend Postgres, SDK Expo/RN oficial, Sync Rules pra filtrar dados por usuário. Descartado como default hoje por três motivos: (a) exige adicionar Postgres como novo serviço no homeserver (ou pagar SaaS) — mais uma dependência de ops sem ganho proporcional pra escala atual; (b) lock-in maior — o `createPowerSyncPersister` do TinyBase substitui o `expo-sqlite` persister e o modelo de dados vira SQLite + Sync Rules, mudança maior que trocar `Store` → `MergeableStore`; (c) reversível — se em algum momento a escala pedir (100+ users, Sync Rules complexos, queries analíticas fora do app), migrar do WS próprio pra PowerSync é possível, e adiar essa escolha até ter demanda concreta é mais barato do que assumir agora.
+- **CRDT com Yjs** (`YjsPersister` + `y-websocket`/`y-webrtc`). Descartado por redundância: o `MergeableStore` do TinyBase já é CRDT nativo determinístico; adicionar Yjs por cima só faz sentido se precisar de features exclusivas do Yjs (rich text/drawing collab), o que não é o caso.
+- **Só backup (export/import JSON)**, sem sync ativo. Alternativa mais barata e já prevista como item do M8 ("Exportação/backup de dados"). Não substitui sync — não resolve "usar em dois aparelhos ao mesmo tempo" nem restaura automaticamente ao reinstalar. Fica como fallback complementar, não como escolha do M6.
+- **Cloudflare Durable Objects** (`WsServerDurableObject`). Zero ops, escala infinita, custo baixo em escala pequena. Descartado por ir contra o princípio "usar a infra que já tem" — introduzir Cloudflare como dependência nova quando o homeserver já resolve é assumir vendor lock-in de graça, e o tempo pra provisionar/aprender > tempo pra rodar um contêiner Node.
+
+**Consequências:**
+
+- **Positivo:** zero custo recorrente; owner completo do estado; menor delta de código (Store → MergeableStore + Synchronizer, sem trocar persister do client); zero lock-in de fornecedor; usa infra e prática de ops que você já tem.
+- **Negativo aceito:** uptime do server é responsabilidade sua (o homeserver já é), reverse proxy + TLS (wss://) precisam ser configurados uma vez, reconnect/retry ficam por conta do que o TinyBase resolve (o essencial já vem pronto no `WsSynchronizer`, mas edge cases podem exigir cuidado). Server persistence via `createFilePersister` é rústica — se ficar apertado, dá pra trocar por `createSqlite3Persister` sem afetar o client.
+- **Auth:** por enquanto o path do WebSocket é a "sala" (ex.: `wss://.../<userId>`). Sem autenticação real na primeira versão — dogfooding continua sendo os 5-6 testers conhecidos. Auth entra em fatia própria do M6 quando a escala/exposição pedir.
+- **Migração:** o próprio `createMergeableStore` é compatível com `expo-sqlite` persister via `MergeableContentPersister` (ou o `Sqlite3Persister` server-side no server); os dados existentes de testers continuam válidos, só ganham metadados de CRDT.
+
+**Quando revisitar:** se a escala passar de ~50 usuários ativos, se Sync Rules ficarem necessárias (particionar dados por permissão complexa), ou se o ops do homeserver se tornar problemático. Nesses casos, considerar PowerSync (SaaS ou self-hosted) — a migração exige troca de persister do client (ExpoSqlite → PowerSync), mas a shape do TinyBase Store persiste.
+
+---
+
 ## Fontes consultadas
 
 - https://docs.expo.dev/router/introduction/
@@ -157,3 +189,9 @@ Campo flexível:
 - https://doolpa.com/article/tinybase
 - https://tinybase.org/api/persister-expo-sqlite/functions/creation/createexposqlitepersister/
 - https://www.nativewind.dev/
+- https://tinybase.org/guides/synchronization/ (ADR-009)
+- https://tinybase.org/guides/synchronization/using-a-synchronizer/ (ADR-009)
+- https://tinybase.org/guides/the-basics/architectural-options/ (ADR-009)
+- https://tinybase.org/api/synchronizer-ws-client/interfaces/synchronizer/wssynchronizer/ (ADR-009)
+- https://tinybase.org/api/persister-powersync/ (ADR-009)
+- https://www.powersync.com/ (ADR-009)
