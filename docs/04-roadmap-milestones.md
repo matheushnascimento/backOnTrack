@@ -94,7 +94,7 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 
 **Objetivo de saída:** os dados sobrevivem a perda/troca de aparelho.
 
-- 🟡 Escolher e configurar o Synchronizer do TinyBase (WebSocket próprio, PowerSync, ou outro transporte). **Escolha feita** na ADR-009 (#192, `docs/03-decisoes-tecnicas.md`): WebSocket próprio no homeserver via `createWsSynchronizer` + `createWsServer` (Node/Docker), cliente migra `Store` → `MergeableStore`. Alternativas (PowerSync, Yjs, só backup, Cloudflare Durable Objects) descartadas com motivo. **Configurar** vira próxima fatia
+- 🟡 Escolher e configurar o Synchronizer do TinyBase (WebSocket próprio, PowerSync, ou outro transporte). **Escolha feita** na ADR-009 (#192, `docs/03-decisoes-tecnicas.md`): WebSocket próprio no homeserver via `createWsSynchronizer` + `createWsServer` (Node/Docker), cliente migra `Store` → `MergeableStore`. Alternativas (PowerSync, Yjs, só backup, Cloudflare Durable Objects) descartadas com motivo. **Configurar** em progresso: **fatia 1** — cliente já migrado pra `MergeableStore` (#195) sem quebrar comportamento; persisters mantêm em JSON mode. **Faltam:** server WS (Node/Docker no homeserver + reverse proxy TLS), client conecta no server via `createWsSynchronizer`
 - ⬜ Autenticação/identificação mínima do dispositivo, se o transporte exigir
 - ⬜ Validar sync em cenários reais: offline → online, dois dispositivos, reinstalação
 - ⬜ Ajustar regras/permissões do lado do transporte escolhido
