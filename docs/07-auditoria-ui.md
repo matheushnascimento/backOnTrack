@@ -129,3 +129,51 @@ Não há uso de `sm:`/`md:`/`lg:` do Tailwind, nem `useWindowDimensions`, em nen
 - **Consertar o default de `MyView`:** `MyCheckbox` e `Score` devem passar `safe={false}` (§6).
 - **Web:** revisar o truque `font-size: 62.5%` (aplicado a `*`, não à raiz) e considerar breakpoints reais em vez do `max-w-[640px]` hardcoded repetido (§4, §8).
 - **Confirmar visualmente** (não dá pra provar só lendo código): borda invisível do `MyInput` no dark mode, alinhamento do `HistoryCard` (§10), padding extra nas telas de métrica (§5), e o efeito real do `font-size: 62.5%` no web (§4).
+
+---
+
+## QA visual final (M5) — #189
+
+Passada sistemática de validação em cada tela, nos dois temas (claro/escuro) e nos dois layouts (mobile/web). Fecho oficial do milestone.
+
+### Suspects code-first
+
+Grep pelo repo depois de todas as fatias do M5:
+
+- **Bug real (corrigido inline no #189):** [`MyIconButton`](../components/MyButton.jsx#L57) usava `border border-[#333]` **sem `dark:` variant** — mesmo achado que resolvemos pro `MyInput` no #152, mas o `MyIconButton` foi esquecido. Provavelmente invisível no dark. Usado no `CounterField` da tela **Alimentação**. Fix aplicado: `dark:border-[#888]` (mesmo pattern do `MyInput`).
+- **Hex crus documentados** (decisões conscientes, confirmar visualmente):
+  - `MyInput.jsx:30` — `placeholderTextColor="#888"` (mesmo em ambos os temas)
+  - `MyCheckbox.jsx:12` — `color={value ? Colors.primary : "gray"}` no unselected
+  - `InstallApp.web.jsx:60,64,65` — wrapper e cores do QR code (`bg-white` intencional, alto contraste)
+- **Dead code confirmado:** `MyButton.jsx:35` (`Icon size={24} color="#333"`) — nenhum call-site passa `Icon`; sem impacto visual, cabe follow-up de cleanup.
+- **Stack native header** (Roadmap/Feedback/Admin): sem código local, é do Expo Router. Conferir fundo/título/back arrow em cada tema.
+- **Layout:** único breakpoint é `max-w-[640px]` — no desktop o card centraliza com espaço lateral vazio. Conferir se está aceitável.
+
+### Checklist por tela
+
+Rodar cada tela em:
+
+- 📱 Mobile (largura ~375-414)
+- 💻 Desktop (largura >800)
+- ☀️ Claro
+- 🌙 Escuro (toggle via botão "Alternar tema" nos Utilitários da Home)
+
+| Tela            | Rota                  | Focar em                                                                                                                                       |
+| --------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Home**        | `/`                   | Card resumo, "MÉTRICAS DE HOJE", "UTILITÁRIOS", InstallApp (só web), wordmark do rodapé, versão/bundle                                         |
+| **Histórico**   | `/history`            | Nav de data (◀ ▶ + "Hoje"), estado vazio, `HistoryCard` (badge de nota, botões editar/excluir)                                                 |
+| **Água**        | `/(metrics)/water`    | Card outer, `MinMaxIdealField` (MIN/MAX/IDEAL), `QuantityField`, botão Salvar                                                                  |
+| **Sono**        | `/(metrics)/sleep`    | `MinMaxIdealField`, card interno de hora/minuto                                                                                                |
+| **Alimentação** | `/(metrics)/feeding`  | `CounterField` (⚠️ **MyIconButton borda invisível no dark**)                                                                                   |
+| **Exercício**   | `/(metrics)/exercise` | Checkboxes Treino/Cardio, card "Hora do treino", `DurationField`                                                                               |
+| **Estudo**      | `/(metrics)/study`    | Checkbox Feito, `DurationField`                                                                                                                |
+| **Roadmap**     | `/roadmap`            | Stack header nativo (título + back arrow), cards de progresso/atual/recentes                                                                   |
+| **Feedback**    | `/feedback`           | Stack header nativo, form (categoria, título, descrição), estado ok, estado error                                                              |
+| **Admin**       | `/admin` (deep link)  | Stack header nativo, form (nome, número), lista de testers, botão "Remover" em vermelho, "Exportar lista"                                      |
+| **Export**      | `/export`             | ⚠️ Placeholder sabidamente órfão (`<Text>Hello World!</Text>`) — sem estilo, sem safe-area, sem dark mode. §9 desta auditoria. Pertence ao M8. |
+
+### Onde entrar cada tipo de achado
+
+- **Bug trivial** (1-2 linhas, ex.: um `dark:` faltando) → fix inline no mesmo PR desta fatia
+- **Bug estrutural** (mais de 1 tela, refatoração) → fatia própria
+- **Conhecido, não bloqueia** (ex.: `Export` órfão do M8) → mantém nota aqui, sem ação nesta fatia
