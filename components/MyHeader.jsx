@@ -56,31 +56,3 @@ export default function MyHeader() {
     </ScrollView>
   );
 }
-export function MyMonthHeader({ onMonthSelect }) {
-  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
-
-  const months = new Array(12).fill(0).map((_, i) => {
-    return new Date(`${i + 1}/1`).toLocaleDateString(undefined, {
-      month: "long",
-    });
-  });
-
-  function handleButtonSelection(index) {
-    setSelectedMonth(index);
-    onMonthSelect?.(index);
-  }
-
-  return (
-    <ScrollView horizontal={true} className="w-full grow-0 bg-transparent p-3">
-      {months.map((month, index) => (
-        <Button
-          className="mx-4"
-          key={index}
-          title={month.toUpperCase().substring(0, 3)}
-          isSelected={selectedMonth === index}
-          onPress={() => handleButtonSelection(index)}
-        />
-      ))}
-    </ScrollView>
-  );
-}
