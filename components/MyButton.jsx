@@ -54,7 +54,7 @@ export function MyIconButton({
       className={`items-center justify-center overflow-hidden rounded-full p-[3px] ${
         isSelected
           ? "border-0 bg-secondary"
-          : "border border-[#333] bg-transparent"
+          : "border border-[#333] bg-transparent dark:border-[#888]"
       } ${disabled ? "opacity-40" : ""} ${className ?? ""}`}
       style={[shadow, style]}
       android_ripple={{ color: "#00000022" }}
