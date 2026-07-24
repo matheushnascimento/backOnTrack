@@ -1,10 +1,14 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
-import { createStore } from "tinybase";
+import { createMergeableStore } from "tinybase";
 
 const TABLE = "records";
 const TESTERS = "testers";
 
-export const store = createStore().setTablesSchema({
+// MergeableStore em vez de Store puro: pré-requisito de qualquer sync (M6,
+// ADR-009). Carrega metadata de CRDT pra merge determinístico entre devices.
+// Persisters atuais (expo-sqlite em modo JSON, browser localStorage) já
+// suportam MergeableStore sem mudar. Ver docs/03-decisoes-tecnicas.md.
+export const store = createMergeableStore().setTablesSchema({
   [TABLE]: {
     type: { type: "string" },
     date: { type: "string" },
