@@ -1,18 +1,21 @@
-# Deploy do server WS via Cloudflare Tunnel — homeserver atrás de NAT, sem
-# porta publicada no roteador, TLS terminado na Cloudflare.
+# Deploy do server WS. TLS público via Cloudflare Tunnel — mas o cloudflared já
+# roda como serviço systemd no host (servindo outros subdomínios do túnel `home
+# server`), então NÃO subimos um container cloudflared aqui: seria uma segunda
+# replica redundante do mesmo túnel.
 #
-# Antes do primeiro `up`:
-#   1. Criar o túnel no Cloudflare Zero Trust dashboard (Networks → Tunnels).
-#      Nome sugerido: `backontrack-sync`.
-#   2. Adicionar a Public Hostname do túnel:
-#        - Subdomain: backontrack-sync
-#        - Domain: mhdn.com.br
-#        - Service type: HTTP  (não HTTPS! o cloudflared fala HTTP com Upgrade
-#          pro server interno; a Cloudflare cuida do TLS público)
-#        - URL: sync:8787
-#   3. Copiar o token do túnel e salvar em `.env` (gitignored):
-#        CLOUDFLARE_TUNNEL_TOKEN=eyJhIjoiXXX...
-#   4. `docker compose up -d --build` (ver README).
+# Fluxo:
+#   1. Container `sync` expõe 8787 em 127.0.0.1 (loopback do host, não LAN).
+#   2. cloudflared do systemd alcança via `http://127.0.0.1:8787`.
+#   3. Rota `backontrack-sync.mhdn.com.br` configurada no dashboard do túnel:
+#        Public Hostname: backontrack-sync . mhdn.com.br
+#        Service:         HTTP  (não HTTPS)
+#        URL:             http://127.0.0.1:8787
+#      Nova rota é puxada automaticamente pelo cloudflared existente — sem
+#      restart, sem rebuild.
+#
+# Subir:
+#   docker compose up -d --build
+#   docker compose logs -f
 services:
   sync:
     build: .
@@ -23,16 +26,7 @@ services:
       DATA_DIR: "/data"
     volumes:
       - ./data:/data
-    # Sem `ports:` de propósito — só o cloudflared acessa (rede interna do
-    # compose). Isso mantém a superfície de ataque no mínimo: nada exposto
-    # nem no host, nem na LAN.
-
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    container_name: backontrack-sync-cloudflared
-    restart: unless-stopped
-    depends_on:
-      - sync
-    # Túnel stateless: o token do dashboard traz toda a config (rotas,
-    # ingress, credenciais). Sem volume, sem cert.pem, sem login local.
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
+    # Bind explícito em 127.0.0.1: acessível pelo cloudflared do host, mas não
+    # publicado na LAN nem no público. Superfície de ataque mínima.
+    ports:
+      - "127.0.0.1:8787:8787"

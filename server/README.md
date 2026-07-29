@@ -4,7 +4,7 @@ Server WebSocket do TinyBase pra sincronizar dados entre dispositivos do app Bac
 
 ## Arquitetura em uma frase
 
-Node.js + `ws` + `createWsServer` do TinyBase, atrás de **Cloudflare Tunnel** com TLS terminado na borda. Uma `MergeableStore` por "sala" (o path da URL WS), persistida em arquivo JSON no volume. Cliente conecta em `wss://backontrack-sync.mhdn.com.br/<userId>`.
+Node.js + `ws` + `createWsServer` do TinyBase, atrás do **Cloudflare Tunnel `home server`** (`cloudflared` do systemd, já rodando no host, servindo outros subdomínios). Uma `MergeableStore` por "sala" (o path da URL WS), persistida em arquivo JSON no volume. Cliente conecta em `wss://backontrack-sync.mhdn.com.br/<userId>`.
 
 ## Dev local
 
@@ -20,44 +20,31 @@ O `smoke` conecta, escreve uma célula, desconecta, reconecta e confirma que o v
 
 ## Deploy no homeserver
 
-Pré-requisitos:
+O homeserver **já tem um `cloudflared` rodando como serviço systemd** (unit `/etc/systemd/system/cloudflared.service`), servindo o túnel `home server` da Cloudflare com outros subdomínios (`app`, `cloud`, `mc`). **Reusamos esse túnel** — não subimos um segundo `cloudflared` no compose (seria replica redundante da mesma tunnel).
 
-- Docker rodando (docker-ce 29+ recomendado; ver [[docker-snap-apparmor-broken]] pro histórico).
-- Domínio na Cloudflare (`mhdn.com.br` já está — nameservers `mina.ns.cloudflare.com` / `jeff.ns.cloudflare.com`).
-- Conta Cloudflare Zero Trust ativada (é grátis pra até 50 usuários; a maioria das contas free já tem).
+Passos (uma vez):
 
-Passos:
+1. **Adicionar a rota `backontrack-sync` no dashboard do túnel:**
 
-1. **Criar o túnel no Cloudflare Zero Trust** (uma vez):
+   Dashboard → túnel `home server` → aba **Routes → + Add route** (ou "Public Hostname → Add a public hostname"):
+   - **Subdomain:** `backontrack-sync`
+   - **Domain:** `mhdn.com.br`
+   - **Service type:** **HTTP** (não HTTPS!)
+   - **URL:** `127.0.0.1:8787`
 
-   - Dashboard: **Zero Trust → Networks → Tunnels → Create a tunnel**.
-   - Connector: **Cloudflared**. Nome sugerido: `backontrack-sync`.
-   - Na tela do túnel, aba **Public Hostname → Add a public hostname**:
-     - Subdomain: `backontrack-sync`
-     - Domain: `mhdn.com.br`
-     - Service type: **HTTP** (não HTTPS!)
-     - URL: `sync:8787` (nome do service Docker, porta interna)
-   - Copiar o token que aparece após "Install and run a connector" — é o argumento do `cloudflared service install <TOKEN>`. Começa com `eyJh` e tem **~200 caracteres**; copie o token inteiro, não só o prefixo.
+   O cloudflared do systemd puxa a nova rota automaticamente — sem restart, sem rebuild.
 
-2. **Criar o `.env` local** (gitignored). O token vem no comando `cloudflared service install <TOKEN>` que o dashboard mostra na aba "Install and run a connector" — copie o argumento inteiro depois de `install `, começando com `eyJh` e com ~200 caracteres. Sem quebras de linha, sem aspas:
+2. **Subir o container `sync`:**
 
    ```bash
    cd server
-   # NÃO copie o "eyJhIjoi..." literal — cole o token INTEIRO do dashboard:
-   echo 'CLOUDFLARE_TUNNEL_TOKEN=<COLE_TOKEN_INTEIRO_DE_~200_CHARS>' > .env
-   chmod 600 .env
-   # Sanidade: comprimento do token no .env (deve dar 150+)
-   awk -F= '/^CLOUDFLARE_TUNNEL_TOKEN=/{print length($2)}' .env
-   ```
-
-3. **Subir:**
-
-   ```bash
    docker compose up -d --build
-   docker compose logs -f cloudflared   # esperado: "Registered tunnel connection"
+   docker compose logs sync   # esperado: "[sync] listening on ws://0.0.0.0:8787 ..."
    ```
 
-4. **Smoke test remoto** (de qualquer máquina, sem VPN):
+   O container publica a porta 8787 **só em 127.0.0.1** (loopback do host — acessível pelo cloudflared do systemd, mas não pela LAN nem externamente).
+
+3. **Smoke test remoto** (de qualquer máquina, sem VPN):
 
    ```bash
    URL=wss://backontrack-sync.mhdn.com.br npm run smoke
@@ -65,14 +52,34 @@ Passos:
 
    Exit 0 = round-trip OK pelo TLS público da Cloudflare.
 
-### Por que Cloudflare Tunnel (e não Traefik)
+### Por que Cloudflare Tunnel
 
 - **Zero porta aberta no roteador** — o `cloudflared` faz outbound; ideal pra homeserver atrás de NAT ou CG-NAT.
 - **TLS gerenciado pela Cloudflare** — sem Let's Encrypt local, sem renovação, sem DNS challenge.
 - **DDoS + cache + firewall grátis** na frente, se um dia precisar.
-- **Um túnel serve N serviços** — se depois `nextcloud` ou outro quiser ser público, adiciona rota no mesmo túnel (sem novo container).
+- **Um túnel serve N serviços** — o `home server` já servia `app`/`cloud`/`mc`; a rota `backontrack-sync` entra sem novo cloudflared.
 
 Trade-off honesto: **dependência da Cloudflare** — se o dashboard/rede deles cair, o tunel cai. Aceitável pra este uso.
+
+### Rotate do token (só se vazar)
+
+O cloudflared do systemd usa `--token <JWT>` embutido na unit file. Se o token vazar (ex.: apareceu em log/output), **rotacione**:
+
+1. Dashboard do túnel → **Rotate token** (invalida o antigo no lado Cloudflare).
+2. No host, com `sudo` (o serviço roda como root):
+   ```bash
+   sudo cloudflared tunnel login   # uma vez — só se ~/.cloudflared/cert.pem não existe
+   sudo bash -c '
+     NEW=$(cloudflared tunnel token <TUNNEL_UUID>) && \
+     [ ${#NEW} -ge 150 ] && [[ "$NEW" == eyJ* ]] && \
+     cp /etc/systemd/system/cloudflared.service /etc/systemd/system/cloudflared.service.bak && \
+     sed -i "s|--token [A-Za-z0-9._-]*|--token $NEW|" /etc/systemd/system/cloudflared.service && \
+     echo "OK: ${#NEW} chars gravados"
+   '
+   sudo systemctl daemon-reload && sudo systemctl restart cloudflared
+   ```
+
+   O `cloudflared tunnel token <UUID>` imprime o token atual do túnel — pegamos direto via API em vez de depender do dashboard mostrar. Sem eco no shell.
 
 ## Persistência
 
@@ -84,7 +91,7 @@ Se apertar (concorrência alta, integridade, queries futuras), trocar por SQLite
 
 **Sem auth nesta fatia.** Trust-by-obscurity — quem sabe o `pathId` (userId) conecta e sincroniza. Aceitável enquanto os testers são 5-6 conhecidos e os IDs são difíceis de adivinhar. Auth real (JWT, token compartilhado, etc.) fica pra próxima fatia do M6.
 
-Cloudflare Tunnel na frente já garante TLS válido; o server em si só fala WS plano na rede interna do Docker (sem porta publicada no host).
+Cloudflare Tunnel na frente já garante TLS válido; o server em si só fala WS plano em `127.0.0.1:8787` do host (loopback, não LAN — só o cloudflared do systemd alcança).
 
 ## O que NÃO está aqui
 
