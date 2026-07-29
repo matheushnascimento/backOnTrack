@@ -7,7 +7,8 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "smoke": "node smoke-client.js"
+    "smoke": "node smoke-client.js",
+    "smoke:multi": "node smoke-two-clients.js"
   },
   "engines": {
     "node": ">=20"
