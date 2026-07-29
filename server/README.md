@@ -67,6 +67,7 @@ O cloudflared do systemd usa `--token <JWT>` embutido na unit file. Se o token v
 
 1. Dashboard do túnel → **Rotate token** (invalida o antigo no lado Cloudflare).
 2. No host, com `sudo` (o serviço roda como root):
+
    ```bash
    sudo cloudflared tunnel login   # uma vez — só se ~/.cloudflared/cert.pem não existe
    sudo bash -c '
