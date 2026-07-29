@@ -5,10 +5,14 @@ import { Stack } from "expo-router";
 import { View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useRegistrosPersistencia } from "@/infra/persistence";
+import { useRegistrosSync } from "@/infra/sync";
 import UpdateBanner from "@/components/UpdateBanner";
 
 export default function RootLayout() {
   useRegistrosPersistencia();
+  // Depois de persistência: o hook de sync depende do syncRoomId já estar
+  // carregado do disco (ver infra/sync.js).
+  useRegistrosSync();
 
   return (
     <SafeAreaProvider>
