@@ -75,28 +75,34 @@ async function connect(room) {
   return [store, sync];
 }
 
-test("round-trip: valor escrito volta em nova conexão (fatia 2 do M6)", async () => {
-  const now = String(Date.now());
+test(
+  "round-trip: valor escrito volta em nova conexão (fatia 2 do M6)",
+  async () => {
+    const now = String(Date.now());
 
-  // Round 1: escreve e desconecta.
-  const [s1, sync1] = await connect("round-trip");
-  s1.setCell("ping", "row1", "value", now);
-  await new Promise((r) => setTimeout(r, 300));
-  await sync1.destroy();
+    // Round 1: escreve e desconecta.
+    const [s1, sync1] = await connect("round-trip");
+    s1.setCell("ping", "row1", "value", now);
+    await new Promise((r) => setTimeout(r, 1500));
+    await sync1.destroy();
 
-  // Round 2: reconecta com store limpa — valor deve voltar do server.
-  const [s2, sync2] = await connect("round-trip");
-  await new Promise((r) => setTimeout(r, 300));
-  const got = s2.getCell("ping", "row1", "value");
-  await sync2.destroy();
+    // Round 2: reconecta com store limpa — valor deve voltar do server.
+    const [s2, sync2] = await connect("round-trip");
+    await new Promise((r) => setTimeout(r, 1500));
+    const got = s2.getCell("ping", "row1", "value");
+    await sync2.destroy();
 
-  expect(got).toBe(now);
-});
+    expect(got).toBe(now);
+  },
+  // Timeout: 2 conexões + 2 waits de 1500ms + margem de segurança pra CI mais
+  // lento. Default do jest (5s) fica curto.
+  15000,
+);
 
 test("persistência: arquivo JSON por sala é criado no DATA_DIR", async () => {
   const [store, sync] = await connect("persist-check");
   store.setCell("t", "r", "c", "v");
-  await new Promise((r) => setTimeout(r, 300));
+  await new Promise((r) => setTimeout(r, 1500));
   await sync.destroy();
 
   // O safeFilename do server transforma o pathId em `<nome>.json`.
@@ -110,10 +116,13 @@ test("path traversal: pathId malicioso não escapa do DATA_DIR", async () => {
   // dentro do DATA_DIR — não escrever fora.
   const [store, sync] = await connect("..%2F..%2Fetc%2Fpasswd");
   store.setCell("x", "y", "z", "1");
-  await new Promise((r) => setTimeout(r, 300));
+  await new Promise((r) => setTimeout(r, 1500));
   await sync.destroy();
 
   const files = readdirSync(dataDir);
+  // Guarda contra falso-positivo: se o server nem chegou a persistir, o
+  // for-loop passa vacuamente. Exige pelo menos 1 arquivo.
+  expect(files.length).toBeGreaterThan(0);
   // Todos os arquivos gerados devem estar diretamente no dataDir e ser .json —
   // nenhum ../../ escapou.
   for (const f of files) {
