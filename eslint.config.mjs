@@ -57,6 +57,14 @@ export default defineConfig([
     },
   },
   {
+    // Server WS de sync do M6 (server/) — Node ESM, fora do bundle do app.
+    files: ["server/**/*.js"],
+    languageOptions: {
+      sourceType: "module",
+      globals: globals.node,
+    },
+  },
+  {
     // Testes (jest): globals describe/test/expect/…; e os callbacks de
     // renderHook chamam hooks fora de componente de propósito.
     files: ["tests/**/*.{js,jsx}"],

@@ -1,0 +1,38 @@
+# Deploy do server WS via Cloudflare Tunnel — homeserver atrás de NAT, sem
+# porta publicada no roteador, TLS terminado na Cloudflare.
+#
+# Antes do primeiro `up`:
+#   1. Criar o túnel no Cloudflare Zero Trust dashboard (Networks → Tunnels).
+#      Nome sugerido: `backontrack-sync`.
+#   2. Adicionar a Public Hostname do túnel:
+#        - Subdomain: backontrack-sync
+#        - Domain: mhdn.com.br
+#        - Service type: HTTP  (não HTTPS! o cloudflared fala HTTP com Upgrade
+#          pro server interno; a Cloudflare cuida do TLS público)
+#        - URL: sync:8787
+#   3. Copiar o token do túnel e salvar em `.env` (gitignored):
+#        CLOUDFLARE_TUNNEL_TOKEN=eyJhIjoiXXX...
+#   4. `docker compose up -d --build` (ver README).
+services:
+  sync:
+    build: .
+    container_name: backontrack-sync
+    restart: unless-stopped
+    environment:
+      PORT: "8787"
+      DATA_DIR: "/data"
+    volumes:
+      - ./data:/data
+    # Sem `ports:` de propósito — só o cloudflared acessa (rede interna do
+    # compose). Isso mantém a superfície de ataque no mínimo: nada exposto
+    # nem no host, nem na LAN.
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: backontrack-sync-cloudflared
+    restart: unless-stopped
+    depends_on:
+      - sync
+    # Túnel stateless: o token do dashboard traz toda a config (rotas,
+    # ingress, credenciais). Sem volume, sem cert.pem, sem login local.
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
