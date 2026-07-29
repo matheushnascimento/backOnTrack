@@ -91,9 +91,8 @@ test("round-trip: valor escrito volta em nova conexão (fatia 2 do M6)", async (
   await sync2.destroy();
 
   expect(got).toBe(now);
-}, // Timeout: 2 conexões + 2 waits de 1500ms + margem de segurança pra CI mais
-// lento. Default do jest (5s) fica curto.
-15000);
+  // 15s: 2 conexões + 2 waits de 1500ms + margem pra CI lento (default é 5s).
+}, 15_000);
 
 test("persistência: arquivo JSON por sala é criado no DATA_DIR", async () => {
   const [store, sync] = await connect("persist-check");
