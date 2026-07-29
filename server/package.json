@@ -1,0 +1,19 @@
+{
+  "name": "backontrack-sync-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "TinyBase WebSocket sync server for the Back on Track app (M6, ADR-009).",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "smoke": "node smoke-client.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "tinybase": "^6.5.0",
+    "ws": "^8.18.0"
+  }
+}
