@@ -75,29 +75,25 @@ async function connect(room) {
   return [store, sync];
 }
 
-test(
-  "round-trip: valor escrito volta em nova conexão (fatia 2 do M6)",
-  async () => {
-    const now = String(Date.now());
+test("round-trip: valor escrito volta em nova conexão (fatia 2 do M6)", async () => {
+  const now = String(Date.now());
 
-    // Round 1: escreve e desconecta.
-    const [s1, sync1] = await connect("round-trip");
-    s1.setCell("ping", "row1", "value", now);
-    await new Promise((r) => setTimeout(r, 1500));
-    await sync1.destroy();
+  // Round 1: escreve e desconecta.
+  const [s1, sync1] = await connect("round-trip");
+  s1.setCell("ping", "row1", "value", now);
+  await new Promise((r) => setTimeout(r, 1500));
+  await sync1.destroy();
 
-    // Round 2: reconecta com store limpa — valor deve voltar do server.
-    const [s2, sync2] = await connect("round-trip");
-    await new Promise((r) => setTimeout(r, 1500));
-    const got = s2.getCell("ping", "row1", "value");
-    await sync2.destroy();
+  // Round 2: reconecta com store limpa — valor deve voltar do server.
+  const [s2, sync2] = await connect("round-trip");
+  await new Promise((r) => setTimeout(r, 1500));
+  const got = s2.getCell("ping", "row1", "value");
+  await sync2.destroy();
 
-    expect(got).toBe(now);
-  },
-  // Timeout: 2 conexões + 2 waits de 1500ms + margem de segurança pra CI mais
-  // lento. Default do jest (5s) fica curto.
-  15000,
-);
+  expect(got).toBe(now);
+}, // Timeout: 2 conexões + 2 waits de 1500ms + margem de segurança pra CI mais
+// lento. Default do jest (5s) fica curto.
+15000);
 
 test("persistência: arquivo JSON por sala é criado no DATA_DIR", async () => {
   const [store, sync] = await connect("persist-check");
