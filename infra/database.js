@@ -8,24 +8,30 @@ const TESTERS = "testers";
 // ADR-009). Carrega metadata de CRDT pra merge determinístico entre devices.
 // Persisters atuais (expo-sqlite em modo JSON, browser localStorage) já
 // suportam MergeableStore sem mudar. Ver docs/03-decisoes-tecnicas.md.
-export const store = createMergeableStore().setTablesSchema({
-  [TABLE]: {
-    type: { type: "string" },
-    date: { type: "string" },
-    quantity: { type: "number" },
-    unit: { type: "string" },
-    note: { type: "string" },
-    details: { type: "string", default: "{}" },
-    createdAt: { type: "number" },
-  },
-  // Lista de testers da tela de admin (Track A do M3-5). Local por-device;
-  // só o aparelho do admin popula. Ver app/admin.jsx.
-  [TESTERS]: {
-    name: { type: "string" },
-    phone: { type: "string" },
-    createdAt: { type: "number" },
-  },
-});
+export const store = createMergeableStore()
+  .setTablesSchema({
+    [TABLE]: {
+      type: { type: "string" },
+      date: { type: "string" },
+      quantity: { type: "number" },
+      unit: { type: "string" },
+      note: { type: "string" },
+      details: { type: "string", default: "{}" },
+      createdAt: { type: "number" },
+    },
+    // Lista de testers da tela de admin (Track A do M3-5). Local por-device;
+    // só o aparelho do admin popula. Ver app/admin.jsx.
+    [TESTERS]: {
+      name: { type: "string" },
+      phone: { type: "string" },
+      createdAt: { type: "number" },
+    },
+  })
+  .setValuesSchema({
+    // Room ID por install pra sync WS (M6 fatia 3, #202). Gerado no 1º launch
+    // (ver infra/persistence.js). Default vazio = sync ainda não inicializado.
+    syncRoomId: { type: "string", default: "" },
+  });
 
 // Espalha `details` (JSON) de volta pro topo. É espalhado por último de
 // propósito: registros antigos (schema frouxo, com quantity/observation
@@ -137,6 +143,32 @@ export function getToday() {
 export function clearAll() {
   // Só os registros — a lista de testers (admin) sobrevive ao "limpar dados".
   store.delTable(TABLE);
+}
+
+// --- Sync (M6 fatia 3, #202) ---
+
+// UUID-like local: 22 chars alfanuméricos, ~130 bits. Não é criptograficamente
+// forte, mas é obscuro o bastante pra ninguém adivinhar o room de outro tester.
+// Evita depender de expo-crypto (não instalado) e do crypto.randomUUID (RN não
+// garante em todas as versões).
+function generateRoomId() {
+  const chunk = () => Math.random().toString(36).slice(2, 13);
+  return (chunk() + chunk()).slice(0, 22);
+}
+
+/**
+ * Garante que o store tem um `syncRoomId`. Chamar DEPOIS do startAutoLoad do
+ * persister local — senão pode gerar um room, ser sobrescrito pelo load, e o
+ * sync tenta se conectar num room que muda no meio do caminho.
+ * @returns {string} o roomId (novo ou existente).
+ */
+export function ensureSyncRoomId() {
+  let roomId = store.getValue("syncRoomId");
+  if (!roomId) {
+    roomId = generateRoomId();
+    store.setValue("syncRoomId", roomId);
+  }
+  return roomId;
 }
 
 // --- Testers (tela de admin, Track A do M3-5) ---
