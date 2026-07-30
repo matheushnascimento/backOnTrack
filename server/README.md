@@ -88,15 +88,51 @@ Arquivo JSON por sala em `/data` (volume bind-mount `./data:/data`). Um `pathId`
 
 Se apertar (concorrência alta, integridade, queries futuras), trocar por SQLite via `createSqlite3Persister` — mesmo shape, muda 1 função no `server.js`. Adiar até ter demanda concreta.
 
-## Segurança
+## Autenticação (M6 fatia B, #211, ADR-010)
 
-**Sem auth nesta fatia.** Trust-by-obscurity — quem sabe o `pathId` (userId) conecta e sincroniza. Aceitável enquanto os testers são 5-6 conhecidos e os IDs são difíceis de adivinhar. Auth real (JWT, token compartilhado, etc.) fica pra próxima fatia do M6.
+O server valida JWT do Supabase se o cliente mandar `?token=<JWT>` na URL. HS256 verificado com `crypto` nativo (zero dep). Enforça `jwt.sub === pathId` — quem sabe o path sem o token do dono não conecta (403).
+
+Duas envs controlam o comportamento:
+
+| Env                   | Default    | Efeito                                                                                                      |
+| --------------------- | ---------- | ----------------------------------------------------------------------------------------------------------- |
+| `AUTH_MODE`           | `optional` | `optional`: aceita anônimo se sem token. `required`: rejeita sem token (401).                               |
+| `SUPABASE_JWT_SECRET` | vazio      | Secret HS256 do projeto Supabase. Obrigatório se `AUTH_MODE=required` OU se algum cliente mandar `?token=`. |
+
+**Onde pegar o `SUPABASE_JWT_SECRET`:** Supabase Dashboard → Project Settings → API → **JWT Settings** → "JWT Secret". Rotate lá também se precisar. É diferente da `anon key` (que é pública, vai no bundle do app); o JWT Secret NUNCA deve ir pro cliente.
+
+Adicionar ao `.env` local do server:
+
+```bash
+cd server
+echo 'AUTH_MODE=optional' >> .env
+echo 'SUPABASE_JWT_SECRET=<colar-o-secret-aqui>' >> .env
+chmod 600 .env
+docker compose up -d --build
+```
+
+### Matriz de comportamento
+
+| Requisição                          | `AUTH_MODE=optional` | `AUTH_MODE=required` |
+| ----------------------------------- | -------------------- | -------------------- |
+| Sem `?token=`                       | ✅ aceita anônimo    | ❌ 401               |
+| `?token=` válido + `sub === pathId` | ✅ aceita            | ✅ aceita            |
+| `?token=` válido + `sub !== pathId` | ❌ 403               | ❌ 403               |
+| `?token=` assinatura inválida       | ❌ 401               | ❌ 401               |
+| `?token=` expirado                  | ❌ 401               | ❌ 401               |
+
+### Rollout
+
+1. Deploy com `AUTH_MODE=optional`. Clientes anônimos (compat) continuam sincronizando.
+2. Merge da fatia C (cliente passa a mandar JWT + migração dos dados anônimos → sala do userId). OTA chega nos testers.
+3. Aviso via WhatsApp (Evolution API) pros testers logarem — [[evolution-api-testers-stack]].
+4. Dias depois, PR separado: flip `AUTH_MODE=required` no server. Anônimo passa a ser rejeitado.
 
 Cloudflare Tunnel na frente já garante TLS válido; o server em si só fala WS plano em `127.0.0.1:8787` do host (loopback, não LAN — só o cloudflared do systemd alcança).
 
 ## O que NÃO está aqui
 
-- Integração do client do app (`createWsSynchronizer` no `infra/persistence.js`) — próxima fatia.
-- Auth real — fatia própria.
+- Cliente do app passando `?token=` — vem na fatia C junto com a migração dos dados anônimos.
+- Migração de dados anônimos → sala do userId (fatia C).
 - Validação em cenários reais (offline→online, 2 devices, reinstall) — última fatia do M6.
 - Migração de schema server-side (não temos, `MergeableStore` cuida da forma dos dados).
