@@ -177,6 +177,61 @@ Campo flexível:
 
 ---
 
+## ADR-010 — Autenticação: Supabase Auth (hospedado) com magic link
+
+**Status:** decidido. Fecha o item "Autenticação/identificação mínima do dispositivo" do M6. Escolha feita ao completar a fatia 3 (#202) e planejar a fatia de identidade/multi-device.
+
+**Contexto:** o M6 quer que "os dados sobrevivam a perda/troca de aparelho". Após as fatias 1-3 (#195, #198, #202), o transporte de sync funciona ponta a ponta, mas cada install gera um `syncRoomId` aleatório — dois devices do mesmo usuário NÃO sincronizam sozinhos, e reinstall perde dados. Falta identificar o usuário de forma que:
+
+- 2 devices do mesmo usuário compartilhem estado (web + native, ou 2 celulares).
+- Reinstall recupere dados sem depender de export/import manual.
+- Testers fiquem isolados uns dos outros (o que hoje o roomId aleatório já garante — não regredir).
+- O server WS possa validar quem tem direito a ler/escrever em cada sala.
+
+Contexto do projeto que pesa:
+
+- **Escala pequena** hoje (5-6 testers), longo prazo dezenas.
+- **Baixo apetite por manter senha/reset/hash/rotate** — o app é pra durar anos, e o dev principal é o próprio usuário.
+- **Homeserver já cheio** de containers (server WS, Evolution API, outros do túnel `home server`).
+- **Já usamos Vercel functions** (`api/feedback.js`) — não é anátema ter SaaS na stack.
+
+**Decisão:** usar **Supabase Auth hospedado** (`supabase.com`), método único **magic link por email**. Cliente usa `@supabase/supabase-js` com persistência de sessão local. Server WS valida o JWT emitido pelo Supabase (HS256, secret compartilhado) na conexão e deriva o `roomId` do `sub` (userId). Client `syncRoomId` deixa de ser gerado localmente — passa a ser o userId. Dados anônimos existentes migram pra sala do usuário no primeiro sign-in.
+
+**Fluxo:**
+
+1. User abre app pela 1ª vez (ou após sign-out) → tela de login pede email.
+2. Supabase envia magic link → user clica no email → deep link (`backontrack://auth/callback`) volta pro app com token.
+3. Sessão persiste local (`@supabase/supabase-js` cuida via SecureStore/localStorage).
+4. `useRegistrosSync` só abre WS se houver sessão ativa; passa `?token=<jwt>` na URL do WS.
+5. Server WS verifica JWT no upgrade; se válido, deriva pathId = `user.id`, aceita conexão. Se inválido, rejeita com 401.
+
+**Alternativas consideradas:**
+
+- **Auth próprio no homeserver** (Node + bcrypt + JWT + SQLite). Alinha 100% com ADR-009 ("infra que já tem, zero SaaS"). Descartado por custo/valor: reset de senha, entrega confiável de email transacional, patches de segurança, e o teto de "single dev cuidando de tudo" não compensam o ganho de "não ter dependência SaaS" pra 5-6 usuários.
+- **Supabase self-hosted no homeserver**. Traria a stack toda pra dentro do docker (Postgres + GoTrue + PostgREST + Realtime + Storage + Studio + Kong = 7+ containers). Manutenção do Postgres + migrations do `supabase-cli` + backups viram responsabilidade da casa. Descartado — se vamos aceitar o custo de manter Supabase, o managed é objetivamente mais barato em ops.
+- **Clerk**. UX polida, mas free até 10k MAU depois pago; lock-in maior (menos APIs standard) e Supabase resolve o mesmo problema no free tier atual.
+- **Firebase Auth**. SDK maduro, tier free grande, mas puxa Firebase inteiro pro bundle e reforça o ecossistema Google numa stack que não usa mais nada dele. Descartado.
+- **Email + senha em vez de magic link**. Adiciona: validação de força de senha, telas de esqueci-a-senha, superfície de credential stuffing. Sem valor pra 5-6 pessoas que sabem checar email. Fica como follow-up se algum tester pedir.
+- **OAuth (Google/Apple) agora**. Config de cada provider é 1x mas não trivial (Apple exige Developer Program se um dia for pra App Store). Fica como follow-up quando o app for pra loja.
+
+**Consequências:**
+
+- **Positivo:** identidade + reset + delivery de email delegados; SDK RN oficial; free tier resolve escala prevista sem pagar; zero senha pra usuário lembrar; JWT verificável offline pelo server WS (HS256, sem chamar Supabase a cada mensagem).
+- **Negativo aceito:** dependência de SaaS (contradiz parcialmente ADR-009 — reconhecido no trade-off acima); precisa configurar SMTP no Supabase ou usar o SMTP dele (rate-limitado no free); vendor lock-in moderado (migrar de Supabase Auth pra qualquer outra coisa exigirá refluxo — mas o formato de user é padrão o suficiente pra ser refazível).
+- **Server WS:** ganha dependência de `SUPABASE_JWT_SECRET` (env). Verifica JWT no `verifyClient` do `ws.Server`; pathId ignora o que o cliente pede na URL e usa `sub` do token. Sem JWT válido, upgrade rejeitado.
+- **Client:** ganha telas de login/logout, `SessionProvider` pra expor user pro resto do app, e um pequeno passo de migração no 1º sign-in (mover dados do roomId anônimo pro roomId = userId, apagar o anônimo depois).
+- **Testers em rollout:** primeiro launch pós-deploy pede login. Ninguém perde dados (script de migração cobre), mas o mecanismo de bootstrap muda — precisa aviso via WhatsApp (Evolution API — ver [[evolution-api-testers-stack]]).
+
+**Quando revisitar:** se escala passar de 50 MAU (approaching free tier limits), se precisarmos de multi-tenant complexo (organizações, roles), ou se Supabase mudar preço/termos de forma inaceitável. Migração de saída passa por reexportar user list + reissue de magic links de outra fonte.
+
+**Fatiamento pra M6:**
+
+- **Fatia A (setup):** projeto Supabase criado, `@supabase/supabase-js` no client, telas de login/callback/logout, sessão persistida, `SessionProvider`. Sync ainda não usa a sessão. App usa magic link mas continua sincronizando anonimamente por baixo.
+- **Fatia B (server valida JWT):** server WS ganha `SUPABASE_JWT_SECRET`, verifica no upgrade, deriva pathId de `sub`. Client passa `?token=<jwt>` na URL do WS. Rooms passam a ser por-userId. Testers precisam relogar (sem migração — dados anônimos ficam no roomId antigo, invisíveis).
+- **Fatia C (migração de anônimo → user):** no 1º sign-in, se local tem `syncRoomId` anônimo com dados, faz merge desses dados pra sala do userId e apaga o roomId anônimo. Encerra o M6.
+
+---
+
 ## Fontes consultadas
 
 - https://docs.expo.dev/router/introduction/
@@ -195,3 +250,8 @@ Campo flexível:
 - https://tinybase.org/api/synchronizer-ws-client/interfaces/synchronizer/wssynchronizer/ (ADR-009)
 - https://tinybase.org/api/persister-powersync/ (ADR-009)
 - https://www.powersync.com/ (ADR-009)
+- https://supabase.com/docs/guides/auth (ADR-010)
+- https://supabase.com/docs/reference/javascript/auth-signinwithotp (ADR-010)
+- https://supabase.com/docs/guides/auth/sessions (ADR-010)
+- https://supabase.com/pricing (ADR-010)
+- https://docs.expo.dev/guides/deep-linking/ (ADR-010)
