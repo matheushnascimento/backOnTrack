@@ -21,7 +21,9 @@
   },
   "dependencies": {
     "@expo/metro-runtime": "~57.0.2",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-vector-icons/material-design-icons": "^13.1.2",
+    "@supabase/supabase-js": "^2.111.0",
     "commitizen": "^4.3.2",
     "expo": "^57.0.1",
     "expo-checkbox": "~57.0.0",

@@ -14,6 +14,8 @@ import Card from "@/components/Card";
 import SectionLabel from "@/components/SectionLabel";
 
 import { clearAll, getToday, store } from "@/infra/database";
+import { useSession } from "@/infra/session";
+import { AUTH_ENABLED } from "@/infra/supabase";
 import { confirmAction } from "@/constants/dialogs";
 import { getEnvironmentInfo } from "@/constants/environment";
 import { CATEGORY_MAP } from "@/components/categoryUtils";
@@ -51,6 +53,7 @@ function MetricRow({ done, name, detail }) {
 
 export default function Home() {
   const { toggleColorScheme } = useColorScheme();
+  const { user, signOut } = useSession();
 
   // Assina a tabela: `useTable` re-renderiza a cada mudança nos registros —
   // inclusive quando o `startAutoLoad()` da persistência termina de carregar.
@@ -152,6 +155,23 @@ export default function Home() {
             title="Roadmap do projeto"
             onPress={() => router.navigate("/roadmap")}
           />
+          {/* Auth (fatia A do M6): botão condicional. Só aparece se as env
+              vars do Supabase estiverem configuradas — do contrário, o botão
+              não faria nada útil. Sync ainda anônimo nesta fatia. */}
+          {AUTH_ENABLED &&
+            (user ? (
+              <>
+                <Text className="pt-1 text-center text-xs text-light-text opacity-70 dark:text-dark-text">
+                  Logado como {user.email}
+                </Text>
+                <MyButton title="Sair" onPress={() => signOut()} />
+              </>
+            ) : (
+              <MyButton
+                title="Entrar"
+                onPress={() => router.navigate("/login")}
+              />
+            ))}
           {/* Versão visível pro tester saber (e reportar) em qual bundle está —
               o OTA troca o JS sem mudar a versão do app (#131). */}
           <Text className="pt-1 text-center text-xs text-light-text opacity-50 dark:text-dark-text">
