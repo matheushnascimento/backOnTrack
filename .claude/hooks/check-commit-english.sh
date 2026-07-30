@@ -18,8 +18,11 @@ fi
 input=$(cat)
 cmd=$(printf '%s' "$input" | jq -r '.tool_input.command // ""')
 
-# Só nos interessa `git commit`. Deixa passar tudo o mais.
-if ! printf '%s' "$cmd" | grep -qE '(^|[[:space:]])git[[:space:]]+commit\b'; then
+# Só nos interessa `git commit` como o COMANDO principal (ancorado no início da
+# string, opcionalmente precedido de whitespace). Isso evita falso-positivo
+# quando outros comandos (ex.: `gh pr create --body "...git commit..."`) citam
+# a string "git commit" dentro de argumentos.
+if ! printf '%s' "$cmd" | grep -qE '^[[:space:]]*git[[:space:]]+commit\b'; then
   exit 0
 fi
 
