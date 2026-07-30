@@ -27,22 +27,44 @@ export default function AuthCallback() {
       setStatus("error");
       return;
     }
-    if (!code || !supabase) {
-      setErrorMsg("Link inválido ou sem código de autenticação.");
+    if (!supabase) {
+      setErrorMsg("Auth não configurada.");
       setStatus("error");
       return;
     }
-    supabase.auth
-      .exchangeCodeForSession(String(code))
-      .then(({ error: exchangeErr }) => {
-        if (exchangeErr) throw exchangeErr;
-        // SessionProvider vai pegar via onAuthStateChange — só voltar pra home.
+    // Caminho A (PKCE): magic link veio com `?code=` — troca por sessão.
+    if (code) {
+      supabase.auth
+        .exchangeCodeForSession(String(code))
+        .then(({ error: exchangeErr }) => {
+          if (exchangeErr) throw exchangeErr;
+          router.replace("/");
+        })
+        .catch((e) => {
+          setErrorMsg(String(e?.message ?? e));
+          setStatus("error");
+        });
+      return;
+    }
+    // Caminho B (implícito, `#access_token=...`): o client parseia sozinho na
+    // init (detectSessionInUrl no web). Ouve o próximo evento de auth; se cair
+    // com sessão em até 3s, redireciona. Senão, o link mesmo era ruim.
+    const { data: sub } = supabase.auth.onAuthStateChange((_evt, session) => {
+      if (session) {
+        clearTimeout(timeoutId);
+        sub.subscription.unsubscribe();
         router.replace("/");
-      })
-      .catch((e) => {
-        setErrorMsg(String(e?.message ?? e));
-        setStatus("error");
-      });
+      }
+    });
+    const timeoutId = setTimeout(() => {
+      sub.subscription.unsubscribe();
+      setErrorMsg("Link inválido ou sem código de autenticação.");
+      setStatus("error");
+    }, 3000);
+    return () => {
+      clearTimeout(timeoutId);
+      sub.subscription.unsubscribe();
+    };
   }, [code, error, error_description]);
 
   return (

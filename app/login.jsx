@@ -38,7 +38,13 @@ export default function Login() {
       if (error) throw error;
       setStatus("sent");
     } catch (e) {
-      setErrorMsg(String(e?.message ?? e));
+      // Loga o erro cru pra debug no console (AuthError vem com .status, .code
+      // e .message; alguns caminhos jogam objeto opaco onde só o console ajuda).
+      console.error("[login] signInWithOtp falhou:", e);
+      const parts = [e?.message, e?.code, e?.status]
+        .filter(Boolean)
+        .map(String);
+      setErrorMsg(parts.length ? parts.join(" · ") : "erro desconhecido");
       setStatus("error");
     }
   }
