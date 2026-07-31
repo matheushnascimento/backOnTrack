@@ -24,6 +24,10 @@ services:
     environment:
       PORT: "8787"
       DATA_DIR: "/data"
+    # Carrega .env do lado do container (auth: SUPABASE_JWT_SECRET, AUTH_MODE).
+    # `.env` é gitignored — cada deploy tem o seu.
+    env_file:
+      - .env
     volumes:
       - ./data:/data
     # Bind explícito em 127.0.0.1: acessível pelo cloudflared do host, mas não
