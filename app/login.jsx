@@ -19,14 +19,12 @@ export default function Login() {
   const { user } = useSession();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("idle"); // idle | sending | sent | error
-  const [errorMsg, setErrorMsg] = useState("");
 
   const canSend = AUTH_ENABLED && status !== "sending" && email.includes("@");
 
   async function handleSend() {
     if (!canSend || !supabase) return;
     setStatus("sending");
-    setErrorMsg("");
     try {
       // Linking.createURL cobre native (backontrack://) e web (https://origin).
       // Ambos precisam estar no allowlist de Redirect URLs do Supabase.
@@ -38,13 +36,10 @@ export default function Login() {
       if (error) throw error;
       setStatus("sent");
     } catch (e) {
-      // Loga o erro cru pra debug no console (AuthError vem com .status, .code
-      // e .message; alguns caminhos jogam objeto opaco onde só o console ajuda).
+      // Detalhes técnicos ficam no console — UI mostra só mensagem genérica.
+      // "Invalid API key", HTTP status, stack trace: infra interna que só
+      // atrapalha usuário final e pode vazar shape do backend.
       console.error("[login] signInWithOtp falhou:", e);
-      const parts = [e?.message, e?.code, e?.status]
-        .filter(Boolean)
-        .map(String);
-      setErrorMsg(parts.length ? parts.join(" · ") : "erro desconhecido");
       setStatus("error");
     }
   }
@@ -120,8 +115,8 @@ export default function Login() {
 
             {status === "error" && (
               <Text className="text-sm text-danger">
-                Não consegui enviar ({errorMsg}). Confere o email e tenta de
-                novo.
+                Não consegui enviar o link agora. Confere o email e tenta de
+                novo em alguns minutos.
               </Text>
             )}
 
