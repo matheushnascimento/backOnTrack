@@ -12,7 +12,7 @@
 // Internet, mas trava no Chrome). Ciclo 3, #74.
 
 export const EAS_INSTALL_URL =
-  "https://expo.dev/accounts/matheushnascimento/projects/backOnTrack/builds/a847923f-2975-4b74-9ccc-2661999e595c";
+  "https://expo.dev/accounts/matheushnascimento/projects/backOnTrack/builds/2e4d014d-d558-4c6d-9d75-0d2c2be81870";
 
 export const APK_URL =
   "https://github.com/matheushnascimento/backOnTrack/releases/latest/download/backOnTrack.apk";
