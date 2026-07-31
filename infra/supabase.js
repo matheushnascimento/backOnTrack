@@ -16,12 +16,35 @@ export const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL ?? "";
 export const SUPABASE_ANON_KEY =
   process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? "";
 
+// TEMP debug (crash investigation): logs the URL/key that Metro actually
+// baked at build time. Visible via `adb logcat *:S ReactNativeJS:V`.
+// Remove after fixing.
+console.log(
+  "[supabase-debug] URL type:",
+  typeof SUPABASE_URL,
+  "length:",
+  SUPABASE_URL?.length,
+  "value:",
+  JSON.stringify(SUPABASE_URL),
+);
+console.log(
+  "[supabase-debug] KEY type:",
+  typeof SUPABASE_ANON_KEY,
+  "length:",
+  SUPABASE_ANON_KEY?.length,
+  "first 4:",
+  JSON.stringify(SUPABASE_ANON_KEY?.slice(0, 4)),
+);
+
 export const AUTH_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
-// Se ainda não configurou, cria um stub que nunca conecta — evita crash na
-// import. Telas de login devem gate em AUTH_ENABLED antes de tentar chamar.
-export const supabase = AUTH_ENABLED
-  ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+// Envelope createClient em try/catch pra crash de validação (ex.: URL
+// inválido) NÃO derrubar o app inteiro. Retorna null e loga — app abre
+// com auth desligada em vez de crash na abertura.
+function safeCreateClient() {
+  if (!AUTH_ENABLED) return null;
+  try {
+    return createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
       auth: {
         // Web: `undefined` = localStorage automático. Native: AsyncStorage.
         storage: Platform.OS === "web" ? undefined : AsyncStorage,
@@ -31,5 +54,12 @@ export const supabase = AUTH_ENABLED
         // via deep link handler em app/auth/callback.jsx.
         detectSessionInUrl: Platform.OS === "web",
       },
-    })
-  : null;
+    });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    console.error("[supabase-debug] createClient falhou:", msg);
+    return null;
+  }
+}
+
+export const supabase = safeCreateClient();
