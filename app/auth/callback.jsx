@@ -15,13 +15,9 @@ import { supabase } from "@/infra/supabase";
 // sessão via PKCE, redireciona pra /.
 
 export default function AuthCallback() {
-  const params = useLocalSearchParams();
-  const { code, error, error_description } = params;
+  const { code, error, error_description } = useLocalSearchParams();
   const [status, setStatus] = useState("exchanging");
   const [errorMsg, setErrorMsg] = useState("");
-  // TEMP debug: mostra os params do deep link — se PKCE está funcionando,
-  // `code` deve estar presente. Se hash-flow, params tem outros campos.
-  const debugParams = JSON.stringify(params, null, 2);
 
   useEffect(() => {
     // Supabase pode redirecionar com `?error=...` em vez de `?code=...`
@@ -92,13 +88,6 @@ export default function AuthCallback() {
               Não deu certo
             </Text>
             <Text className="text-sm text-danger">{errorMsg}</Text>
-            {/* TEMP debug: mostra params do deep link pra diagnóstico. */}
-            <Text
-              selectable
-              className="text-xs text-light-text opacity-70 dark:text-dark-text"
-            >
-              DEBUG params: {debugParams}
-            </Text>
             <MyButton
               title="Tentar de novo"
               onPress={() => router.replace("/login")}
