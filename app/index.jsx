@@ -89,10 +89,10 @@ export default function Home() {
         contentContainerStyle={{ padding: 16, gap: 16, alignItems: "center" }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Trigger do menu lateral: hamburger alinhado à direita, no fluxo
-            do documento pra respeitar padding/safe area do MyView (posição
-            absoluta ignoraria essas margens). */}
-        <View className="w-full flex-row justify-end">
+        {/* Trigger do menu lateral: hamburger alinhado à esquerda pra
+            casar com o painel que abre da esquerda (padrão de app mobile).
+            No fluxo do documento pra respeitar padding/safe area do MyView. */}
+        <View className="w-full flex-row justify-start">
           <Pressable
             accessibilityLabel="Abrir menu"
             accessibilityRole="button"
