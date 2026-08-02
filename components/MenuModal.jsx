@@ -4,6 +4,7 @@ import { useColorScheme } from "nativewind";
 import { router } from "expo-router";
 
 import MyButton from "./MyButton";
+import MyView from "./MyView";
 import SectionLabel from "./SectionLabel";
 
 import { clearAll } from "@/infra/database";
@@ -53,8 +54,10 @@ export default function MenuModal({ visible, onClose }) {
       statusBarTranslucent
     >
       <View className="flex-1 flex-row">
-        {/* Painel */}
-        <View className="w-4/5 max-w-sm bg-light-background dark:bg-dark-background">
+        {/* Painel. MyView safe=true aplica paddingTop=insets.top pro conteúdo
+            não colidir com clock/status-bar icons — o Modal usa
+            statusBarTranslucent, então sem safe-area o topo fica sob a barra. */}
+        <MyView className="w-4/5 max-w-sm bg-light-background dark:bg-dark-background">
           <ScrollView
             contentContainerStyle={{ padding: 16, gap: 12 }}
             showsVerticalScrollIndicator={false}
@@ -112,7 +115,7 @@ export default function MenuModal({ visible, onClose }) {
               {ENV.bundle ? ` · ${ENV.bundle}` : ""}
             </Text>
           </ScrollView>
-        </View>
+        </MyView>
 
         {/* Backdrop tap-to-close */}
         <Pressable className="flex-1 bg-black/40" onPress={onClose} />
