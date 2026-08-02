@@ -1,3 +1,4 @@
+// @ts-nocheck -- debug patch com let export com narrow inicial null (ADR-002)
 /* global process */
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createClient } from "@supabase/supabase-js";
@@ -41,6 +42,9 @@ export const AUTH_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 // Envelope createClient em try/catch pra crash de validação (ex.: URL
 // inválido) NÃO derrubar o app inteiro. Retorna null e loga — app abre
 // com auth desligada em vez de crash na abertura.
+// TEMP debug: também guarda o erro num export pra UI mostrar (sem ADB).
+export let supabaseInitError = null;
+
 function safeCreateClient() {
   if (!AUTH_ENABLED) return null;
   try {
@@ -58,6 +62,7 @@ function safeCreateClient() {
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     console.error("[supabase-debug] createClient falhou:", msg);
+    supabaseInitError = msg;
     return null;
   }
 }
