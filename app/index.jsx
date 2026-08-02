@@ -1,8 +1,7 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //#region imports
-import { useMemo } from "react";
-import { ScrollView, Text, View } from "react-native";
-import { useColorScheme } from "nativewind";
+import { useMemo, useState } from "react";
+import { Pressable, ScrollView, Text, View } from "react-native";
 import { router } from "expo-router";
 import { useTable } from "tinybase/ui-react";
 
@@ -12,18 +11,14 @@ import MyHeader from "@/components/MyHeader";
 import InstallApp from "@/components/InstallApp";
 import Card from "@/components/Card";
 import SectionLabel from "@/components/SectionLabel";
+import MenuModal from "@/components/MenuModal";
 
-import { clearAll, getToday, store } from "@/infra/database";
+import { getToday, store } from "@/infra/database";
 import { useSession } from "@/infra/session";
 import { AUTH_ENABLED } from "@/infra/supabase";
-import { confirmAction } from "@/constants/dialogs";
-import { getEnvironmentInfo } from "@/constants/environment";
 import { CATEGORY_MAP } from "@/components/categoryUtils";
 import { minutesToHHMM } from "@/constants/duration";
 //#endregion
-
-// Versão/bundle exibidos nos Utilitários (#131).
-const ENV = getEnvironmentInfo();
 
 const METRICS = Object.keys(CATEGORY_MAP);
 const TOTAL = METRICS.length;
@@ -52,8 +47,8 @@ function MetricRow({ done, name, detail }) {
 }
 
 export default function Home() {
-  const { toggleColorScheme } = useColorScheme();
-  const { user, signOut } = useSession();
+  const { user } = useSession();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // Assina a tabela: `useTable` re-renderiza a cada mudança nos registros —
   // inclusive quando o `startAutoLoad()` da persistência termina de carregar.
@@ -66,16 +61,6 @@ export default function Home() {
   // olham os mesmos dados e sugere remover — o que reintroduziria o #108.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = useMemo(() => getToday(), [records]);
-
-  function handleClear() {
-    confirmAction({
-      title: "Limpar todos os dados",
-      message: "Isso apaga todos os registros. Tem certeza?",
-      confirmLabel: "Limpar",
-      // A assinatura da store cuida do re-render; não precisa reler na mão.
-      onConfirm: clearAll,
-    });
-  }
 
   const rows = METRICS.map((type) => {
     const { displayName, unit } = CATEGORY_MAP[type];
@@ -104,6 +89,22 @@ export default function Home() {
         contentContainerStyle={{ padding: 16, gap: 16, alignItems: "center" }}
         showsVerticalScrollIndicator={false}
       >
+        {/* Trigger do menu lateral: hamburger alinhado à esquerda pra
+            casar com o painel que abre da esquerda (padrão de app mobile).
+            No fluxo do documento pra respeitar padding/safe area do MyView. */}
+        <View className="w-full flex-row justify-start">
+          <Pressable
+            accessibilityLabel="Abrir menu"
+            accessibilityRole="button"
+            onPress={() => setMenuOpen(true)}
+            className="rounded-full p-2"
+          >
+            <Text className="text-2xl text-light-text dark:text-dark-text">
+              ☰
+            </Text>
+          </Pressable>
+        </View>
+
         {/* Resumo do dia */}
         <Card className="gap-2">
           <Text className="font-bold text-2xl text-light-text dark:text-dark-text">
@@ -138,47 +139,17 @@ export default function Home() {
         {/* Obter o app (só web: QR no desktop, download no celular) */}
         <InstallApp />
 
-        {/* Utilitários */}
-        <Card className="gap-2">
-          <SectionLabel>UTILITÁRIOS</SectionLabel>
-          <MyButton title="Alternar tema" onPress={() => toggleColorScheme()} />
-          <MyButton
-            title="Histórico"
-            onPress={() => router.navigate("/history")}
-          />
-          <MyButton title="Limpar todos os dados" onPress={handleClear} />
-          <MyButton
-            title="Enviar feedback"
-            onPress={() => router.navigate("/feedback")}
-          />
-          <MyButton
-            title="Roadmap do projeto"
-            onPress={() => router.navigate("/roadmap")}
-          />
-          {/* Auth (fatia A do M6): botão condicional. Só aparece se as env
-              vars do Supabase estiverem configuradas — do contrário, o botão
-              não faria nada útil. Sync ainda anônimo nesta fatia. */}
-          {AUTH_ENABLED &&
-            (user ? (
-              <>
-                <Text className="pt-1 text-center text-xs text-light-text opacity-70 dark:text-dark-text">
-                  Logado como {user.email}
-                </Text>
-                <MyButton title="Sair" onPress={() => signOut()} />
-              </>
-            ) : (
-              <MyButton
-                title="Entrar"
-                onPress={() => router.navigate("/login")}
-              />
-            ))}
-          {/* Versão visível pro tester saber (e reportar) em qual bundle está —
-              o OTA troca o JS sem mudar a versão do app (#131). */}
-          <Text className="pt-1 text-center text-xs text-light-text opacity-50 dark:text-dark-text">
-            v{ENV.appVersion}
-            {ENV.bundle ? ` · ${ENV.bundle}` : ""}
-          </Text>
-        </Card>
+        {/* Entrar isolado só quando deslogado + auth configurada. Sair vai
+            pro MenuModal junto com "Logado como" — Home enxuta em ambos
+            estados de auth. */}
+        {AUTH_ENABLED && !user && (
+          <Card className="gap-2">
+            <MyButton
+              title="Entrar"
+              onPress={() => router.navigate("/login")}
+            />
+          </Card>
+        )}
 
         {/* Wordmark discreto — marca presente na tela principal sem competir
             com o conteúdo. Ver docs/08-design-tokens.md § Identidade visual. */}
@@ -186,6 +157,8 @@ export default function Home() {
           Back on Track · de volta aos trilhos, um registro por vez
         </Text>
       </ScrollView>
+
+      <MenuModal visible={menuOpen} onClose={() => setMenuOpen(false)} />
     </MyView>
   );
 }
