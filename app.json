@@ -28,7 +28,7 @@
       "bundler": "metro",
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#F8F9FA"
       },
       "edgeToEdgeEnabled": true,
       "package": "com.matheushnascimento.backOnTrack"

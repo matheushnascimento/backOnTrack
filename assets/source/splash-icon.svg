@@ -1,0 +1,11 @@
+<!--
+  Back on Track · splash-icon.png source (M5-B, #228).
+  Símbolo isolado com transparência ao redor — Expo centraliza sobre o
+  splash backgroundColor (`#F8F9FA` no app.json). Cor navy pra contrastar
+  sobre esse fundo claro.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <path d="M 140 780 Q 460 780 560 520 T 880 240"
+        fill="none" stroke="#2E5A88" stroke-width="82" stroke-linecap="round"/>
+  <circle cx="140" cy="780" r="70" fill="#4CAF50"/>
+</svg>
