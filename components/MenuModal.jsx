@@ -59,7 +59,29 @@ export default function MenuModal({ visible, onClose }) {
             contentContainerStyle={{ padding: 16, gap: 12 }}
             showsVerticalScrollIndicator={false}
           >
-            <SectionLabel>MENU</SectionLabel>
+            {/* Cabeçalho: label MENU à esquerda, toggle de tema à direita
+                (sol ⇄ lua flanqueando o slider — padrão de app mobile). */}
+            <View className="flex-row items-center justify-between">
+              <SectionLabel>MENU</SectionLabel>
+              <View className="flex-row items-center gap-2">
+                <Text
+                  className={`text-base ${isDark ? "opacity-40" : "opacity-100"}`}
+                >
+                  ☀️
+                </Text>
+                <Switch
+                  value={isDark}
+                  onValueChange={() => toggleColorScheme()}
+                  accessibilityLabel="Alternar tema escuro"
+                />
+                <Text
+                  className={`text-base ${isDark ? "opacity-100" : "opacity-40"}`}
+                >
+                  🌙
+                </Text>
+              </View>
+            </View>
+
             <MyButton
               title="Histórico"
               onPress={() => navigateTo("/history")}
@@ -72,20 +94,6 @@ export default function MenuModal({ visible, onClose }) {
               title="Roadmap do projeto"
               onPress={() => navigateTo("/roadmap")}
             />
-            {/* Toggle de tema no padrão mobile — Switch nativo com label
-                à esquerda. Reflete o estado atual em vez de só "alternar"
-                (usuário sabe se está no dark antes de clicar). */}
-            <View className="flex-row items-center justify-between py-2">
-              <Text className="text-base text-light-text dark:text-dark-text">
-                Tema escuro
-              </Text>
-              <Switch
-                value={isDark}
-                onValueChange={() => toggleColorScheme()}
-                accessibilityLabel="Alternar tema escuro"
-              />
-            </View>
-
             <MyButton title="Limpar todos os dados" onPress={handleClear} />
 
             {AUTH_ENABLED && user && (
