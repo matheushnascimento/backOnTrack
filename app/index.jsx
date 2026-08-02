@@ -15,7 +15,13 @@ import SectionLabel from "@/components/SectionLabel";
 
 import { clearAll, getToday, store } from "@/infra/database";
 import { useSession } from "@/infra/session";
-import { AUTH_ENABLED } from "@/infra/supabase";
+import {
+  AUTH_ENABLED,
+  SUPABASE_ANON_KEY,
+  SUPABASE_URL,
+  supabase,
+  supabaseInitError,
+} from "@/infra/supabase";
 import { confirmAction } from "@/constants/dialogs";
 import { getEnvironmentInfo } from "@/constants/environment";
 import { CATEGORY_MAP } from "@/components/categoryUtils";
@@ -177,6 +183,26 @@ export default function Home() {
           <Text className="pt-1 text-center text-xs text-light-text opacity-50 dark:text-dark-text">
             v{ENV.appVersion}
             {ENV.bundle ? ` · ${ENV.bundle}` : ""}
+          </Text>
+          {/* TEMP DEBUG: mostra estado do supabase.js pra diagnóstico do
+              crash "Invalid supabaseUrl" sem precisar de adb logcat. Ver
+              PR #221 e a próxima. Remover assim que bug resolvido. */}
+          <Text
+            selectable
+            className="pt-2 text-center text-xs text-light-text opacity-70 dark:text-dark-text"
+          >
+            DEBUG · url_type={typeof SUPABASE_URL} url_len=
+            {SUPABASE_URL?.length ?? 0} url_head=
+            {JSON.stringify(SUPABASE_URL?.slice(0, 10) ?? "")}
+            {"\n"}
+            key_type={typeof SUPABASE_ANON_KEY} key_len=
+            {SUPABASE_ANON_KEY?.length ?? 0} key_head=
+            {JSON.stringify(SUPABASE_ANON_KEY?.slice(0, 6) ?? "")}
+            {"\n"}
+            auth_enabled={String(AUTH_ENABLED)} supabase_null=
+            {String(supabase === null)}
+            {"\n"}
+            init_err={String(supabaseInitError ?? "none")}
           </Text>
         </Card>
 
