@@ -57,6 +57,11 @@ function safeCreateClient() {
         // Web: parsear tokens da URL após magic link redirect. Native: manual
         // via deep link handler em app/auth/callback.jsx.
         detectSessionInUrl: Platform.OS === "web",
+        // Força PKCE em todas as plataformas. Sem isso, o supabase-js pode
+        // gerar magic link em hash-flow (#access_token=...) que só funciona
+        // com detectSessionInUrl=true — quebra no native, onde o callback
+        // precisa do ?code= pra chamar exchangeCodeForSession.
+        flowType: "pkce",
       },
     });
   } catch (e) {
