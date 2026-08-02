@@ -1,5 +1,5 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
-import { Modal, Pressable, ScrollView, Text, View } from "react-native";
+import { Modal, Pressable, ScrollView, Switch, Text, View } from "react-native";
 import { useColorScheme } from "nativewind";
 import { router } from "expo-router";
 
@@ -19,8 +19,9 @@ const ENV = getEnvironmentInfo();
 // com backdrop tap-to-close. Ver decisão em conversation (drawer requeria
 // gesture-handler nativo = APK nova).
 export default function MenuModal({ visible, onClose }) {
-  const { toggleColorScheme } = useColorScheme();
+  const { colorScheme, toggleColorScheme } = useColorScheme();
   const { user, signOut } = useSession();
+  const isDark = colorScheme === "dark";
 
   // Fecha antes de navegar/agir — evita ver o modal por cima da tela nova.
   function navigateTo(path) {
@@ -71,10 +72,20 @@ export default function MenuModal({ visible, onClose }) {
               title="Roadmap do projeto"
               onPress={() => navigateTo("/roadmap")}
             />
-            <MyButton
-              title="Alternar tema"
-              onPress={() => toggleColorScheme()}
-            />
+            {/* Toggle de tema no padrão mobile — Switch nativo com label
+                à esquerda. Reflete o estado atual em vez de só "alternar"
+                (usuário sabe se está no dark antes de clicar). */}
+            <View className="flex-row items-center justify-between py-2">
+              <Text className="text-base text-light-text dark:text-dark-text">
+                Tema escuro
+              </Text>
+              <Switch
+                value={isDark}
+                onValueChange={() => toggleColorScheme()}
+                accessibilityLabel="Alternar tema escuro"
+              />
+            </View>
+
             <MyButton title="Limpar todos os dados" onPress={handleClear} />
 
             {AUTH_ENABLED && user && (
