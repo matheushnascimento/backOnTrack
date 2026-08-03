@@ -12,6 +12,7 @@ import MyButtonRaw from "@/components/MyButton";
 import MyCheckboxRaw from "@/components/MyCheckbox";
 import FieldLabelRaw from "@/components/FieldLabel";
 import MyHistory, { MyExerciseHistory } from "@/components/MyHistory";
+import WaterQuickAdd from "./WaterQuickAdd";
 
 import { hhmmToMinutes, minutesToHHMM } from "@/constants/duration";
 import {
@@ -48,6 +49,10 @@ const INPUT_LG =
  * @property {(props: SlotProps) => any} [Top]
  * @property {(props: SlotProps) => any} [Bottom]
  * @property {string} [cardClass]
+ * @property {(props: { onAfterAdd: () => void }) => any} [renderCustom]  Se
+ *   presente, substitui o corpo Score/OBS/Top/Bottom do card na criação de
+ *   novos registros (recordId ausente). Edição via `?id=` cai no fluxo
+ *   genérico. Usado por métricas com padrão bespoke (fatia 2a+ do M5-B).
  */
 
 /** Slot MIN/MAX/IDEAL compartilhado por água e sono. @param {SlotProps} p */
@@ -69,6 +74,9 @@ const REGISTRY = {
   water: {
     obsPlaceholder: "Observações sobre água...",
     History: MyHistory,
+    // Estado inicial + loadExtra + buildData continuam usados no fluxo de
+    // EDIÇÃO (recordId presente cai no shell genérico com o Top/Bottom).
+    // Novos registros usam o `renderCustom` (WaterQuickAdd) abaixo.
     initialExtra: { quantity: "", min: "", max: "", ideal: "" },
     loadExtra: (r) => ({
       quantity: String(r.quantity ?? ""),
@@ -94,6 +102,9 @@ const REGISTRY = {
         <MyButton title="Salvar" onPress={onSubmit} />
       </MyView>
     ),
+    // Fatia 2a do M5-B: novos registros usam o UI bespoke (big number +
+    // quick-add chips + lista de hoje). Ver components/metrics/WaterQuickAdd.jsx.
+    renderCustom: ({ onAfterAdd }) => <WaterQuickAdd onAfterAdd={onAfterAdd} />,
   },
 
   sleep: {

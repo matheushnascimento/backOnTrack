@@ -87,7 +87,16 @@ export default function MetricScreen({ metric, recordId }) {
     setReloadKey((prev) => prev + 1);
   }
 
-  const { Top, Bottom, History } = config;
+  const { Top, Bottom, History, renderCustom } = config;
+  // renderCustom substitui o corpo Score/OBS/Top/Bottom em NOVOS registros
+  // (recordId ausente). Edição via `?id=` cai no fluxo genérico pra continuar
+  // funcionando com os campos do modelo (min/max/ideal, duração, etc). Ver
+  // typedef MetricConfig e docs/09-design-v2.md fatia 2a.
+  const useCustom = !!renderCustom && !recordId;
+  function afterAdd() {
+    setVisible(true);
+    setReloadKey((prev) => prev + 1);
+  }
 
   return (
     <MyView
@@ -117,32 +126,38 @@ export default function MetricScreen({ metric, recordId }) {
           label={navLabelFor(metric, date.ISOdate)}
         />
 
-        <Card className={`gap-8 ${config.cardClass ?? ""}`}>
-          {Top && <Top extra={extra} setField={setField} />}
+        {useCustom ? (
+          <Card className={config.cardClass ?? ""}>
+            {renderCustom({ onAfterAdd: afterAdd })}
+          </Card>
+        ) : (
+          <Card className={`gap-8 ${config.cardClass ?? ""}`}>
+            {Top && <Top extra={extra} setField={setField} />}
 
-          <FieldLabel>Nota</FieldLabel>
-          <Score value={score} onPress={setScore} />
+            <FieldLabel>Nota</FieldLabel>
+            <Score value={score} onPress={setScore} />
 
-          <MyView safe={false} className="gap-1">
-            <FieldLabel>OBS:</FieldLabel>
-            <TextInput
-              value={observation}
-              onChangeText={setObservation}
-              className="h-16 rounded-lg bg-light-backgroundCard p-2 text-base font-normal text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
-              placeholder={config.obsPlaceholder}
-            />
-          </MyView>
+            <MyView safe={false} className="gap-1">
+              <FieldLabel>OBS:</FieldLabel>
+              <TextInput
+                value={observation}
+                onChangeText={setObservation}
+                className="h-16 rounded-lg bg-light-backgroundCard p-2 text-base font-normal text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
+                placeholder={config.obsPlaceholder}
+              />
+            </MyView>
 
-          {Bottom && (
-            <Bottom
-              extra={extra}
-              setField={setField}
-              onSubmit={handleSubmit}
-              displayName={displayName}
-              unit={unit}
-            />
-          )}
-        </Card>
+            {Bottom && (
+              <Bottom
+                extra={extra}
+                setField={setField}
+                onSubmit={handleSubmit}
+                displayName={displayName}
+                unit={unit}
+              />
+            )}
+          </Card>
+        )}
         <History tableName={metric} reload={reloadKey} />
       </ScrollView>
     </MyView>
