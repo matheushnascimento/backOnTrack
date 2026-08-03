@@ -12,9 +12,9 @@ import { Snackbar } from "react-native-paper";
 
 import ScoreRaw from "@/components/Score";
 import MyViewRaw from "@/components/MyView";
-import MyHeaderRaw from "@/components/MyHeader";
 import FieldLabelRaw from "@/components/FieldLabel";
 import CardRaw from "@/components/Card";
+import MetricRegisterHeaderRaw from "@/components/MetricRegisterHeader";
 
 import { getCategoryInfo } from "@/components/categoryUtils";
 import getDate from "@/constants/getDate";
@@ -23,16 +23,31 @@ import { getMetricConfig } from "./registry";
 
 const MyView = /** @type {any} */ (MyViewRaw);
 const Score = /** @type {any} */ (ScoreRaw);
-const MyHeader = /** @type {any} */ (MyHeaderRaw);
 const FieldLabel = /** @type {any} */ (FieldLabelRaw);
 const Card = /** @type {any} */ (CardRaw);
+const MetricRegisterHeader = /** @type {any} */ (MetricRegisterHeaderRaw);
+
+// Nav label mono. Sono ganha "NOITE PASSADA" na mockup (contexto do registro
+// é a noite anterior); outras métricas usam "HOJE · <data>".
+/** @param {string} metric @param {string} dateISO */
+function navLabelFor(metric, dateISO) {
+  if (metric === "sleep") return "NOITE PASSADA";
+  const d = new Date(dateISO);
+  const day = d.getDate();
+  const month = d
+    .toLocaleDateString("pt-BR", { month: "short" })
+    .replace(".", "");
+  return `HOJE · ${day} ${month}`.toUpperCase();
+}
 
 /**
  * @param {{ metric: string, recordId?: string }} props
  */
 export default function MetricScreen({ metric, recordId }) {
-  const { displayName, unit } = getCategoryInfo(metric);
+  const { displayName, unit, subtitle } = getCategoryInfo(metric);
   const config = getMetricConfig(metric);
+  // Título capitalizado (design v2 mostra "Água" e não "água").
+  const title = displayName.charAt(0).toUpperCase() + displayName.slice(1);
 
   const [date] = useState(getDate());
   const [score, setScore] = useState(
@@ -79,7 +94,6 @@ export default function MetricScreen({ metric, recordId }) {
       safe={true}
       className="flex-1 bg-light-background dark:bg-dark-background"
     >
-      <MyHeader />
       <Snackbar
         visible={visible}
         onDismiss={() => setVisible(false)}
@@ -90,18 +104,20 @@ export default function MetricScreen({ metric, recordId }) {
       <ScrollView
         style={{ width: "100%" }}
         contentContainerStyle={{
-          padding: 16,
-          gap: 16,
-          alignItems: "center",
+          padding: 20,
+          gap: 20,
           paddingBottom: 24,
         }}
         showsVerticalScrollIndicator={false}
       >
-        <Card className={`gap-8 ${config.cardClass ?? ""}`}>
-          <FieldLabel>
-            {date.displayDate} {displayName}
-          </FieldLabel>
+        <MetricRegisterHeader
+          metric={metric}
+          title={title}
+          subtitle={subtitle}
+          label={navLabelFor(metric, date.ISOdate)}
+        />
 
+        <Card className={`gap-8 ${config.cardClass ?? ""}`}>
           {Top && <Top extra={extra} setField={setField} />}
 
           <FieldLabel>Nota</FieldLabel>
