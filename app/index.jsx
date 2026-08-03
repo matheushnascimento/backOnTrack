@@ -5,13 +5,11 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 import { router } from "expo-router";
 import { useTable } from "tinybase/ui-react";
 
-import MyButton from "@/components/MyButton";
 import MyView from "@/components/MyView";
-import MyHeader from "@/components/MyHeader";
 import InstallApp from "@/components/InstallApp";
-import Card from "@/components/Card";
-import SectionLabel from "@/components/SectionLabel";
+import MetricCard from "@/components/MetricCard";
 import MenuModal from "@/components/MenuModal";
+import Icon1c from "@/components/Icon1c";
 
 import { getToday, store } from "@/infra/database";
 import { useSession } from "@/infra/session";
@@ -21,29 +19,38 @@ import { minutesToHHMM } from "@/constants/duration";
 //#endregion
 
 const METRICS = Object.keys(CATEGORY_MAP);
-const TOTAL = METRICS.length;
 
-// Total do dia formatado por unidade: minutos -> HH:MM; refeição pluraliza;
-// o resto (ml) sai cru com a unidade.
-function formatTotal(unit, total) {
+// Formata o total do dia por unidade. Migração v2: usa vírgula pra ml (padrão pt-BR)
+// e HH:MM pra minutos. Pluraliza refeição.
+function formatValue(unit, total) {
   if (unit === "min") return minutesToHHMM(total);
   if (unit === "refeição")
     return `${total} ${total === 1 ? "refeição" : "refeições"}`;
+  if (unit === "ml") return `${total.toLocaleString("pt-BR")} ml`;
   return `${total} ${unit}`;
 }
 
-function MetricRow({ done, name, detail }) {
-  return (
-    <View className="flex-row items-center gap-2">
-      <Text className="text-base">{done ? "✅" : "⬜"}</Text>
-      <Text className="flex-1 text-base text-light-text dark:text-dark-text">
-        {name}
-      </Text>
-      <Text className="text-sm text-light-text opacity-70 dark:text-dark-text">
-        {detail}
-      </Text>
-    </View>
-  );
+// Saudação por horário. Design v2 usa "Bom dia, Ana." — nome vem do email
+// do usuário logado; deslogado usa só o cumprimento.
+function getGreeting(user) {
+  const h = new Date().getHours();
+  const g = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
+  if (!user?.email) return `${g}.`;
+  const raw = user.email.split("@")[0];
+  const name = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+  return `${g}, ${name}.`;
+}
+
+// Data no formato "SEGUNDA · 12 AGO" (pt-BR, uppercase). Usada como label
+// discreto acima do greeting.
+function formatDateLabel() {
+  const d = new Date();
+  const weekday = d.toLocaleDateString("pt-BR", { weekday: "long" });
+  const day = d.getDate();
+  const month = d
+    .toLocaleDateString("pt-BR", { month: "short" })
+    .replace(".", "");
+  return `${weekday} · ${day} ${month}`.toUpperCase();
 }
 
 export default function Home() {
@@ -62,36 +69,35 @@ export default function Home() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = useMemo(() => getToday(), [records]);
 
-  const rows = METRICS.map((type) => {
+  const totalRecords = METRICS.reduce((s, m) => s + (today[m]?.length ?? 0), 0);
+
+  const cards = METRICS.map((type) => {
     const { displayName, unit } = CATEGORY_MAP[type];
     const registros = today[type] ?? [];
     const total = registros.reduce((s, r) => s + (Number(r.quantity) || 0), 0);
-    const done = registros.length > 0;
+    const active = registros.length > 0;
     return {
-      type,
-      name: displayName,
-      done,
-      detail: done ? `${formatTotal(unit, total)} · ${registros.length}×` : "—",
+      key: type,
+      metric: type,
+      name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
+      active,
+      value: active ? formatValue(unit, total) : null,
+      detail:
+        active && registros.length > 1 ? `${registros.length} registros` : null,
     };
   });
-
-  const registradas = rows.filter((r) => r.done).length;
-  const pct = Math.round((registradas / TOTAL) * 100);
-  const dataHoje = new Date().toLocaleDateString("pt-BR");
 
   return (
     <MyView
       safe={true}
       className="flex-1 bg-light-background dark:bg-dark-background"
     >
-      <MyHeader />
       <ScrollView
-        contentContainerStyle={{ padding: 16, gap: 16, alignItems: "center" }}
+        contentContainerStyle={{ padding: 20, gap: 20 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Trigger do menu lateral: hamburger alinhado à esquerda pra
-            casar com o painel que abre da esquerda (padrão de app mobile).
-            No fluxo do documento pra respeitar padding/safe area do MyView. */}
+        {/* Trigger do menu lateral — hamburger alinhado à esquerda pra casar
+            com o painel que abre da esquerda. */}
         <View className="w-full flex-row justify-start">
           <Pressable
             accessibilityLabel="Abrir menu"
@@ -105,57 +111,75 @@ export default function Home() {
           </Pressable>
         </View>
 
-        {/* Resumo do dia */}
-        <Card className="gap-2">
-          <Text className="font-bold text-2xl text-light-text dark:text-dark-text">
-            Hoje
+        {/* Header: data · greeting · mini-ícone 1c · subtitle. Padrão da mockup
+            2a·1 do design v2. */}
+        <View className="gap-1 px-1">
+          <Text
+            className="text-xs tracking-wider text-label"
+            style={{ fontFamily: "JetBrainsMono_500Medium" }}
+          >
+            {formatDateLabel()}
           </Text>
-          <Text className="font-bold text-base text-light-text opacity-60 dark:text-dark-text">
-            {dataHoje} · {registradas} de {TOTAL} métricas registradas
-          </Text>
-          <View className="h-2 w-full overflow-hidden rounded-full bg-light-background dark:bg-dark-background">
+          <View className="flex-row items-center justify-between">
+            <Text
+              className="text-2xl text-ink"
+              style={{ fontFamily: "Inter_600SemiBold", letterSpacing: -0.24 }}
+            >
+              {getGreeting(user)}
+            </Text>
             <View
-              className="h-2 rounded-full bg-secondary"
-              style={{ width: `${pct}%` }}
-            />
+              className="items-center justify-center rounded-lg bg-primary"
+              style={{ width: 32, height: 32 }}
+            >
+              <Icon1c size={22} />
+            </View>
           </View>
-        </Card>
+          <Text
+            className="text-sm text-body-secondary"
+            style={{ fontFamily: "Inter_400Regular", marginTop: 2 }}
+          >
+            {totalRecords === 0
+              ? "Nenhum registro hoje ainda. Sem pressa."
+              : `${totalRecords} ${totalRecords === 1 ? "registro" : "registros"} hoje. Sem pressa.`}
+          </Text>
+        </View>
 
-        {/* Métricas do dia */}
-        <Card className="gap-3">
-          <SectionLabel>MÉTRICAS DE HOJE</SectionLabel>
-          <MyView safe={false} className="gap-2">
-            {rows.map((r) => (
-              <MetricRow
-                key={r.type}
-                done={r.done}
-                name={r.name}
-                detail={r.detail}
-              />
-            ))}
-          </MyView>
-        </Card>
+        {/* 5 metric cards — toque navega pro registro rápido. */}
+        <View className="gap-2.5">
+          {cards.map((c) => (
+            <MetricCard
+              key={c.key}
+              metric={c.metric}
+              name={c.name}
+              active={c.active}
+              value={c.value}
+              detail={c.detail}
+              onPress={() => router.navigate(`/(metrics)/${c.metric}`)}
+            />
+          ))}
+        </View>
 
         {/* Obter o app (só web: QR no desktop, download no celular) */}
         <InstallApp />
 
         {/* Entrar isolado só quando deslogado + auth configurada. Sair vai
-            pro MenuModal junto com "Logado como" — Home enxuta em ambos
-            estados de auth. */}
+            pro MenuModal junto com "Logado como". */}
         {AUTH_ENABLED && !user && (
-          <Card className="gap-2">
-            <MyButton
-              title="Entrar"
+          <View className="rounded-2xl border border-border-subtle bg-white p-4">
+            <Pressable
+              accessibilityRole="button"
               onPress={() => router.navigate("/login")}
-            />
-          </Card>
+              className="items-center rounded-xl bg-primary py-3"
+            >
+              <Text
+                className="text-sm text-white"
+                style={{ fontFamily: "Inter_500Medium" }}
+              >
+                Entrar
+              </Text>
+            </Pressable>
+          </View>
         )}
-
-        {/* Wordmark discreto — marca presente na tela principal sem competir
-            com o conteúdo. Ver docs/08-design-tokens.md § Identidade visual. */}
-        <Text className="text-center text-xs text-light-text opacity-50 dark:text-dark-text">
-          Back on Track · de volta aos trilhos, um registro por vez
-        </Text>
       </ScrollView>
 
       <MenuModal visible={menuOpen} onClose={() => setMenuOpen(false)} />
