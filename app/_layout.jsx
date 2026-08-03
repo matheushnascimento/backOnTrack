@@ -4,6 +4,17 @@ import "@/global.css";
 import { Stack } from "expo-router";
 import { View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { useFonts } from "expo-font";
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+} from "@expo-google-fonts/inter";
+import {
+  JetBrainsMono_400Regular,
+  JetBrainsMono_500Medium,
+} from "@expo-google-fonts/jetbrains-mono";
+
 import { useRegistrosPersistencia } from "@/infra/persistence";
 import { SessionProvider } from "@/infra/session";
 import { useRegistrosSync } from "@/infra/sync";
@@ -11,6 +22,17 @@ import UpdateBanner from "@/components/UpdateBanner";
 
 export default function RootLayout() {
   useRegistrosPersistencia();
+  // Fontes do design v2 (M5-B fatia 0). Carrega em background; se ainda não
+  // tiver terminado, sistema serve o fallback e a UI re-renderiza quando
+  // ficarem prontas. Não bloqueia boot pra não introduzir splash extra —
+  // fatia 1+ é que começa a usar essas famílias. Ver docs/09-design-v2.md.
+  useFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    JetBrainsMono_400Regular,
+    JetBrainsMono_500Medium,
+  });
 
   return (
     <SafeAreaProvider>

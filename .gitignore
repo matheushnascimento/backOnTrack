@@ -49,3 +49,8 @@ convite.txt
 # Bind-mount do docker compose vira `server/data/` no host de dev.
 server/data/
 
+# Fonte visual do design v2 (Claude Design bundle, M5-B). ~600KB, referência
+# local — os tokens extraídos vivem em docs/09-design-v2.md.
+Back on Track - Icon Directions.html
+
+

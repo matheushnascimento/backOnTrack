@@ -1,5 +1,7 @@
 # Design Tokens — Back on Track
 
+> **Nota (M5-B, agosto 2026):** o redesign completo baseado no Turno 2 do Claude Design vive em [09-design-v2.md](09-design-v2.md). Este doc segue como baseline pra telas ainda não migradas — os dois convergem quando todas as fatias 1-6 do v2 estiverem em produção.
+
 Referência viva do design system do M5. Cada seção fecha uma decisão sobre um **eixo** (raio, tipografia, espaçamento, cor…) e mostra onde ela vale. O objetivo é matar as escolhas ad-hoc que a auditoria pegou em [docs/07-auditoria-ui.md](07-auditoria-ui.md) — de forma que "qual valor uso aqui?" tenha uma resposta óbvia em cada eixo.
 
 O doc cresce em fatias: começa com raio (fatia 1); tipografia, espaçamento, sombra e cor entram conforme a milestone avança. Cada fatia deve ter um PR próprio e um item ✅ no roadmap.
