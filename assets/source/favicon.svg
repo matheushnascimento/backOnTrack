@@ -1,0 +1,12 @@
+<!--
+  Back on Track · favicon.png source (M5-B, #228).
+  Browser tab (48-96px) — fundo navy + curva branca pra contraste alto em
+  tamanhos pequenos. Ponto verde mantém o ancoramento visual, mas em stroke
+  mais grosso pra sobreviver ao downscale.
+-->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <rect width="1024" height="1024" fill="#2E5A88"/>
+  <path d="M 180 760 Q 460 760 560 520 T 860 280"
+        fill="none" stroke="#F8F9FA" stroke-width="110" stroke-linecap="round"/>
+  <circle cx="180" cy="760" r="100" fill="#4CAF50"/>
+</svg>

@@ -393,13 +393,15 @@ Superfícies (`light-background`, `dark-background`) são neutras por design —
 - **Home:** wordmark discreto no rodapé da tela ("Back on Track · de volta aos trilhos, um registro por vez"), abaixo do card Utilitários
 - **Roadmap:** título + tagline no primeiro card ("Back on Track" + "De volta aos trilhos, um registro por vez.")
 
-### Parte B — pendente
+### Parte B — entregue (#228)
 
-Assets visuais ainda são template default do Expo:
+Assets visuais substituídos por design real. Direção **1c · Linha que sobe** do projeto no Claude Design (`Back on Track - Icon Directions`, ID `4565395c-...`), escolhida entre 3 propostas por melhor traduzir o tom "retomada, não conquista": curva suave subindo + ponto verde ancorando o início (o "aqui, hoje"). Sem seta, sem streak, sem literalismo de trilho.
 
-- `assets/icon.png` — ícone do app (iOS, launcher)
-- `assets/adaptive-icon.png` — foreground do adaptive icon Android
-- `assets/splash-icon.png` — logo/ícone do splash
-- `assets/favicon.png` — favicon web
+- `assets/icon.png` — 1024×1024, fundo navy (`#2E5A88`) + curva branca (`#F8F9FA`) + ponto verde (`#4CAF50`). Launcher iOS/Android legacy.
+- `assets/adaptive-icon.png` — 1024×1024, símbolo navy sobre transparência. Android compõe com `adaptiveIcon.backgroundColor` (`#F8F9FA`).
+- `assets/splash-icon.png` — 1024×1024, símbolo navy sobre transparência. Centralizado sobre `splash.backgroundColor` (`#F8F9FA`).
+- `assets/favicon.png` — 96×96, fundo navy + curva branca (contraste alto no browser tab pequeno).
 
-Substituir cada um exige arte real (design tool / IA generativa consciente / designer). Card no ambiente rastreia. Enquanto Parte B não pousa, o splash mostra o template Expo sobre fundo `#F8F9FA` — legível, sem estranheza, mas ainda não é a marca.
+**SVGs source** vivem em `assets/source/` — re-export via `./scripts/build-icons.sh` (ImageMagick). Mexer nos SVGs, rodar o script, commitar o par SVG+PNG junto.
+
+**Racional da escolha (1c vs 1a/1b):** 1a era seta+trilho (mais literal, beira o esperado); 1b era trilho em perspectiva (risco de virar "V" em 24px); 1c é linha subindo (mais gentil, mais original, sem clichê de "conquista"). Bônus: só o ponto verde carrega a segunda cor — o resto da forma é monocromática, o que sobrevive melhor em launcher pequeno e favicon.
