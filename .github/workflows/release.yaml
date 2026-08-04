@@ -54,33 +54,47 @@ jobs:
             --title "Back on Track ${{ inputs.tag }}" \
             --notes "${{ inputs.notes }}"
 
-      # Aponta a EAS_INSTALL_URL pro build recém-criado. Não commita na main
-      # (ruleset exige PR) nem abre o PR via API (PR do GITHUB_TOKEN não dispara
-      # o linting.yaml `on: pull_request`, travando os checks). Empurra a branch
-      # e deixa um link pro humano abrir o PR — aí o CI roda normal. Issue #92.
-      - name: Atualiza EAS_INSTALL_URL (branch + link de PR)
+      # Aponta EAS_INSTALL_URL (card "Obter o app") + latest-apk-version.json
+      # (banner NATIVE_OUTDATED do UpdateBanner) pro build recém-criado. Não
+      # commita na main (ruleset exige PR) nem abre PR via API (PR do
+      # GITHUB_TOKEN não dispara `on: pull_request`, travando os checks).
+      # Empurra a branch e deixa link pro humano abrir o PR — aí o CI roda.
+      # Ver [[repo-ci-constraints]].
+      - name: Atualiza EAS_INSTALL_URL + latest-apk-version.json (branch + link de PR)
         env:
           BUILD_ID: ${{ steps.build.outputs.build_id }}
           TAG: ${{ inputs.tag }}
         run: |
           EAS_URL="https://expo.dev/accounts/matheushnascimento/projects/backOnTrack/builds/${BUILD_ID}"
+          APP_VERSION=$(jq -r '.expo.version' app.json)
+
+          # constants/distribution.js — card "Obter o app"
           sed -i -E "s#(projects/backOnTrack/builds/)[a-f0-9-]+#\1${BUILD_ID}#" constants/distribution.js
-          if git diff --quiet constants/distribution.js; then
-            echo "EAS_INSTALL_URL já aponta pro build atual — nada a fazer." >> "$GITHUB_STEP_SUMMARY"
+
+          # assets/latest-apk-version.json — banner NATIVE_OUTDATED (dispara
+          # nos testers em versão anterior). Reescreve o arquivo inteiro pra
+          # garantir schema estável (jq -n em vez de sed).
+          jq -n --arg v "$APP_VERSION" --arg u "$EAS_URL" \
+            '{version: $v, installUrl: $u}' \
+            > assets/latest-apk-version.json
+
+          if git diff --quiet constants/distribution.js assets/latest-apk-version.json; then
+            echo "Distribuição já aponta pro build atual — nada a fazer." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          BRANCH="chore/eas-install-url-${TAG}"
+
+          BRANCH="chore/release-${TAG}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -b "$BRANCH"
-          git add constants/distribution.js
-          git commit -m "chore(install): aponta a instalação pro build ${TAG}"
+          git add constants/distribution.js assets/latest-apk-version.json
+          git commit -m "chore(release): distribute build ${TAG} (${APP_VERSION})"
           git push -u origin "$BRANCH"
           PR_URL="https://github.com/matheushnascimento/backOnTrack/compare/main...${BRANCH}?expand=1"
           {
-            echo "## EAS_INSTALL_URL do novo build"
+            echo "## Distribuição do build ${TAG} (v${APP_VERSION})"
             echo ""
-            echo "Build \`${TAG}\` → ${EAS_URL}"
+            echo "Build EAS: ${EAS_URL}"
             echo ""
-            echo "Branch \`${BRANCH}\` empurrada. **[Abrir o PR](${PR_URL})** e mergear pra atualizar o card \"Obter o app\"."
+            echo "Branch \`${BRANCH}\` empurrada com update pro card \"Obter o app\" **e** pro banner NATIVE_OUTDATED. **[Abrir o PR](${PR_URL})** e mergear."
           } >> "$GITHUB_STEP_SUMMARY"
