@@ -68,7 +68,7 @@ export default function WaterQuickAdd({ onAfterAdd }) {
       <View className="items-center gap-3">
         <View className="flex-row items-baseline gap-1.5">
           <Text
-            className="text-primary"
+            className="text-primary dark:text-primary-dark"
             style={{
               fontFamily: "JetBrainsMono_500Medium",
               fontSize: 72,
@@ -81,21 +81,21 @@ export default function WaterQuickAdd({ onAfterAdd }) {
             })}
           </Text>
           <Text
-            className="text-label"
+            className="text-label dark:text-label-dark"
             style={{ fontFamily: "JetBrainsMono_500Medium", fontSize: 20 }}
           >
             L
           </Text>
         </View>
         <Text
-          className="text-xs text-label"
+          className="text-xs text-label dark:text-label-dark"
           style={{ fontFamily: "Inter_400Regular" }}
         >
           de {GOAL_ML / 1000} L hoje
         </Text>
         <View className="h-1.5 w-full overflow-hidden rounded-full bg-border-subtle">
           <View
-            className="h-full rounded-full bg-primary"
+            className="h-full rounded-full bg-primary dark:bg-primary-dark"
             style={{ width: `${pct}%` }}
           />
         </View>
@@ -104,7 +104,7 @@ export default function WaterQuickAdd({ onAfterAdd }) {
       {/* Quick add chips */}
       <View>
         <Text
-          className="mb-3 text-xs uppercase tracking-wider text-label"
+          className="mb-3 text-xs uppercase tracking-wider text-label dark:text-label-dark"
           style={{ fontFamily: "JetBrainsMono_500Medium" }}
         >
           Adicionar
@@ -116,16 +116,16 @@ export default function WaterQuickAdd({ onAfterAdd }) {
                 accessibilityRole="button"
                 accessibilityLabel={`Adicionar ${qa.label}`}
                 onPress={() => handleAdd(qa.amount)}
-                className="gap-0.5 rounded-2xl border border-border-strong bg-white p-4 active:opacity-70"
+                className="gap-0.5 rounded-2xl border border-border-strong dark:border-border-strong-dark bg-white dark:bg-card-dark p-4 active:opacity-70"
               >
                 <Text
-                  className="text-base text-ink"
+                  className="text-base text-ink dark:text-ink-dark"
                   style={{ fontFamily: "Inter_500Medium" }}
                 >
                   + {qa.label}
                 </Text>
                 <Text
-                  className="text-xs text-label"
+                  className="text-xs text-label dark:text-label-dark"
                   style={{ fontFamily: "Inter_400Regular" }}
                 >
                   {qa.hint}
@@ -140,7 +140,7 @@ export default function WaterQuickAdd({ onAfterAdd }) {
       {waterToday.length > 0 && (
         <View>
           <Text
-            className="mb-2.5 text-xs uppercase tracking-wider text-label"
+            className="mb-2.5 text-xs uppercase tracking-wider text-label dark:text-label-dark"
             style={{ fontFamily: "JetBrainsMono_500Medium" }}
           >
             Registros de hoje
@@ -149,13 +149,13 @@ export default function WaterQuickAdd({ onAfterAdd }) {
             {waterToday.map((r) => (
               <View key={r.id} className="flex-row justify-between">
                 <Text
-                  className="text-xs text-body-secondary"
+                  className="text-xs text-body-secondary dark:text-body-secondary-dark"
                   style={{ fontFamily: "Inter_400Regular" }}
                 >
                   {formatTime(r.createdAt)}
                 </Text>
                 <Text
-                  className="text-xs text-ink"
+                  className="text-xs text-ink dark:text-ink-dark"
                   style={{ fontFamily: "JetBrainsMono_400Regular" }}
                 >
                   {r.quantity} ml

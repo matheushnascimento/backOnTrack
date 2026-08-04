@@ -72,7 +72,7 @@ export default function FeedingBespoke({ onAfterAdd }) {
       {/* Big number */}
       <View className="items-center gap-2">
         <Text
-          className="text-primary"
+          className="text-primary dark:text-primary-dark"
           style={{
             fontFamily: "JetBrainsMono_500Medium",
             fontSize: 88,
@@ -82,7 +82,7 @@ export default function FeedingBespoke({ onAfterAdd }) {
           {totalCount}
         </Text>
         <Text
-          className="text-xs text-label"
+          className="text-xs text-label dark:text-label-dark"
           style={{ fontFamily: "Inter_400Regular" }}
         >
           {totalCount === 1 ? "refeição hoje" : "refeições hoje"}
@@ -99,12 +99,16 @@ export default function FeedingBespoke({ onAfterAdd }) {
           onPress={handleRemove}
           className={`flex-1 items-center rounded-2xl border py-4 ${
             totalCount === 0
-              ? "border-border-subtle bg-surface-subtle"
-              : "border-border-strong bg-white active:opacity-70"
+              ? "border-border-subtle dark:border-border-subtle-dark bg-surface-subtle dark:bg-surface-subtle-dark"
+              : "border-border-strong dark:border-border-strong-dark bg-white dark:bg-card-dark active:opacity-70"
           }`}
         >
           <Text
-            className={totalCount === 0 ? "text-icon-dim" : "text-ink"}
+            className={
+              totalCount === 0
+                ? "text-icon-dim dark:text-icon-dim-dark"
+                : "text-ink dark:text-ink-dark"
+            }
             style={{ fontFamily: "JetBrainsMono_500Medium", fontSize: 22 }}
           >
             −
@@ -114,10 +118,10 @@ export default function FeedingBespoke({ onAfterAdd }) {
           accessibilityRole="button"
           accessibilityLabel="Adicionar refeição"
           onPress={handleAdd}
-          className="flex-1 items-center rounded-2xl border border-border-strong bg-white py-4 active:opacity-70"
+          className="flex-1 items-center rounded-2xl border border-border-strong dark:border-border-strong-dark bg-white dark:bg-card-dark py-4 active:opacity-70"
         >
           <Text
-            className="text-ink"
+            className="text-ink dark:text-ink-dark"
             style={{ fontFamily: "JetBrainsMono_500Medium", fontSize: 22 }}
           >
             +
@@ -129,7 +133,7 @@ export default function FeedingBespoke({ onAfterAdd }) {
       {feedingToday.length > 0 && (
         <View>
           <Text
-            className="mb-2.5 text-xs uppercase tracking-wider text-label"
+            className="mb-2.5 text-xs uppercase tracking-wider text-label dark:text-label-dark"
             style={{ fontFamily: "JetBrainsMono_500Medium" }}
           >
             Registros de hoje
@@ -143,13 +147,13 @@ export default function FeedingBespoke({ onAfterAdd }) {
                 return (
                   <View key={r.id} className="flex-row justify-between">
                     <Text
-                      className="text-xs text-body-secondary"
+                      className="text-xs text-body-secondary dark:text-body-secondary-dark"
                       style={{ fontFamily: "Inter_400Regular" }}
                     >
                       {time}
                     </Text>
                     <Text
-                      className="text-xs text-ink"
+                      className="text-xs text-ink dark:text-ink-dark"
                       style={{ fontFamily: "JetBrainsMono_400Regular" }}
                     >
                       {mealLabel(hour)}
@@ -162,9 +166,9 @@ export default function FeedingBespoke({ onAfterAdd }) {
       )}
 
       {/* Info card sereno */}
-      <View className="rounded-2xl bg-tint-blue px-4 py-3">
+      <View className="rounded-2xl bg-tint-blue dark:bg-tint-blue-dark px-4 py-3">
         <Text
-          className="text-sm text-primary"
+          className="text-sm text-primary dark:text-primary-dark"
           style={{ fontFamily: "Inter_400Regular" }}
         >
           3–4 no dia costuma ser um bom ritmo. Sem pressa.
@@ -176,10 +180,10 @@ export default function FeedingBespoke({ onAfterAdd }) {
         accessibilityRole="button"
         accessibilityLabel="Concluir e voltar"
         onPress={() => router.back()}
-        className="mt-1 items-center rounded-2xl bg-primary py-4 active:opacity-70"
+        className="mt-1 items-center rounded-2xl bg-primary dark:bg-primary-dark py-4 active:opacity-70"
       >
         <Text
-          className="text-base text-white"
+          className="text-base text-white dark:text-on-primary-dark"
           style={{ fontFamily: "Inter_600SemiBold" }}
         >
           Concluir

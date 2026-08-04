@@ -1,6 +1,8 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 import { Text, View } from "react-native";
 
+import { useThemeTokens } from "@/constants/themeTokens";
+
 // Faixa visual dos últimos 7 dias (M5-B fatia 3, mockup 2a·7).
 // Cada dia = coluna com stack vertical de barrinhas: 1 por métrica registrada.
 // Se todas as 5 métricas foram registradas, a barra do topo vira verde
@@ -22,8 +24,9 @@ const STACK_HEIGHT = MAX_METRICS * BAR_HEIGHT + (MAX_METRICS - 1) * BAR_GAP; // 
  * }> }} props
  */
 export default function WeekStrip({ days }) {
+  const t = useThemeTokens();
   return (
-    <View className="rounded-2xl border border-border-subtle bg-white p-4">
+    <View className="rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark p-4">
       <View
         className="flex-row items-end justify-between"
         style={{ height: STACK_HEIGHT + 24 }}
@@ -34,10 +37,10 @@ export default function WeekStrip({ days }) {
       </View>
 
       {/* Legend */}
-      <View className="mt-4 flex-row gap-3 border-t border-surface-subtle pt-3">
-        <LegendItem color="#2E5A88" label="registro" />
-        <LegendItem color="#4CAF50" label="dia completo" />
-        <LegendItem color="#E5E7EB" label="vazio" />
+      <View className="mt-4 flex-row gap-3 border-t border-surface-subtle dark:border-surface-subtle-dark pt-3">
+        <LegendItem color={t.primary} label="registro" />
+        <LegendItem color={t.accentToday} label="dia completo" />
+        <LegendItem color={t.borderSubtle} label="vazio" />
       </View>
     </View>
   );
@@ -45,15 +48,16 @@ export default function WeekStrip({ days }) {
 
 /** @param {{ day: { weekdayLabel: string, isToday: boolean, filledMetrics: string[], complete: boolean } }} props */
 function DayColumn({ day }) {
+  const t = useThemeTokens();
   const filled = day.filledMetrics.length;
   const isEmpty = filled === 0;
 
   // Uma barrinha por métrica registrada; topo verde se completo. Se vazio,
   // uma barra cinza placeholder.
   const bars = isEmpty
-    ? [{ color: "#E5E7EB", key: "empty" }]
+    ? [{ color: t.borderSubtle, key: "empty" }]
     : Array.from({ length: filled }, (_, i) => ({
-        color: day.complete && i === filled - 1 ? "#4CAF50" : "#2E5A88",
+        color: day.complete && i === filled - 1 ? t.accentToday : t.primary,
         key: `bar-${i}`,
       }));
 
@@ -76,7 +80,7 @@ function DayColumn({ day }) {
               // reproduz o efeito com custo zero).
               ...(day.isToday && {
                 borderWidth: 2,
-                borderColor: "#EAF3FB",
+                borderColor: t.tintBlue,
               }),
             }}
           />
@@ -86,7 +90,7 @@ function DayColumn({ day }) {
         style={{
           fontFamily: "JetBrainsMono_500Medium",
           fontSize: 10,
-          color: day.isToday ? "#2E5A88" : "#6B7280",
+          color: day.isToday ? t.primary : t.label,
           fontWeight: day.isToday ? "700" : "500",
         }}
       >
@@ -104,7 +108,7 @@ function LegendItem({ color, label }) {
         style={{ width: 8, height: 8, backgroundColor: color, borderRadius: 2 }}
       />
       <Text
-        className="text-xs text-label"
+        className="text-xs text-label dark:text-label-dark"
         style={{ fontFamily: "Inter_400Regular" }}
       >
         {label}

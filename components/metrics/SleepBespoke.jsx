@@ -4,6 +4,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 
 import { add } from "@/infra/database";
 import getDate from "@/constants/getDate";
+import { useThemeTokens } from "@/constants/themeTokens";
 
 // UI bespoke da tela de sono (M5-B fatia 2b, mockup 2a·3 do Claude Design).
 // Substitui o card Score/OBS/Top/Bottom da MetricScreen quando o registry
@@ -111,15 +112,15 @@ export default function SleepBespoke({ onAfterAdd }) {
       />
 
       {/* duração calculada */}
-      <View className="flex-row items-center justify-between rounded-2xl bg-tint-blue px-5 py-4">
+      <View className="flex-row items-center justify-between rounded-2xl bg-tint-blue dark:bg-tint-blue-dark px-5 py-4">
         <Text
-          className="text-sm text-primary"
+          className="text-sm text-primary dark:text-primary-dark"
           style={{ fontFamily: "Inter_500Medium" }}
         >
           Duração
         </Text>
         <Text
-          className="text-primary"
+          className="text-primary dark:text-primary-dark"
           style={{
             fontFamily: "JetBrainsMono_500Medium",
             fontSize: 22,
@@ -132,7 +133,7 @@ export default function SleepBespoke({ onAfterAdd }) {
       {/* qualidade */}
       <View className="mt-2">
         <Text
-          className="mb-3 text-xs uppercase tracking-wider text-label"
+          className="mb-3 text-xs uppercase tracking-wider text-label dark:text-label-dark"
           style={{ fontFamily: "JetBrainsMono_500Medium" }}
         >
           Como se sente hoje
@@ -149,13 +150,15 @@ export default function SleepBespoke({ onAfterAdd }) {
                 onPress={() => setQuality(q.score)}
                 className={`flex-1 items-center rounded-xl py-3 ${
                   selected
-                    ? "border-2 border-primary bg-tint-blue"
-                    : "border border-border-strong bg-white"
+                    ? "border-2 border-primary dark:border-primary-dark bg-tint-blue dark:bg-tint-blue-dark"
+                    : "border border-border-strong dark:border-border-strong-dark bg-white dark:bg-card-dark"
                 }`}
               >
                 <Text
                   className={`text-xs ${
-                    selected ? "text-primary" : "text-body-secondary"
+                    selected
+                      ? "text-primary dark:text-primary-dark"
+                      : "text-body-secondary dark:text-body-secondary-dark"
                   }`}
                   style={{
                     fontFamily: selected
@@ -179,11 +182,13 @@ export default function SleepBespoke({ onAfterAdd }) {
         disabled={!canSave}
         onPress={handleSave}
         className={`mt-2 items-center rounded-2xl py-4 ${
-          canSave ? "bg-primary active:opacity-70" : "bg-border-strong"
+          canSave
+            ? "bg-primary dark:bg-primary-dark active:opacity-70"
+            : "bg-border-strong dark:bg-border-strong-dark"
         }`}
       >
         <Text
-          className="text-base text-white"
+          className="text-base text-white dark:text-on-primary-dark"
           style={{ fontFamily: "Inter_600SemiBold" }}
         >
           Registrar
@@ -203,11 +208,12 @@ export default function SleepBespoke({ onAfterAdd }) {
  * }} props
  */
 function TimeRow({ label, value, onChange, dayLabel, placeholder }) {
+  const t = useThemeTokens();
   return (
-    <View className="flex-row items-center justify-between rounded-2xl border border-border-subtle bg-white px-5 py-4">
+    <View className="flex-row items-center justify-between rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark px-5 py-4">
       <View className="gap-0.5">
         <Text
-          className="text-xs uppercase tracking-wider text-label"
+          className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
           style={{ fontFamily: "JetBrainsMono_500Medium" }}
         >
           {label}
@@ -216,21 +222,21 @@ function TimeRow({ label, value, onChange, dayLabel, placeholder }) {
           value={value}
           onChangeText={onChange}
           placeholder={placeholder}
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={t.iconDim}
           keyboardType="numbers-and-punctuation"
           maxLength={5}
           accessibilityLabel={`Horário — ${label}`}
           style={{
             fontFamily: "JetBrainsMono_500Medium",
             fontSize: 24,
-            color: "#0F1419",
+            color: t.ink,
             padding: 0,
             minWidth: 80,
           }}
         />
       </View>
       <Text
-        className="text-xs text-body-secondary"
+        className="text-xs text-body-secondary dark:text-body-secondary-dark"
         style={{ fontFamily: "Inter_400Regular" }}
       >
         {dayLabel}
