@@ -123,7 +123,7 @@ export default function Home() {
           <View className="flex-row items-center justify-between">
             <Text
               className="text-2xl text-ink"
-              style={{ fontFamily: "Inter_600SemiBold", letterSpacing: -0.24 }}
+              style={{ fontFamily: "Inter_600SemiBold" }}
             >
               {getGreeting(user)}
             </Text>
