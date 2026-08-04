@@ -14,6 +14,9 @@ import FieldLabelRaw from "@/components/FieldLabel";
 import MyHistory, { MyExerciseHistory } from "@/components/MyHistory";
 import WaterQuickAdd from "./WaterQuickAdd";
 import SleepBespoke from "./SleepBespoke";
+import ExerciseBespoke from "./ExerciseBespoke";
+import FeedingBespoke from "./FeedingBespoke";
+import StudyBespoke from "./StudyBespoke";
 
 import { hhmmToMinutes, minutesToHHMM } from "@/constants/duration";
 import {
@@ -176,6 +179,11 @@ const REGISTRY = {
       />
     ),
     Bottom: ({ onSubmit }) => <MyButton title="Salvar" onPress={onSubmit} />,
+    // Fatia 2c do M5-B: novos registros usam UI bespoke (big number counter,
+    // +/- imediatos, cada + cria row quantity=1). Ver FeedingBespoke.jsx.
+    renderCustom: ({ onAfterAdd }) => (
+      <FeedingBespoke onAfterAdd={onAfterAdd} />
+    ),
   },
 
   exercise: {
@@ -257,6 +265,11 @@ const REGISTRY = {
         <MyButton title="Salvar" onPress={onSubmit} />
       </MyView>
     ),
+    // Fatia 2c do M5-B: novos registros usam UI bespoke (modalidade toggle +
+    // duração + hora de início opcional + intensidade). Ver ExerciseBespoke.jsx.
+    renderCustom: ({ onAfterAdd }) => (
+      <ExerciseBespoke onAfterAdd={onAfterAdd} />
+    ),
   },
 
   study: {
@@ -292,6 +305,9 @@ const REGISTRY = {
         <MyButton title="Salvar" onPress={onSubmit} />
       </MyView>
     ),
+    // Fatia 2c do M5-B: novos registros usam UI bespoke (Feito toggle +
+    // duração + foco opcional em pills). Ver StudyBespoke.jsx.
+    renderCustom: ({ onAfterAdd }) => <StudyBespoke onAfterAdd={onAfterAdd} />,
   },
 };
 
