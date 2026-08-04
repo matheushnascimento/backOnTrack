@@ -85,6 +85,7 @@ export default function MenuModal({ visible, onClose }) {
               </View>
             </View>
 
+            <MyButton title="Semana" onPress={() => navigateTo("/semana")} />
             <MyButton
               title="Histórico"
               onPress={() => navigateTo("/history")}
