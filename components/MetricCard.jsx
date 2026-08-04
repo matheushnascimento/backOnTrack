@@ -2,6 +2,7 @@
 import { Pressable, Text, View } from "react-native";
 
 import MetricIcon from "./MetricIcon";
+import { useThemeTokens } from "@/constants/themeTokens";
 
 // Card de métrica na Home v2 (M5-B fatia 1, direção 1c do design).
 // Estrutura: [ícone tinted 44×44] [nome (bold) — direita: valor ou "quando puder"] [detalhe pequeno opcional].
@@ -26,33 +27,36 @@ export default function MetricCard({
   detail,
   onPress,
 }) {
+  const t = useThemeTokens();
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`Métrica ${name}${active ? `, ${value}` : ", sem registros"}`}
-      className="w-full flex-row items-center gap-3 rounded-2xl border border-border-subtle bg-white p-4 active:opacity-70"
+      className="w-full flex-row items-center gap-3 rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark p-4 active:opacity-70"
     >
       <View
-        className={`h-11 w-11 items-center justify-center rounded-xl ${active ? "bg-tint-blue" : "bg-surface-subtle"}`}
+        className={`h-11 w-11 items-center justify-center rounded-xl ${active ? "bg-tint-blue dark:bg-tint-blue-dark" : "bg-surface-subtle dark:bg-surface-subtle-dark"}`}
       >
         <MetricIcon
           metric={metric}
           size={22}
-          color={active ? "#2E5A88" : "#6B7280"}
+          color={active ? t.primary : t.label}
         />
       </View>
       <View className="flex-1 gap-0.5">
         <View className="flex-row items-baseline justify-between">
           <Text
-            className="text-sm text-ink"
+            className="text-sm text-ink dark:text-ink-dark"
             style={{ fontFamily: "Inter_600SemiBold" }}
           >
             {name}
           </Text>
           <Text
             className={
-              active ? "text-xs text-body-secondary" : "text-xs text-label"
+              active
+                ? "text-xs text-body-secondary dark:text-body-secondary-dark"
+                : "text-xs text-label dark:text-label-dark"
             }
             style={{
               fontFamily: active
@@ -65,7 +69,7 @@ export default function MetricCard({
         </View>
         {detail ? (
           <Text
-            className="text-xs text-label"
+            className="text-xs text-label dark:text-label-dark"
             style={{ fontFamily: "Inter_400Regular" }}
           >
             {detail}

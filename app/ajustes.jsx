@@ -11,6 +11,7 @@ import { useSession } from "@/infra/session";
 import { AUTH_ENABLED } from "@/infra/supabase";
 import { confirmAction } from "@/constants/dialogs";
 import { getEnvironmentInfo } from "@/constants/environment";
+import { useThemeTokens } from "@/constants/themeTokens";
 
 const ENV = getEnvironmentInfo();
 
@@ -44,6 +45,7 @@ export default function Ajustes() {
   const { colorScheme, toggleColorScheme } = useColorScheme();
   const { user, signOut } = useSession();
   const isDark = colorScheme === "dark";
+  const t = useThemeTokens();
 
   function handleClear() {
     confirmAction({
@@ -55,10 +57,7 @@ export default function Ajustes() {
   }
 
   return (
-    <MyView
-      safe={true}
-      className="flex-1 bg-light-background dark:bg-dark-background"
-    >
+    <MyView safe={true} className="flex-1 bg-light-background dark:bg-app-dark">
       <ScrollView
         contentContainerStyle={{ padding: 20, gap: 20 }}
         showsVerticalScrollIndicator={false}
@@ -74,14 +73,14 @@ export default function Ajustes() {
             <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
               <Path
                 d="M15 6l-6 6 6 6"
-                stroke="#2E5A88"
+                stroke={t.primary}
                 strokeWidth={2.4}
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
             </Svg>
             <Text
-              className="text-base text-primary"
+              className="text-base text-primary dark:text-primary-dark"
               style={{ fontFamily: "Inter_500Medium" }}
             >
               Voltar
@@ -92,13 +91,13 @@ export default function Ajustes() {
         {/* Header */}
         <View className="gap-1 px-1">
           <Text
-            className="text-2xl text-ink"
+            className="text-2xl text-ink dark:text-ink-dark"
             style={{ fontFamily: "Inter_600SemiBold" }}
           >
             Ajustes
           </Text>
           <Text
-            className="text-sm text-body-secondary"
+            className="text-sm text-body-secondary dark:text-body-secondary-dark"
             style={{ fontFamily: "Inter_400Regular", marginTop: 2 }}
           >
             Metas gentis. Pode mudar a qualquer hora.
@@ -137,7 +136,7 @@ export default function Ajustes() {
           {/* Tema com switch inline (mesmo controle do MenuModal antigo) */}
           <View className="flex-row items-center justify-between border-t border-surface-subtle px-4 py-3">
             <Text
-              className="text-sm text-ink"
+              className="text-sm text-ink dark:text-ink-dark"
               style={{ fontFamily: "Inter_400Regular" }}
             >
               Tema escuro
@@ -185,7 +184,7 @@ export default function Ajustes() {
 
         {/* Tagline */}
         <Text
-          className="mt-2 text-center text-xs text-icon-dim"
+          className="mt-2 text-center text-xs text-icon-dim dark:text-icon-dim-dark"
           style={{ fontFamily: "Inter_400Regular", fontStyle: "italic" }}
         >
           Back on Track · de volta aos trilhos, um registro por vez.
@@ -194,7 +193,7 @@ export default function Ajustes() {
         {/* Bundle info discreto (mantém diagnóstico do tester) */}
         {ENV.bundle ? (
           <Text
-            className="text-center text-xs text-icon-dim"
+            className="text-center text-xs text-icon-dim dark:text-icon-dim-dark"
             style={{ fontFamily: "JetBrainsMono_400Regular" }}
           >
             {ENV.bundle}
@@ -208,9 +207,9 @@ export default function Ajustes() {
 /** @param {{ title: string, children: any }} props */
 function Section({ title, children }) {
   return (
-    <View className="overflow-hidden rounded-2xl border border-border-subtle bg-white">
+    <View className="overflow-hidden rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark">
       <Text
-        className="px-4 pt-3.5 pb-1.5 text-xs uppercase tracking-wider text-label"
+        className="px-4 pt-3.5 pb-1.5 text-xs uppercase tracking-wider text-label dark:text-label-dark"
         style={{ fontFamily: "JetBrainsMono_500Medium" }}
       >
         {title}
@@ -256,7 +255,7 @@ function Row({
       }`}
     >
       <Text
-        className={`text-sm ${destructive ? "text-danger" : "text-ink"}`}
+        className={`text-sm ${destructive ? "text-danger dark:text-danger" : "text-ink dark:text-ink-dark"}`}
         style={{ fontFamily: "Inter_400Regular" }}
       >
         {label}
@@ -264,7 +263,7 @@ function Row({
       <View className="flex-row items-center gap-1">
         {value ? (
           <Text
-            className="text-sm text-body-secondary"
+            className="text-sm text-body-secondary dark:text-body-secondary-dark"
             style={{
               fontFamily: valueMono
                 ? "JetBrainsMono_400Regular"
@@ -277,7 +276,7 @@ function Row({
         ) : null}
         {valueChevron || (onPress && !disabled && !destructive) ? (
           <Text
-            className="text-sm text-label"
+            className="text-sm text-label dark:text-label-dark"
             style={{ fontFamily: "Inter_400Regular" }}
           >
             ›

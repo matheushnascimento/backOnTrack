@@ -29,6 +29,8 @@ import { ProgressBar } from "react-native-paper";
 import Constants from "expo-constants";
 import { useUpdates, reloadAsync } from "expo-updates";
 
+import { useThemeTokens } from "@/constants/themeTokens";
+
 // Fonte remota da última versão do APK cortada, atualizada manualmente no repo
 // quando um build novo é distribuído. Preferi raw.githubusercontent.com em vez
 // de embed no bundle porque o cliente numa versão VELHA precisa saber de uma
@@ -57,6 +59,7 @@ function isBehind(current, latest) {
 export default function UpdateBanner() {
   const { isUpdatePending, isDownloading } = useUpdates();
   const insets = useSafeAreaInsets();
+  const t = useThemeTokens();
 
   // Última APK conhecida — carrega em background, sem bloquear render.
   const [latestApk, setLatestApk] = useState(
@@ -89,19 +92,19 @@ export default function UpdateBanner() {
     const url = latestApk.installUrl;
     return (
       <BannerBase
-        color="#2E5A88"
+        color={t.primary}
         bottomPad={bottomPad}
         onPress={url ? () => Linking.openURL(url).catch(() => {}) : undefined}
         accessibilityLabel={`Nova versão do app disponível: ${latestApk.version}`}
       >
         <Text
-          className="text-center text-white"
+          className="text-center text-white dark:text-on-primary-dark"
           style={{ fontFamily: "Inter_600SemiBold", fontSize: 14 }}
         >
           Nova versão do app disponível
         </Text>
         <Text
-          className="text-center text-white opacity-80"
+          className="text-center text-white dark:text-on-primary-dark opacity-80"
           style={{ fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 2 }}
         >
           Toque para instalar {latestApk.version} · você está em v
@@ -113,15 +116,15 @@ export default function UpdateBanner() {
 
   if (isDownloading) {
     return (
-      <BannerBase color="#F3F4F6" bottomPad={bottomPad}>
+      <BannerBase color={t.surfaceSubtle} bottomPad={bottomPad}>
         <Text
-          className="text-center text-ink"
+          className="text-center text-ink dark:text-ink-dark"
           style={{ fontFamily: "Inter_500Medium", fontSize: 13 }}
         >
           Baixando atualização…
         </Text>
         <View style={{ marginTop: 8, borderRadius: 4, overflow: "hidden" }}>
-          <ProgressBar indeterminate color="#2E5A88" />
+          <ProgressBar indeterminate color={t.primary} />
         </View>
       </BannerBase>
     );
@@ -130,7 +133,7 @@ export default function UpdateBanner() {
   if (isUpdatePending) {
     return (
       <BannerBase
-        color="#4CAF50"
+        color={t.accentToday}
         bottomPad={bottomPad}
         onPress={() => reloadAsync()}
         accessibilityLabel="Atualização pronta — toque para reiniciar"

@@ -13,6 +13,7 @@ import RetomadaState from "@/components/RetomadaState";
 
 import { getToday, store } from "@/infra/database";
 import { useSession } from "@/infra/session";
+import { useThemeTokens } from "@/constants/themeTokens";
 import { AUTH_ENABLED } from "@/infra/supabase";
 import { CATEGORY_MAP } from "@/components/categoryUtils";
 import { minutesToHHMM } from "@/constants/duration";
@@ -82,6 +83,7 @@ function formatDateLabel() {
 
 export default function Home() {
   const { user } = useSession();
+  const t = useThemeTokens();
   // Dismissal in-memory do estado de retomada (M5-B fatia 5). Persistir viraria
   // sub-tarefa; hoje "Depois" dura só a sessão — próximo launch com o critério
   // ainda válido volta a mostrar, que é o objetivo (convidar até registrar).
@@ -130,7 +132,7 @@ export default function Home() {
     return (
       <MyView
         safe={true}
-        className="flex-1 bg-light-background dark:bg-dark-background"
+        className="flex-1 bg-light-background dark:bg-app-dark"
       >
         <ScrollView
           contentContainerStyle={{ flexGrow: 1 }}
@@ -160,10 +162,7 @@ export default function Home() {
   }
 
   return (
-    <MyView
-      safe={true}
-      className="flex-1 bg-light-background dark:bg-dark-background"
-    >
+    <MyView safe={true} className="flex-1 bg-light-background dark:bg-app-dark">
       <ScrollView
         contentContainerStyle={{ padding: 20, gap: 20 }}
         showsVerticalScrollIndicator={false}
@@ -187,27 +186,31 @@ export default function Home() {
             2a·1 do design v2. */}
         <View className="gap-1 px-1">
           <Text
-            className="text-xs tracking-wider text-label"
+            className="text-xs tracking-wider text-label dark:text-label-dark"
             style={{ fontFamily: "JetBrainsMono_500Medium" }}
           >
             {formatDateLabel()}
           </Text>
           <View className="flex-row items-center justify-between">
             <Text
-              className="text-2xl text-ink"
+              className="text-2xl text-ink dark:text-ink-dark"
               style={{ fontFamily: "Inter_600SemiBold" }}
             >
               {getGreeting(user)}
             </Text>
             <View
-              className="items-center justify-center rounded-lg bg-primary"
+              className="items-center justify-center rounded-lg bg-primary dark:bg-primary-dark"
               style={{ width: 32, height: 32 }}
             >
-              <Icon1c size={22} />
+              <Icon1c
+                size={22}
+                strokeColor={t.onPrimary}
+                dotColor={t.accentToday}
+              />
             </View>
           </View>
           <Text
-            className="text-sm text-body-secondary"
+            className="text-sm text-body-secondary dark:text-body-secondary-dark"
             style={{ fontFamily: "Inter_400Regular", marginTop: 2 }}
           >
             {totalRecords === 0
@@ -237,14 +240,14 @@ export default function Home() {
         {/* Entrar isolado só quando deslogado + auth configurada. Sair vai
             pra tela de Ajustes junto com "Logado como". */}
         {AUTH_ENABLED && !user && (
-          <View className="rounded-2xl border border-border-subtle bg-white p-4">
+          <View className="rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark p-4">
             <Pressable
               accessibilityRole="button"
               onPress={() => router.navigate("/login")}
-              className="items-center rounded-xl bg-primary py-3"
+              className="items-center rounded-xl bg-primary dark:bg-primary-dark py-3"
             >
               <Text
-                className="text-sm text-white"
+                className="text-sm text-white dark:text-on-primary-dark"
                 style={{ fontFamily: "Inter_500Medium" }}
               >
                 Entrar
