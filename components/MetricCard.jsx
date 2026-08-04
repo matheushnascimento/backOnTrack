@@ -45,7 +45,7 @@ export default function MetricCard({
       <View className="flex-1 gap-0.5">
         <View className="flex-row items-baseline justify-between">
           <Text
-            className="text-sm font-semibold text-ink"
+            className="text-sm text-ink"
             style={{ fontFamily: "Inter_600SemiBold" }}
           >
             {name}
