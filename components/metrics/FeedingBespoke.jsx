@@ -77,7 +77,6 @@ export default function FeedingBespoke({ onAfterAdd }) {
             fontFamily: "JetBrainsMono_500Medium",
             fontSize: 88,
             lineHeight: 92,
-            letterSpacing: -2.5,
           }}
         >
           {totalCount}
