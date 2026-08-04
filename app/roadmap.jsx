@@ -1,32 +1,22 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //#region imports
-import { ScrollView, Text, View } from "react-native";
+import { Pressable, ScrollView, Text, View } from "react-native";
+import { router } from "expo-router";
+import Svg, { Path } from "react-native-svg";
 
 import MyView from "@/components/MyView";
-import Card from "@/components/Card";
-import SectionLabel from "@/components/SectionLabel";
 
 import { parseRoadmap, getDigest } from "@/constants/roadmap";
 // Caminho relativo de propósito: o babel-plugin-inline-import resolve pelo
 // arquivo, não pelo alias @/. Editar o roadmap exige reiniciar com --clear.
 import roadmapMd from "../docs/04-roadmap-milestones.md";
+import { useThemeTokens } from "@/constants/themeTokens";
 //#endregion
 
-const STATUS_ICON = { done: "✅", partial: "🟡", todo: "⬜" };
 const digest = getDigest(parseRoadmap(roadmapMd));
 
-const ITEM_TEXT = "flex-1 text-base text-light-text dark:text-dark-text";
-
-function ItemRow({ status, text }) {
-  return (
-    <View className="flex-row gap-2">
-      <Text className="text-base">{STATUS_ICON[status] ?? "•"}</Text>
-      <Text className={ITEM_TEXT}>{text}</Text>
-    </View>
-  );
-}
-
 export default function Roadmap() {
+  const t = useThemeTokens();
   const {
     milestonesDone,
     milestonesTotal,
@@ -39,61 +29,160 @@ export default function Roadmap() {
     : 0;
 
   return (
-    <MyView
-      safe={true}
-      className="flex-1 bg-light-background dark:bg-dark-background"
-    >
+    <MyView safe={true} className="flex-1 bg-light-background dark:bg-app-dark">
       <ScrollView
-        contentContainerStyle={{ padding: 16, gap: 16, alignItems: "center" }}
+        contentContainerStyle={{ padding: 20, gap: 20 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Progresso geral */}
-        <Card className="gap-2">
-          <Text className="font-bold text-2xl text-light-text dark:text-dark-text">
+        {/* Nav */}
+        <View className="flex-row items-center justify-between">
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+            onPress={() => router.back()}
+            className="flex-row items-center gap-1 rounded-full p-1 pr-2 active:opacity-70"
+          >
+            <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
+              <Path
+                d="M15 6l-6 6 6 6"
+                stroke={t.primary}
+                strokeWidth={2.4}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </Svg>
+            <Text
+              className="text-base text-primary dark:text-primary-dark"
+              style={{ fontFamily: "Inter_500Medium" }}
+            >
+              Voltar
+            </Text>
+          </Pressable>
+        </View>
+
+        {/* Header */}
+        <View className="gap-1 px-1">
+          <Text
+            className="text-xs tracking-wider text-label dark:text-label-dark"
+            style={{ fontFamily: "JetBrainsMono_500Medium" }}
+          >
+            ROADMAP
+          </Text>
+          <Text
+            className="text-2xl text-ink dark:text-ink-dark"
+            style={{ fontFamily: "Inter_600SemiBold" }}
+          >
             Back on Track
           </Text>
-          <Text className="text-sm text-light-text opacity-70 dark:text-dark-text">
+          <Text
+            className="text-sm text-body-secondary dark:text-body-secondary-dark"
+            style={{ fontFamily: "Inter_400Regular", marginTop: 2 }}
+          >
             De volta aos trilhos, um registro por vez.
           </Text>
-          <Text className="font-bold text-base text-light-text opacity-60 dark:text-dark-text">
-            {milestonesDone} de {milestonesTotal} milestones concluídas
-          </Text>
-          <View className="h-2 w-full overflow-hidden rounded-full bg-light-background dark:bg-dark-background">
+        </View>
+
+        {/* Progresso geral */}
+        <View className="rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark p-5 gap-3">
+          <View className="flex-row items-baseline justify-between">
+            <Text
+              className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
+              style={{ fontFamily: "JetBrainsMono_500Medium" }}
+            >
+              Progresso geral
+            </Text>
+            <Text
+              className="text-sm text-body-secondary dark:text-body-secondary-dark"
+              style={{ fontFamily: "JetBrainsMono_400Regular" }}
+            >
+              {milestonesDone}/{milestonesTotal}
+            </Text>
+          </View>
+          <View className="h-1.5 w-full overflow-hidden rounded-full bg-border-subtle dark:bg-border-subtle-dark">
             <View
-              className="h-2 rounded-full bg-secondary"
+              className="h-full rounded-full bg-secondary dark:bg-secondary-dark"
               style={{ width: `${pct}%` }}
             />
           </View>
-        </Card>
+          <Text
+            className="text-xs text-label dark:text-label-dark"
+            style={{ fontFamily: "Inter_400Regular" }}
+          >
+            {milestonesDone === milestonesTotal
+              ? "Roadmap fechado."
+              : `${milestonesDone === 1 ? "1 milestone concluída" : `${milestonesDone} milestones concluídas`} · ${pct}% do total.`}
+          </Text>
+        </View>
 
         {/* Milestone atual */}
         {current && (
-          <Card className="gap-3">
-            <SectionLabel>EM ANDAMENTO</SectionLabel>
-            <Text className="font-bold text-lg text-light-text dark:text-dark-text">
-              {current.id} · {current.title} ({currentProgress.done}/
-              {currentProgress.total})
-            </Text>
-            <MyView safe={false} className="gap-2">
+          <View className="rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark p-5 gap-4">
+            <View className="gap-1">
+              <Text
+                className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
+                style={{ fontFamily: "JetBrainsMono_500Medium" }}
+              >
+                Em andamento · {currentProgress.done}/{currentProgress.total}
+              </Text>
+              <Text
+                className="text-lg text-ink dark:text-ink-dark"
+                style={{ fontFamily: "Inter_600SemiBold" }}
+              >
+                {current.id} · {current.title}
+              </Text>
+            </View>
+            <View className="gap-2.5">
               {current.items.map((item, i) => (
                 <ItemRow key={i} status={item.status} text={item.text} />
               ))}
-            </MyView>
-          </Card>
+            </View>
+          </View>
         )}
 
         {/* Concluído recentemente */}
         {recentDone.length > 0 && (
-          <Card className="gap-3">
-            <SectionLabel>CONCLUÍDO RECENTEMENTE</SectionLabel>
-            <MyView safe={false} className="gap-2">
+          <View className="rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark p-5 gap-3">
+            <Text
+              className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
+              style={{ fontFamily: "JetBrainsMono_500Medium" }}
+            >
+              Concluído recentemente
+            </Text>
+            <View className="gap-2.5">
               {recentDone.map((item, i) => (
                 <ItemRow key={i} status="done" text={item.text} />
               ))}
-            </MyView>
-          </Card>
+            </View>
+          </View>
         )}
       </ScrollView>
     </MyView>
+  );
+}
+
+/** @param {{ status: "done" | "partial" | "todo", text: string }} props */
+function ItemRow({ status, text }) {
+  // Bolinha colorida em vez do emoji: done = accentToday, partial = primary,
+  // todo = border-strong (vazio). Mais discreto e alinha melhor com o resto
+  // do design v2 (WeekStrip usa a mesma paleta pra status de dia).
+  const color = {
+    done: "bg-secondary dark:bg-secondary-dark",
+    partial: "bg-primary dark:bg-primary-dark",
+    todo: "bg-border-strong dark:bg-border-strong-dark",
+  }[status];
+  const textColor =
+    status === "todo"
+      ? "text-label dark:text-label-dark"
+      : "text-ink dark:text-ink-dark";
+  return (
+    <View className="flex-row items-start gap-3">
+      <View className={`mt-1.5 h-2 w-2 rounded-full ${color}`} />
+      <Text
+        className={`flex-1 text-sm ${textColor}`}
+        style={{ fontFamily: "Inter_400Regular" }}
+      >
+        {text}
+      </Text>
+    </View>
   );
 }
