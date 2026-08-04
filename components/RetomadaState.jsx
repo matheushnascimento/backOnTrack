@@ -94,7 +94,10 @@ export default function RetomadaState({ daysSinceLast, onDismiss }) {
         </View>
       </View>
 
-      {/* Link "Depois" */}
+      {/* Link "Depois" — sem `underline` porque no Android + custom font o
+          decoration bugava o advance width e clipava a última letra
+          ("Depoi"). Cor label + peso regular já hierarquiza como link
+          secundário; visualmente basta. */}
       <View className="items-center">
         <Pressable
           accessibilityRole="button"
@@ -103,7 +106,7 @@ export default function RetomadaState({ daysSinceLast, onDismiss }) {
           className="p-4 active:opacity-70"
         >
           <Text
-            className="text-sm text-label dark:text-label-dark underline"
+            className="text-sm text-label dark:text-label-dark"
             style={{ fontFamily: "Inter_400Regular" }}
           >
             Depois
@@ -136,8 +139,12 @@ function ShortcutButton({ metric, label, dim, onPress }) {
           …
         </Text>
       )}
+      {/* flex-1 força o Text a preencher o espaço restante do Pressable
+          (flex-row) em vez de depender da intrinsic width medida do
+          NativeText — Android + Inter custom estava truncando labels no
+          meio ("Um copo" em vez de "Um copo d'água"). */}
       <Text
-        className={`text-sm ${dim ? "text-body-secondary dark:text-body-secondary-dark" : "text-ink dark:text-ink-dark"}`}
+        className={`flex-1 text-sm ${dim ? "text-body-secondary dark:text-body-secondary-dark" : "text-ink dark:text-ink-dark"}`}
         style={{ fontFamily: "Inter_400Regular" }}
       >
         {label}
