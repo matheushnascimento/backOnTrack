@@ -1,6 +1,6 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //#region imports
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { router } from "expo-router";
 import { useTable } from "tinybase/ui-react";
@@ -8,7 +8,6 @@ import { useTable } from "tinybase/ui-react";
 import MyView from "@/components/MyView";
 import InstallApp from "@/components/InstallApp";
 import MetricCard from "@/components/MetricCard";
-import MenuModal from "@/components/MenuModal";
 import Icon1c from "@/components/Icon1c";
 
 import { getToday, store } from "@/infra/database";
@@ -55,7 +54,6 @@ function formatDateLabel() {
 
 export default function Home() {
   const { user } = useSession();
-  const [menuOpen, setMenuOpen] = useState(false);
 
   // Assina a tabela: `useTable` re-renderiza a cada mudança nos registros —
   // inclusive quando o `startAutoLoad()` da persistência termina de carregar.
@@ -96,13 +94,13 @@ export default function Home() {
         contentContainerStyle={{ padding: 20, gap: 20 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Trigger do menu lateral — hamburger alinhado à esquerda pra casar
-            com o painel que abre da esquerda. */}
+        {/* Trigger de Ajustes — hamburger à esquerda navega pra tela dedicada
+            (M5-B fatia 4). Substituiu o MenuModal antigo. */}
         <View className="w-full flex-row justify-start">
           <Pressable
-            accessibilityLabel="Abrir menu"
+            accessibilityLabel="Abrir ajustes"
             accessibilityRole="button"
-            onPress={() => setMenuOpen(true)}
+            onPress={() => router.navigate("/ajustes")}
             className="rounded-full p-2"
           >
             <Text className="text-2xl text-light-text dark:text-dark-text">
@@ -163,7 +161,7 @@ export default function Home() {
         <InstallApp />
 
         {/* Entrar isolado só quando deslogado + auth configurada. Sair vai
-            pro MenuModal junto com "Logado como". */}
+            pra tela de Ajustes junto com "Logado como". */}
         {AUTH_ENABLED && !user && (
           <View className="rounded-2xl border border-border-subtle bg-white p-4">
             <Pressable
@@ -181,8 +179,6 @@ export default function Home() {
           </View>
         )}
       </ScrollView>
-
-      <MenuModal visible={menuOpen} onClose={() => setMenuOpen(false)} />
     </MyView>
   );
 }
