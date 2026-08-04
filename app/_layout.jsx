@@ -69,10 +69,7 @@ function AppTree() {
         <Stack.Screen name="history" options={{ title: "Histórico" }} />
         <Stack.Screen name="semana" options={{ title: "Semana" }} />
         <Stack.Screen name="ajustes" options={{ title: "Ajustes" }} />
-        <Stack.Screen
-          name="feedback"
-          options={{ title: "Feedback", headerShown: true }}
-        />
+        <Stack.Screen name="feedback" options={{ title: "Feedback" }} />
         {/* Rota de admin (testers) — acesso só por deep link backontrack://admin */}
         <Stack.Screen
           name="admin"
