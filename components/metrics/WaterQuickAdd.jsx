@@ -73,7 +73,6 @@ export default function WaterQuickAdd({ onAfterAdd }) {
               fontFamily: "JetBrainsMono_500Medium",
               fontSize: 72,
               lineHeight: 76,
-              letterSpacing: -2,
             }}
           >
             {totalL.toLocaleString("pt-BR", {

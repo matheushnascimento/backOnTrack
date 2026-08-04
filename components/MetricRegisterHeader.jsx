@@ -72,7 +72,7 @@ export default function MetricRegisterHeader({
           </View>
           <Text
             className="text-2xl text-ink"
-            style={{ fontFamily: "Inter_600SemiBold", letterSpacing: -0.24 }}
+            style={{ fontFamily: "Inter_600SemiBold" }}
           >
             {title}
           </Text>
