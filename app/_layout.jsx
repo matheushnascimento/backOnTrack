@@ -69,10 +69,7 @@ function AppTree() {
         <Stack.Screen name="feedback" options={{ title: "Feedback" }} />
         {/* Rota de admin (testers) — acesso só por deep link backontrack://admin */}
         <Stack.Screen name="admin" options={{ title: "Admin" }} />
-        <Stack.Screen
-          name="login"
-          options={{ title: "Entrar", headerShown: true }}
-        />
+        <Stack.Screen name="login" options={{ title: "Entrar" }} />
         {/* Callback do magic link — headless, autopropulsão pra /. */}
         <Stack.Screen
           name="auth/callback"
