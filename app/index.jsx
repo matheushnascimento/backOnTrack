@@ -1,6 +1,6 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //#region imports
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { router } from "expo-router";
 import { useTable } from "tinybase/ui-react";
@@ -9,6 +9,7 @@ import MyView from "@/components/MyView";
 import InstallApp from "@/components/InstallApp";
 import MetricCard from "@/components/MetricCard";
 import Icon1c from "@/components/Icon1c";
+import RetomadaState from "@/components/RetomadaState";
 
 import { getToday, store } from "@/infra/database";
 import { useSession } from "@/infra/session";
@@ -40,6 +41,33 @@ function getGreeting(user) {
   return `${g}, ${name}.`;
 }
 
+// Dias corridos desde o último registro em qualquer métrica. Null se o store
+// nunca teve registro (usuário novo). Usado pra decidir entre Home normal e
+// estado de retomada da fatia 5.
+function computeDaysSinceLast(records) {
+  let maxCreatedAt = 0;
+  for (const row of Object.values(records)) {
+    const c = Number(row?.createdAt) || 0;
+    if (c > maxCreatedAt) maxCreatedAt = c;
+  }
+  if (maxCreatedAt === 0) return null;
+  const now = new Date();
+  const last = new Date(maxCreatedAt);
+  // Compara dias-de-calendário local, não 24h corridas — pra "faz 1 dia" só
+  // acontecer na virada do dia, não 24h depois do registro.
+  const todayMid = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+  ).getTime();
+  const lastMid = new Date(
+    last.getFullYear(),
+    last.getMonth(),
+    last.getDate(),
+  ).getTime();
+  return Math.max(0, Math.round((todayMid - lastMid) / 86_400_000));
+}
+
 // Data no formato "SEGUNDA · 12 AGO" (pt-BR, uppercase). Usada como label
 // discreto acima do greeting.
 function formatDateLabel() {
@@ -54,6 +82,10 @@ function formatDateLabel() {
 
 export default function Home() {
   const { user } = useSession();
+  // Dismissal in-memory do estado de retomada (M5-B fatia 5). Persistir viraria
+  // sub-tarefa; hoje "Depois" dura só a sessão — próximo launch com o critério
+  // ainda válido volta a mostrar, que é o objetivo (convidar até registrar).
+  const [retomadaDismissed, setRetomadaDismissed] = useState(false);
 
   // Assina a tabela: `useTable` re-renderiza a cada mudança nos registros —
   // inclusive quando o `startAutoLoad()` da persistência termina de carregar.
@@ -66,8 +98,17 @@ export default function Home() {
   // olham os mesmos dados e sugere remover — o que reintroduziria o #108.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = useMemo(() => getToday(), [records]);
+  const daysSinceLast = useMemo(() => computeDaysSinceLast(records), [records]);
 
   const totalRecords = METRICS.reduce((s, m) => s + (today[m]?.length ?? 0), 0);
+
+  // Retomada aparece quando: (a) nunca registrou, ou (b) 3+ dias corridos sem
+  // registro em nenhuma métrica. Dismissal in-memory desliga só nesta sessão.
+  // Registrar hoje (totalRecords>0) desliga automaticamente pelo critério (a).
+  const showRetomada =
+    !retomadaDismissed &&
+    totalRecords === 0 &&
+    (daysSinceLast === null || daysSinceLast >= 3);
 
   const cards = METRICS.map((type) => {
     const { displayName, unit } = CATEGORY_MAP[type];
@@ -84,6 +125,39 @@ export default function Home() {
         active && registros.length > 1 ? `${registros.length} registros` : null,
     };
   });
+
+  if (showRetomada) {
+    return (
+      <MyView
+        safe={true}
+        className="flex-1 bg-light-background dark:bg-dark-background"
+      >
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1 }}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Hamburger disponível também aqui pra não trancar acesso ao
+              Ajustes (ex: sair, exportar) quando o usuário está em retomada. */}
+          <View className="w-full flex-row justify-start px-3 pt-2">
+            <Pressable
+              accessibilityLabel="Abrir ajustes"
+              accessibilityRole="button"
+              onPress={() => router.navigate("/ajustes")}
+              className="rounded-full p-2"
+            >
+              <Text className="text-2xl text-light-text dark:text-dark-text">
+                ☰
+              </Text>
+            </Pressable>
+          </View>
+          <RetomadaState
+            daysSinceLast={daysSinceLast}
+            onDismiss={() => setRetomadaDismissed(true)}
+          />
+        </ScrollView>
+      </MyView>
+    );
+  }
 
   return (
     <MyView
