@@ -1,6 +1,12 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 import { useEffect, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
 
 import MyView from "@/components/MyView";
@@ -100,8 +106,8 @@ export default function AuthCallback() {
                 className="text-sm text-body-secondary dark:text-body-secondary-dark"
                 style={{ fontFamily: "Inter_400Regular" }}
               >
-                O link pode ter expirado ou já foi usado. Peça um novo pela
-                tela de entrar.
+                O link pode ter expirado ou já foi usado. Peça um novo pela tela
+                de entrar.
               </Text>
             </View>
             <Pressable
