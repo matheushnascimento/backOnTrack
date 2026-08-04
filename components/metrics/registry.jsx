@@ -13,6 +13,7 @@ import MyCheckboxRaw from "@/components/MyCheckbox";
 import FieldLabelRaw from "@/components/FieldLabel";
 import MyHistory, { MyExerciseHistory } from "@/components/MyHistory";
 import WaterQuickAdd from "./WaterQuickAdd";
+import SleepBespoke from "./SleepBespoke";
 
 import { hhmmToMinutes, minutesToHHMM } from "@/constants/duration";
 import {
@@ -155,6 +156,9 @@ const REGISTRY = {
         <MyButton title="Salvar" onPress={onSubmit} />
       </MyView>
     ),
+    // Fatia 2b do M5-B: novos registros usam o UI bespoke (dormiu/acordou +
+    // duração calculada + qualidade). Ver components/metrics/SleepBespoke.jsx.
+    renderCustom: ({ onAfterAdd }) => <SleepBespoke onAfterAdd={onAfterAdd} />,
   },
 
   feeding: {
