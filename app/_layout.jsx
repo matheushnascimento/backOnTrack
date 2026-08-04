@@ -74,10 +74,7 @@ function AppTree() {
           options={{ title: "Feedback", headerShown: true }}
         />
         {/* Rota de admin (testers) — acesso só por deep link backontrack://admin */}
-        <Stack.Screen
-          name="admin"
-          options={{ title: "Admin", headerShown: true }}
-        />
+        <Stack.Screen name="admin" options={{ title: "Admin" }} />
         <Stack.Screen
           name="login"
           options={{ title: "Entrar", headerShown: true }}
