@@ -71,20 +71,32 @@ function readLatestRelease() {
 }
 
 /**
+ * Monta a mensagem WhatsApp de aviso de nova APK. Tom comercial e enxuto: o
+ * tester decide em segundos se instala agora ou depois — não é changelog de
+ * dev. As **notas da release** (`-f notes=` no workflow) viram o "o que
+ * mudou" — escreva user-facing (features/fixes visíveis), não dev-facing
+ * (SDK bumps, refactors internos). A versão fica no rodapé pra referência,
+ * sem competir com a headline.
+ *
+ * Formatação WhatsApp: `*bold*` e `_italic_` renderizam no cliente.
+ *
  * @param {{ tagName: string, body?: string | null }} release
  * @param {string} homepage
  * @returns {string}
  */
 function buildMessage({ tagName, body }, homepage) {
   const novidades = (body ?? "").trim();
-  const linhas = [`🚀 Back on Track — ${tagName}`, ""];
+  const linhas = ["✨ *Back on Track* atualizou", ""];
   if (novidades) linhas.push(novidades, "");
   linhas.push(
-    "📲 Instalar / atualizar:",
+    "📲 *Baixar aqui:*",
     homepage,
     "",
-    "ℹ️ Já tem o app? Melhorias pequenas chegam sozinhas ao abrir. Baixe de " +
-      "novo só quando eu avisar que é versão nova.",
+    'Toque em "Obter o app" → botão de instalação. Seus registros ficam preservados.',
+    "",
+    `_Versão ${tagName}_`,
+    "",
+    "Tropeço na hora de instalar? Manda print aqui ou usa a tela *Feedback* do app. Obrigado por testar 🙏",
   );
   return linhas.join("\n");
 }
