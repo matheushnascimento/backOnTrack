@@ -165,11 +165,23 @@ export default function Ajustes() {
           <Row label="Sobre" value={`v${ENV.appVersion}`} valueMono disabled />
         </Section>
 
-        {/* Conta (só logado) */}
-        {AUTH_ENABLED && user && (
+        {/* Conta: sempre visível quando auth tá configurada. Concentra o
+            fluxo de entrar/sair — a Home não tem mais botão Entrar isolado
+            (era redundante e piscava durante o auto-load da sessão). */}
+        {AUTH_ENABLED && (
           <Section title="Conta">
-            <Row label="Logado como" value={user.email} disabled />
-            <Row label="Sair" onPress={signOut} destructive />
+            {user ? (
+              <>
+                <Row label="Logado como" value={user.email} disabled />
+                <Row label="Sair" onPress={signOut} destructive />
+              </>
+            ) : (
+              <Row
+                label="Entrar"
+                valueChevron
+                onPress={() => router.navigate("/login")}
+              />
+            )}
           </Section>
         )}
 

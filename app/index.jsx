@@ -14,7 +14,6 @@ import RetomadaState from "@/components/RetomadaState";
 import { getToday, store } from "@/infra/database";
 import { useSession } from "@/infra/session";
 import { useThemeTokens } from "@/constants/themeTokens";
-import { AUTH_ENABLED } from "@/infra/supabase";
 import { CATEGORY_MAP } from "@/components/categoryUtils";
 import { minutesToHHMM } from "@/constants/duration";
 //#endregion
@@ -237,24 +236,11 @@ export default function Home() {
         {/* Obter o app (só web: QR no desktop, download no celular) */}
         <InstallApp />
 
-        {/* Entrar isolado só quando deslogado + auth configurada. Sair vai
-            pra tela de Ajustes junto com "Logado como". */}
-        {AUTH_ENABLED && !user && (
-          <View className="rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark p-4">
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => router.navigate("/login")}
-              className="items-center rounded-xl bg-primary dark:bg-primary-dark py-3"
-            >
-              <Text
-                className="text-sm text-white dark:text-on-primary-dark"
-                style={{ fontFamily: "Inter_500Medium" }}
-              >
-                Entrar
-              </Text>
-            </Pressable>
-          </View>
-        )}
+        {/* Login/logout ficam TODOS em Ajustes → Conta (Entrar quando !user,
+            Sair quando user). Ter um botão Entrar aqui na Home também era
+            redundante — e como useSession pode devolver `user: null` durante
+            o auto-load da sessão, o gate `!user` piscava o botão logo depois
+            de logar. Concentrar em Ajustes elimina o flicker e centraliza. */}
       </ScrollView>
     </MyView>
   );
