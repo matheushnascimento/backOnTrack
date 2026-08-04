@@ -68,6 +68,7 @@ function AppTree() {
         <Stack.Screen name="export" options={{ title: "Exportação" }} />
         <Stack.Screen name="history" options={{ title: "Histórico" }} />
         <Stack.Screen name="semana" options={{ title: "Semana" }} />
+        <Stack.Screen name="ajustes" options={{ title: "Ajustes" }} />
         <Stack.Screen
           name="feedback"
           options={{ title: "Feedback", headerShown: true }}
