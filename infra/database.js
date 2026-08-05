@@ -31,6 +31,10 @@ export const store = createMergeableStore()
     // Room ID por install pra sync WS (M6 fatia 3, #202). Gerado no 1º launch
     // (ver infra/persistence.js). Default vazio = sync ainda não inicializado.
     syncRoomId: { type: "string", default: "" },
+    // Como o usuário quer ser chamado no cumprimento da Home. Preferido em
+    // relação à derivação do email — que quando presente cai no primeiro nome
+    // (antes do primeiro ponto). Editável em Ajustes.
+    displayName: { type: "string", default: "" },
   });
 
 // Espalha `details` (JSON) de volta pro topo. É espalhado por último de
@@ -143,6 +147,16 @@ export function getToday() {
 export function clearAll() {
   // Só os registros — a lista de testers (admin) sobrevive ao "limpar dados".
   store.delTable(TABLE);
+}
+
+// --- Display name (Home greeting) ---
+
+export function getDisplayName() {
+  return String(store.getValue("displayName") || "");
+}
+
+export function setDisplayName(name) {
+  store.setValue("displayName", String(name ?? "").trim());
 }
 
 // --- Sync (M6 fatia 3, #202) ---

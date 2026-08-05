@@ -1,12 +1,22 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
-import { Pressable, ScrollView, Switch, Text, View } from "react-native";
+import { useState } from "react";
+import {
+  Modal,
+  Pressable,
+  ScrollView,
+  Switch,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { router } from "expo-router";
 import { useColorScheme } from "nativewind";
 import Svg, { Path } from "react-native-svg";
+import { useValue } from "tinybase/ui-react";
 
 import MyView from "@/components/MyView";
 
-import { clearAll } from "@/infra/database";
+import { clearAll, setDisplayName, store } from "@/infra/database";
 import { useSession } from "@/infra/session";
 import { AUTH_ENABLED } from "@/infra/supabase";
 import { confirmAction } from "@/constants/dialogs";
@@ -46,6 +56,9 @@ export default function Ajustes() {
   const { user, signOut } = useSession();
   const isDark = colorScheme === "dark";
   const t = useThemeTokens();
+
+  const displayName = useValue("displayName", store);
+  const [nameModalOpen, setNameModalOpen] = useState(false);
 
   function handleClear() {
     confirmAction({
@@ -133,6 +146,14 @@ export default function Ajustes() {
 
         {/* App */}
         <Section title="App">
+          {/* Nome preferido pra saudação da Home. Se vazio, a Home cai no
+              primeiro nome do email do usuário logado. */}
+          <Row
+            label="Como quer ser chamado"
+            value={displayName || "definir"}
+            valueChevron
+            onPress={() => setNameModalOpen(true)}
+          />
           {/* Tema com switch inline (mesmo controle do MenuModal antigo) */}
           <View className="flex-row items-center justify-between border-t border-surface-subtle px-4 py-3">
             <Text
@@ -212,7 +233,140 @@ export default function Ajustes() {
           </Text>
         ) : null}
       </ScrollView>
+
+      {nameModalOpen && (
+        <NameEditModal
+          current={displayName || ""}
+          onClose={() => setNameModalOpen(false)}
+        />
+      )}
     </MyView>
+  );
+}
+
+/** @param {{ current: string, onClose: () => void }} props */
+function NameEditModal({ current, onClose }) {
+  const t = useThemeTokens();
+  const [value, setValue] = useState(current);
+
+  function handleSave() {
+    setDisplayName(value);
+    onClose();
+  }
+
+  return (
+    <Modal transparent animationType="fade" visible onRequestClose={onClose}>
+      <Pressable
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: "rgba(0,0,0,0.4)",
+          padding: 16,
+        }}
+        onPress={onClose}
+      >
+        <View
+          onStartShouldSetResponder={() => true}
+          style={{
+            backgroundColor: t.bgCard,
+            borderRadius: 20,
+            padding: 20,
+            gap: 14,
+            maxWidth: 360,
+            width: "100%",
+          }}
+        >
+          <Text
+            style={{
+              color: t.ink,
+              fontFamily: "Inter_600SemiBold",
+              fontSize: 18,
+            }}
+          >
+            Como quer ser chamado?
+          </Text>
+          <Text
+            style={{
+              color: t.bodySecondary,
+              fontFamily: "Inter_400Regular",
+              fontSize: 13,
+              marginTop: -4,
+            }}
+          >
+            Aparece na saudação da Home. Deixar em branco volta ao primeiro nome
+            do email.
+          </Text>
+          <TextInput
+            value={value}
+            onChangeText={setValue}
+            placeholder="Ana"
+            placeholderTextColor={t.iconDim}
+            autoFocus
+            maxLength={40}
+            accessibilityLabel="Nome preferido"
+            style={{
+              fontFamily: "Inter_500Medium",
+              fontSize: 20,
+              color: t.ink,
+              borderBottomWidth: 1,
+              borderBottomColor: t.borderSubtle,
+              paddingVertical: 6,
+            }}
+          />
+          <View
+            style={{
+              flexDirection: "row",
+              justifyContent: "flex-end",
+              gap: 8,
+              marginTop: 4,
+            }}
+          >
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Cancelar"
+              onPress={onClose}
+              style={{
+                paddingHorizontal: 18,
+                paddingVertical: 10,
+                borderRadius: 12,
+              }}
+            >
+              <Text
+                style={{
+                  color: t.bodySecondary,
+                  fontFamily: "Inter_500Medium",
+                  fontSize: 15,
+                }}
+              >
+                Cancelar
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Salvar"
+              onPress={handleSave}
+              style={{
+                paddingHorizontal: 20,
+                paddingVertical: 10,
+                borderRadius: 12,
+                backgroundColor: t.primary,
+              }}
+            >
+              <Text
+                style={{
+                  color: t.onPrimary,
+                  fontFamily: "Inter_600SemiBold",
+                  fontSize: 15,
+                }}
+              >
+                Salvar
+              </Text>
+            </Pressable>
+          </View>
+        </View>
+      </Pressable>
+    </Modal>
   );
 }
 
