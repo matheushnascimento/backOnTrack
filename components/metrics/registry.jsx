@@ -169,7 +169,11 @@ const REGISTRY = {
     ),
     // Fatia 2b do M5-B: novos registros usam o UI bespoke (dormiu/acordou +
     // duração calculada + qualidade). Ver components/metrics/SleepBespoke.jsx.
-    renderCustom: ({ onAfterAdd }) => <SleepBespoke onAfterAdd={onAfterAdd} />,
+    // Fatia do sono do #256: bespoke também assume edição via `recordId`.
+    customHandlesEdit: true,
+    renderCustom: ({ onAfterAdd, recordId }) => (
+      <SleepBespoke onAfterAdd={onAfterAdd} recordId={recordId} />
+    ),
   },
 
   feeding: {
