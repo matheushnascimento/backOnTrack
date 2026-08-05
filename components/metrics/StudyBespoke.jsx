@@ -8,6 +8,8 @@ import getDate from "@/constants/getDate";
 import { hhmmToMinutes, minutesToHHMM } from "@/constants/duration";
 import { useThemeTokens } from "@/constants/themeTokens";
 
+import TimeInput from "./TimeInput";
+
 // UI bespoke da tela de estudo (M5-B fatia 2c, mockup 2a·6).
 // Toggle "Feito" full-width com check → duração HH:MM (default "00:00") →
 // pill de foco single-select (leitura/curso/prática/revisão/outro, opcional) →
@@ -236,13 +238,10 @@ function DurationField({ value, onChange, placeholder, hint }) {
           >
             duração
           </Text>
-          <TextInput
+          <TimeInput
             value={value}
             onChangeText={onChange}
             placeholder={placeholder}
-            placeholderTextColor={t.iconDim}
-            keyboardType="numbers-and-punctuation"
-            maxLength={5}
             accessibilityLabel="Duração"
             style={{
               fontFamily: "JetBrainsMono_500Medium",
