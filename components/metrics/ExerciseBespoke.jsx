@@ -7,6 +7,8 @@ import getDate from "@/constants/getDate";
 import { hhmmToMinutes, minutesToHHMM } from "@/constants/duration";
 import { useThemeTokens } from "@/constants/themeTokens";
 
+import TimePickerField from "./TimePickerField";
+
 // UI bespoke da tela de exercício (M5-B fatia 2c, mockup 2a·4).
 // Toggle Treino/Cardio (independentes) → duração HH:MM → hora de início
 // opcional → intensidade (leve/ok/forte/puxado) mapeando pra score 2/3/4/5.
@@ -418,13 +420,10 @@ function FieldRow({ label, value, onChange, placeholder, hint }) {
         >
           {label}
         </Text>
-        <TextInput
+        <TimePickerField
           value={value}
           onChangeText={onChange}
           placeholder={placeholder}
-          placeholderTextColor={t.iconDim}
-          keyboardType="numbers-and-punctuation"
-          maxLength={5}
           accessibilityLabel={label}
           style={{
             fontFamily: "JetBrainsMono_500Medium",

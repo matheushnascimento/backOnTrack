@@ -7,6 +7,19 @@ import getDate from "@/constants/getDate";
 import { minutesToHHMM } from "@/constants/duration";
 import { useThemeTokens } from "@/constants/themeTokens";
 
+import TimePickerField from "./TimePickerField";
+
+// Limita string de dígitos ao intervalo [0, max]. Usado nos inputs separados
+// de hora/minuto do SleepEdit — vazio permanece vazio, valor acima do teto é
+// truncado pro teto (usuário tenta digitar "99" na hora, vira "23").
+function clampNumString(s, max) {
+  const digits = String(s ?? "").replace(/\D/g, "");
+  if (digits === "") return "";
+  const n = parseInt(digits, 10);
+  if (n > max) return String(max);
+  return digits;
+}
+
 // UI bespoke da tela de sono (M5-B fatia 2b, mockup 2a·3 do Claude Design).
 // Substitui o card Score/OBS/Top/Bottom da MetricScreen quando o registry
 // aponta pra `renderCustom`. Padrão "noite passada":
@@ -242,14 +255,14 @@ function SleepEdit({ recordId, onAfterSave }) {
         <View className="flex-row items-baseline gap-2">
           <DurationInput
             value={hour}
-            onChange={setHour}
+            onChange={(v) => setHour(clampNumString(v, 23))}
             accessibilityLabel="Horas"
             maxLength={2}
           />
           <UnitLabel>h</UnitLabel>
           <DurationInput
             value={minute}
-            onChange={setMinute}
+            onChange={(v) => setMinute(clampNumString(v, 59))}
             accessibilityLabel="Minutos"
             maxLength={2}
           />
@@ -445,13 +458,10 @@ function TimeRow({ label, value, onChange, dayLabel, placeholder }) {
         >
           {label}
         </Text>
-        <TextInput
+        <TimePickerField
           value={value}
           onChangeText={onChange}
           placeholder={placeholder}
-          placeholderTextColor={t.iconDim}
-          keyboardType="numbers-and-punctuation"
-          maxLength={5}
           accessibilityLabel={`Horário — ${label}`}
           style={{
             fontFamily: "JetBrainsMono_500Medium",
