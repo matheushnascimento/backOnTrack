@@ -193,8 +193,10 @@ const REGISTRY = {
     Bottom: ({ onSubmit }) => <MyButton title="Salvar" onPress={onSubmit} />,
     // Fatia 2c do M5-B: novos registros usam UI bespoke (big number counter,
     // +/- imediatos, cada + cria row quantity=1). Ver FeedingBespoke.jsx.
-    renderCustom: ({ onAfterAdd }) => (
-      <FeedingBespoke onAfterAdd={onAfterAdd} />
+    // Fatia da alimentação do #256: bespoke também assume edição via `recordId`.
+    customHandlesEdit: true,
+    renderCustom: ({ onAfterAdd, recordId }) => (
+      <FeedingBespoke onAfterAdd={onAfterAdd} recordId={recordId} />
     ),
   },
 

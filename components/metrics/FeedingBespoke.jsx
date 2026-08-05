@@ -1,11 +1,19 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
-import { useMemo } from "react";
-import { Pressable, Text, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { router } from "expo-router";
 import { useTable } from "tinybase/ui-react";
 
-import { add, getToday, remove, store } from "@/infra/database";
+import {
+  add,
+  getById,
+  getToday,
+  remove,
+  store,
+  update,
+} from "@/infra/database";
 import getDate from "@/constants/getDate";
+import { useThemeTokens } from "@/constants/themeTokens";
 
 // UI bespoke da tela de alimentação (M5-B fatia 2c, mockup 2a·5).
 //
@@ -18,8 +26,11 @@ import getDate from "@/constants/getDate";
 // Cada refeição ganha um rótulo automático pelo horário (café/almoço/lanche/
 // jantar). O botão "Concluir" só volta pra Home; os +/- já persistem.
 //
-// Notas + score ficam intencionalmente fora (mockup não tem). Edição via ?id=
-// cai no genérico com CounterField.
+// Notas + score ficam intencionalmente fora do create (mockup não tem).
+//
+// Fatia da alimentação do #256: quando `recordId` chega (edição pelo History-
+// Card), o componente troca pra <FeedingEdit> — Quantidade + OBS. Score do
+// registro antigo é preservado no save (o create v2 não define, mas o v1 sim).
 
 function mealLabel(hourNumber) {
   if (hourNumber < 11) return "café";
@@ -34,9 +45,18 @@ function formatTime(ts) {
 }
 
 /**
+ * @param {{ onAfterAdd?: () => void, recordId?: string }} props
+ */
+export default function FeedingBespoke({ onAfterAdd, recordId }) {
+  if (recordId)
+    return <FeedingEdit recordId={recordId} onAfterSave={onAfterAdd} />;
+  return <FeedingCreate onAfterAdd={onAfterAdd} />;
+}
+
+/**
  * @param {{ onAfterAdd?: () => void }} props
  */
-export default function FeedingBespoke({ onAfterAdd }) {
+function FeedingCreate({ onAfterAdd }) {
   const records = useTable("records", store);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = useMemo(() => getToday(), [records]);
@@ -187,6 +207,127 @@ export default function FeedingBespoke({ onAfterAdd }) {
           style={{ fontFamily: "Inter_600SemiBold" }}
         >
           Concluir
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
+
+/**
+ * Edição de um registro de alimentação pelo HistoryCard. Superfície: quantidade
+ * de refeições + OBS. Score do registro original é preservado no save (o v2
+ * não define, mas o v1 sim). Feeding nunca usou min/max/ideal.
+ * @param {{ recordId: string, onAfterSave?: () => void }} props
+ */
+function FeedingEdit({ recordId, onAfterSave }) {
+  const t = useThemeTokens();
+  const [quantity, setQuantity] = useState("");
+  const [note, setNote] = useState("");
+  const [loaded, setLoaded] = useState(/** @type {any} */ (null));
+
+  useEffect(() => {
+    const r = getById(recordId);
+    if (!r) return;
+    setLoaded(r);
+    setQuantity(String(r.quantity ?? ""));
+    setNote(r.note ?? r.observation ?? "");
+  }, [recordId]);
+
+  const parsedQty = Number(quantity);
+  const canSave = loaded != null && Number.isFinite(parsedQty) && parsedQty > 0;
+  const unitLabel = parsedQty === 1 ? "refeição" : "refeições";
+
+  function handleSave() {
+    if (!canSave) return;
+    update(recordId, {
+      unit: loaded.unit || "refeição",
+      quantity: parsedQty,
+      note,
+      score: loaded.score,
+    });
+    onAfterSave?.();
+  }
+
+  return (
+    <View className="gap-4">
+      {/* Quantidade */}
+      <View className="gap-2 rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark px-5 py-4">
+        <Text
+          className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
+          style={{ fontFamily: "JetBrainsMono_500Medium" }}
+        >
+          Quantidade
+        </Text>
+        <View className="flex-row items-baseline gap-2">
+          <TextInput
+            value={quantity}
+            onChangeText={setQuantity}
+            placeholder="0"
+            placeholderTextColor={t.iconDim}
+            keyboardType="numeric"
+            maxLength={3}
+            accessibilityLabel="Quantidade de refeições"
+            style={{
+              fontFamily: "JetBrainsMono_500Medium",
+              fontSize: 32,
+              color: t.ink,
+              padding: 0,
+              minWidth: 60,
+            }}
+          />
+          <Text
+            className="text-label dark:text-label-dark"
+            style={{ fontFamily: "JetBrainsMono_500Medium", fontSize: 18 }}
+          >
+            {unitLabel}
+          </Text>
+        </View>
+      </View>
+
+      {/* OBS */}
+      <View className="gap-2 rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark px-5 py-4">
+        <Text
+          className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
+          style={{ fontFamily: "JetBrainsMono_500Medium" }}
+        >
+          OBS
+        </Text>
+        <TextInput
+          value={note}
+          onChangeText={setNote}
+          placeholder="Observações sobre refeições..."
+          placeholderTextColor={t.iconDim}
+          multiline
+          accessibilityLabel="Observações"
+          style={{
+            fontFamily: "Inter_400Regular",
+            fontSize: 14,
+            color: t.ink,
+            padding: 0,
+            minHeight: 44,
+            textAlignVertical: "top",
+          }}
+        />
+      </View>
+
+      {/* Salvar */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Salvar alterações"
+        accessibilityState={{ disabled: !canSave }}
+        disabled={!canSave}
+        onPress={handleSave}
+        className={`mt-2 items-center rounded-2xl py-4 ${
+          canSave
+            ? "bg-primary dark:bg-primary-dark active:opacity-70"
+            : "bg-border-strong dark:bg-border-strong-dark"
+        }`}
+      >
+        <Text
+          className="text-base text-white dark:text-on-primary-dark"
+          style={{ fontFamily: "Inter_600SemiBold" }}
+        >
+          Salvar alterações
         </Text>
       </Pressable>
     </View>
