@@ -88,11 +88,12 @@ export default function MetricScreen({ metric, recordId }) {
   }
 
   const { Top, Bottom, History, renderCustom } = config;
-  // renderCustom substitui o corpo Score/OBS/Top/Bottom em NOVOS registros
-  // (recordId ausente). Edição via `?id=` cai no fluxo genérico pra continuar
-  // funcionando com os campos do modelo (min/max/ideal, duração, etc). Ver
-  // typedef MetricConfig e docs/09-design-v2.md fatia 2a.
-  const useCustom = !!renderCustom && !recordId;
+  // renderCustom substitui o corpo Score/OBS/Top/Bottom em novos registros.
+  // Métricas que opted-in via `customHandlesEdit` também assumem o fluxo de
+  // edição (recordId presente é passado pro bespoke); as demais caem no shell
+  // legado. Fatiar por métrica: #256 tracks a migração das 5. Ver typedef
+  // MetricConfig e docs/09-design-v2.md fatia 2a.
+  const useCustom = !!renderCustom && (!recordId || !!config.customHandlesEdit);
   function afterAdd() {
     setVisible(true);
     setReloadKey((prev) => prev + 1);
@@ -128,7 +129,7 @@ export default function MetricScreen({ metric, recordId }) {
 
         {useCustom ? (
           <Card className={config.cardClass ?? ""}>
-            {renderCustom({ onAfterAdd: afterAdd })}
+            {renderCustom({ onAfterAdd: afterAdd, recordId })}
           </Card>
         ) : (
           <Card className={`gap-8 ${config.cardClass ?? ""}`}>

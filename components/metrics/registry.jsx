@@ -53,10 +53,14 @@ const INPUT_LG =
  * @property {(props: SlotProps) => any} [Top]
  * @property {(props: SlotProps) => any} [Bottom]
  * @property {string} [cardClass]
- * @property {(props: { onAfterAdd: () => void }) => any} [renderCustom]  Se
- *   presente, substitui o corpo Score/OBS/Top/Bottom do card na criação de
- *   novos registros (recordId ausente). Edição via `?id=` cai no fluxo
- *   genérico. Usado por métricas com padrão bespoke (fatia 2a+ do M5-B).
+ * @property {boolean} [customHandlesEdit]  Se true, o renderCustom também
+ *   assume o fluxo de edição (recebe `recordId`). Se false/ausente, edição
+ *   cai no shell legado (Top/Bottom + Score + OBS) — comportamento default
+ *   enquanto migramos as 5 métricas pelo #256.
+ * @property {(props: { onAfterAdd: () => void, recordId?: string }) => any} [renderCustom]
+ *   Se presente, substitui o corpo Score/OBS/Top/Bottom do card. Recebe
+ *   `recordId` na edição só quando `customHandlesEdit` está ligado. Usado por
+ *   métricas com padrão bespoke (fatia 2a+ do M5-B).
  */
 
 /** Slot MIN/MAX/IDEAL compartilhado por água e sono. @param {SlotProps} p */
@@ -108,7 +112,11 @@ const REGISTRY = {
     ),
     // Fatia 2a do M5-B: novos registros usam o UI bespoke (big number +
     // quick-add chips + lista de hoje). Ver components/metrics/WaterQuickAdd.jsx.
-    renderCustom: ({ onAfterAdd }) => <WaterQuickAdd onAfterAdd={onAfterAdd} />,
+    // Fatia da água do #256: bespoke também assume edição via `recordId`.
+    customHandlesEdit: true,
+    renderCustom: ({ onAfterAdd, recordId }) => (
+      <WaterQuickAdd onAfterAdd={onAfterAdd} recordId={recordId} />
+    ),
   },
 
   sleep: {

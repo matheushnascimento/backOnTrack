@@ -1,10 +1,11 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
-import { useMemo } from "react";
-import { Pressable, Text, View } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Pressable, Text, TextInput, View } from "react-native";
 import { useTable } from "tinybase/ui-react";
 
-import { add, getToday, store } from "@/infra/database";
+import { add, getById, getToday, store, update } from "@/infra/database";
 import getDate from "@/constants/getDate";
+import { useThemeTokens } from "@/constants/themeTokens";
 
 // UI bespoke da tela de água (M5-B fatia 2a, mockup 2a·2 do Claude Design).
 // Substitui o card Score/OBS/Top/Bottom da MetricScreen quando o registry
@@ -24,6 +25,11 @@ import getDate from "@/constants/getDate";
 // Cada chip cria um registro imediatamente (sem staging). Snackbar do
 // MetricScreen (via onAfterAdd) confirma. "outro…" custom amount fica pra
 // sub-fatia futura.
+//
+// Fatia da água do #256: quando `recordId` chega (edição pelo HistoryCard), o
+// componente troca pra um formulário de edição minimalista (quantidade + OBS),
+// preservando os campos legados do registro (score/min/max/ideal) intactos —
+// eles não fazem parte do fluxo de criação v2 mas existem em registros antigos.
 
 const GOAL_ML = 2000;
 
@@ -39,9 +45,18 @@ function formatTime(ts) {
 }
 
 /**
+ * @param {{ onAfterAdd?: () => void, recordId?: string }} props
+ */
+export default function WaterQuickAdd({ onAfterAdd, recordId }) {
+  if (recordId)
+    return <WaterEdit recordId={recordId} onAfterSave={onAfterAdd} />;
+  return <WaterQuickLog onAfterAdd={onAfterAdd} />;
+}
+
+/**
  * @param {{ onAfterAdd?: () => void }} props
  */
-export default function WaterQuickAdd({ onAfterAdd }) {
+function WaterQuickLog({ onAfterAdd }) {
   // Assina a tabela pra re-renderizar quando um novo registro chega (inclusive
   // pós-startAutoLoad da persistência). Mesmo padrão da Home.
   const records = useTable("records", store);
@@ -165,6 +180,132 @@ export default function WaterQuickAdd({ onAfterAdd }) {
           </View>
         </View>
       )}
+    </View>
+  );
+}
+
+/**
+ * Edição de um registro de água pelo HistoryCard. Superfície mínima: quantidade
+ * (ml) + OBS. Score/min/max/ideal do registro original são preservados no save
+ * (o fluxo de criação v2 não os define, mas registros antigos podem tê-los).
+ * @param {{ recordId: string, onAfterSave?: () => void }} props
+ */
+function WaterEdit({ recordId, onAfterSave }) {
+  const t = useThemeTokens();
+  const [quantity, setQuantity] = useState("");
+  const [note, setNote] = useState("");
+  // Guarda o registro original pra preservar campos legados no update
+  // (score/min/max/ideal). Hidrata uma vez — sem reagir a mudanças pra não
+  // sobrescrever o que o usuário está editando.
+  const [loaded, setLoaded] = useState(/** @type {any} */ (null));
+
+  useEffect(() => {
+    const r = getById(recordId);
+    if (!r) return;
+    setLoaded(r);
+    setQuantity(String(r.quantity ?? ""));
+    setNote(r.note ?? r.observation ?? "");
+  }, [recordId]);
+
+  const parsedQty = Number(quantity);
+  const canSave = loaded != null && Number.isFinite(parsedQty) && parsedQty > 0;
+
+  function handleSave() {
+    if (!canSave) return;
+    update(recordId, {
+      unit: "ml",
+      quantity: parsedQty,
+      note,
+      score: loaded.score,
+      min: loaded.min,
+      max: loaded.max,
+      ideal: loaded.ideal,
+    });
+    onAfterSave?.();
+  }
+
+  return (
+    <View className="gap-4">
+      {/* Quantidade */}
+      <View className="gap-2 rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark px-5 py-4">
+        <Text
+          className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
+          style={{ fontFamily: "JetBrainsMono_500Medium" }}
+        >
+          Quantidade
+        </Text>
+        <View className="flex-row items-baseline gap-2">
+          <TextInput
+            value={quantity}
+            onChangeText={setQuantity}
+            placeholder="0"
+            placeholderTextColor={t.iconDim}
+            keyboardType="numeric"
+            maxLength={5}
+            accessibilityLabel="Quantidade em mililitros"
+            style={{
+              fontFamily: "JetBrainsMono_500Medium",
+              fontSize: 32,
+              color: t.ink,
+              padding: 0,
+              minWidth: 100,
+            }}
+          />
+          <Text
+            className="text-label dark:text-label-dark"
+            style={{ fontFamily: "JetBrainsMono_500Medium", fontSize: 18 }}
+          >
+            ml
+          </Text>
+        </View>
+      </View>
+
+      {/* OBS */}
+      <View className="gap-2 rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark px-5 py-4">
+        <Text
+          className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
+          style={{ fontFamily: "JetBrainsMono_500Medium" }}
+        >
+          OBS
+        </Text>
+        <TextInput
+          value={note}
+          onChangeText={setNote}
+          placeholder="Observações sobre água..."
+          placeholderTextColor={t.iconDim}
+          multiline
+          accessibilityLabel="Observações"
+          style={{
+            fontFamily: "Inter_400Regular",
+            fontSize: 14,
+            color: t.ink,
+            padding: 0,
+            minHeight: 44,
+            textAlignVertical: "top",
+          }}
+        />
+      </View>
+
+      {/* Salvar */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Salvar alterações"
+        accessibilityState={{ disabled: !canSave }}
+        disabled={!canSave}
+        onPress={handleSave}
+        className={`mt-2 items-center rounded-2xl py-4 ${
+          canSave
+            ? "bg-primary dark:bg-primary-dark active:opacity-70"
+            : "bg-border-strong dark:bg-border-strong-dark"
+        }`}
+      >
+        <Text
+          className="text-base text-white dark:text-on-primary-dark"
+          style={{ fontFamily: "Inter_600SemiBold" }}
+        >
+          Salvar alterações
+        </Text>
+      </Pressable>
     </View>
   );
 }
