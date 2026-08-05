@@ -1,29 +1,22 @@
-// Componente-base das telas de registro (M2, #80).
+// Componente-base das telas de registro (M2, #80; faxinado pelo #256 fatia 5).
 //
-// Concentra tudo que era idêntico nas 5 telas: o shell (wrapper, Snackbar,
-// ScrollView, card, header, Nota, OBS, History), os states compartilhados e a
-// máquina de submit/edição. O que varia por métrica vem da config (registry):
-// os slots Top/Bottom, a serialização (buildData) e a leitura na edição
-// (loadExtra). Adicionar uma métrica = adicionar uma config.
+// Concentra o shell compartilhado: wrapper, Snackbar, ScrollView, card, header
+// e a lista de histórico. O corpo do card é 100% do bespoke da métrica (via
+// `renderCustom` do registry), que assume criação e edição.
 
-import { useEffect, useState } from "react";
-import { ScrollView, TextInput } from "react-native";
+import { useState } from "react";
+import { ScrollView } from "react-native";
 import { Snackbar } from "react-native-paper";
 
-import ScoreRaw from "@/components/Score";
 import MyViewRaw from "@/components/MyView";
-import FieldLabelRaw from "@/components/FieldLabel";
 import CardRaw from "@/components/Card";
 import MetricRegisterHeaderRaw from "@/components/MetricRegisterHeader";
 
 import { getCategoryInfo } from "@/components/categoryUtils";
 import getDate from "@/constants/getDate";
-import { add, getById, update } from "@/infra/database";
 import { getMetricConfig } from "./registry";
 
 const MyView = /** @type {any} */ (MyViewRaw);
-const Score = /** @type {any} */ (ScoreRaw);
-const FieldLabel = /** @type {any} */ (FieldLabelRaw);
 const Card = /** @type {any} */ (CardRaw);
 const MetricRegisterHeader = /** @type {any} */ (MetricRegisterHeaderRaw);
 
@@ -44,57 +37,18 @@ function navLabelFor(metric, dateISO) {
  * @param {{ metric: string, recordId?: string }} props
  */
 export default function MetricScreen({ metric, recordId }) {
-  const { displayName, unit, subtitle } = getCategoryInfo(metric);
+  const { displayName, subtitle } = getCategoryInfo(metric);
   const config = getMetricConfig(metric);
   // Título capitalizado (design v2 mostra "Água" e não "água").
   const title = displayName.charAt(0).toUpperCase() + displayName.slice(1);
 
   const [date] = useState(getDate());
-  const [score, setScore] = useState(
-    /** @type {number | undefined} */ (undefined),
-  );
-  const [observation, setObservation] = useState("");
   const [reloadKey, setReloadKey] = useState(0);
   const [visible, setVisible] = useState(false);
-  const [extra, setExtra] = useState(() => ({ ...config.initialExtra }));
 
-  /** @type {(key: string, value: any) => void} */
-  function setField(key, value) {
-    setExtra((prev) => ({ ...prev, [key]: value }));
-  }
+  const { History, renderCustom, cardClass } = config;
 
-  useEffect(() => {
-    if (!recordId) return;
-    const r = getById(recordId);
-    if (!r) return;
-    setScore(r.score);
-    setObservation(r.note ?? r.observation ?? "");
-    setExtra(config.loadExtra(r));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [recordId]);
-
-  function handleSubmit() {
-    setVisible(true);
-    const data = {
-      date: date.ISOdate,
-      unit,
-      note: observation,
-      score,
-      ...config.buildData(extra),
-    };
-    if (recordId) update(recordId, data);
-    else add(metric, data);
-    setReloadKey((prev) => prev + 1);
-  }
-
-  const { Top, Bottom, History, renderCustom } = config;
-  // renderCustom substitui o corpo Score/OBS/Top/Bottom em novos registros.
-  // Métricas que opted-in via `customHandlesEdit` também assumem o fluxo de
-  // edição (recordId presente é passado pro bespoke); as demais caem no shell
-  // legado. Fatiar por métrica: #256 tracks a migração das 5. Ver typedef
-  // MetricConfig e docs/09-design-v2.md fatia 2a.
-  const useCustom = !!renderCustom && (!recordId || !!config.customHandlesEdit);
-  function afterAdd() {
+  function afterSave() {
     setVisible(true);
     setReloadKey((prev) => prev + 1);
   }
@@ -127,38 +81,12 @@ export default function MetricScreen({ metric, recordId }) {
           label={navLabelFor(metric, date.ISOdate)}
         />
 
-        {useCustom ? (
-          <Card className={config.cardClass ?? ""}>
-            {renderCustom({ onAfterAdd: afterAdd, recordId })}
-          </Card>
-        ) : (
-          <Card className={`gap-8 ${config.cardClass ?? ""}`}>
-            {Top && <Top extra={extra} setField={setField} />}
-
-            <FieldLabel>Nota</FieldLabel>
-            <Score value={score} onPress={setScore} />
-
-            <MyView safe={false} className="gap-1">
-              <FieldLabel>OBS:</FieldLabel>
-              <TextInput
-                value={observation}
-                onChangeText={setObservation}
-                className="h-16 rounded-lg bg-light-backgroundCard p-2 text-base font-normal text-light-text dark:bg-dark-backgroundCard dark:text-dark-text"
-                placeholder={config.obsPlaceholder}
-              />
-            </MyView>
-
-            {Bottom && (
-              <Bottom
-                extra={extra}
-                setField={setField}
-                onSubmit={handleSubmit}
-                displayName={displayName}
-                unit={unit}
-              />
-            )}
+        {renderCustom && (
+          <Card className={cardClass ?? ""}>
+            {renderCustom({ onAfterAdd: afterSave, recordId })}
           </Card>
         )}
+
         <History tableName={metric} reload={reloadKey} />
       </ScrollView>
     </MyView>
