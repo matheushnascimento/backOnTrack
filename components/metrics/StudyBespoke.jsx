@@ -8,7 +8,7 @@ import getDate from "@/constants/getDate";
 import { hhmmToMinutes, minutesToHHMM } from "@/constants/duration";
 import { useThemeTokens } from "@/constants/themeTokens";
 
-import TimeInput from "./TimeInput";
+import TimePickerField from "./TimePickerField";
 
 // UI bespoke da tela de estudo (M5-B fatia 2c, mockup 2a·6).
 // Toggle "Feito" full-width com check → duração HH:MM (default "00:00") →
@@ -238,7 +238,7 @@ function DurationField({ value, onChange, placeholder, hint }) {
           >
             duração
           </Text>
-          <TimeInput
+          <TimePickerField
             value={value}
             onChangeText={onChange}
             placeholder={placeholder}

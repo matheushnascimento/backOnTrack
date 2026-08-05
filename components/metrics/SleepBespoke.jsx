@@ -7,7 +7,7 @@ import getDate from "@/constants/getDate";
 import { minutesToHHMM } from "@/constants/duration";
 import { useThemeTokens } from "@/constants/themeTokens";
 
-import TimeInput from "./TimeInput";
+import TimePickerField from "./TimePickerField";
 
 // Limita string de dígitos ao intervalo [0, max]. Usado nos inputs separados
 // de hora/minuto do SleepEdit — vazio permanece vazio, valor acima do teto é
@@ -458,7 +458,7 @@ function TimeRow({ label, value, onChange, dayLabel, placeholder }) {
         >
           {label}
         </Text>
-        <TimeInput
+        <TimePickerField
           value={value}
           onChangeText={onChange}
           placeholder={placeholder}
