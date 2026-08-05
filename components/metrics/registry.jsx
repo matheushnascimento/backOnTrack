@@ -281,8 +281,10 @@ const REGISTRY = {
     ),
     // Fatia 2c do M5-B: novos registros usam UI bespoke (modalidade toggle +
     // duração + hora de início opcional + intensidade). Ver ExerciseBespoke.jsx.
-    renderCustom: ({ onAfterAdd }) => (
-      <ExerciseBespoke onAfterAdd={onAfterAdd} />
+    // Fatia do exercício do #256: bespoke também assume edição via `recordId`.
+    customHandlesEdit: true,
+    renderCustom: ({ onAfterAdd, recordId }) => (
+      <ExerciseBespoke onAfterAdd={onAfterAdd} recordId={recordId} />
     ),
   },
 
