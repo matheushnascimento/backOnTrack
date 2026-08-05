@@ -1,9 +1,10 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 
-import { add } from "@/infra/database";
+import { add, getById, update } from "@/infra/database";
 import getDate from "@/constants/getDate";
+import { minutesToHHMM } from "@/constants/duration";
 import { useThemeTokens } from "@/constants/themeTokens";
 
 // UI bespoke da tela de sono (M5-B fatia 2b, mockup 2a·3 do Claude Design).
@@ -21,6 +22,13 @@ import { useThemeTokens } from "@/constants/themeTokens";
 //
 // Duração calculada auto (crossing midnight: (wake - bed + 1440) % 1440).
 // Qualidade mapeia pra `score` (2/3/4/5) pra reusar a infra do histórico.
+//
+// Fatia do sono do #256: quando `recordId` chega (edição pelo HistoryCard), o
+// componente troca pra <SleepEdit> — o registro só guarda duração + score, não
+// bed/wake times, então a edição mostra duração (h/min) + qualidade + OBS.
+// Score fora do range QUALITY (registros antigos com estrelas 0-5) fica sem
+// pill selecionada e o valor original é preservado no save se o usuário não
+// tocar. Legacy min/max/ideal também são preservados.
 
 const QUALITY = [
   { key: "pouco", label: "pouco", score: 2 },
@@ -60,9 +68,18 @@ function relativeDayLabel(offset) {
 }
 
 /**
+ * @param {{ onAfterAdd?: () => void, recordId?: string }} props
+ */
+export default function SleepBespoke({ onAfterAdd, recordId }) {
+  if (recordId)
+    return <SleepEdit recordId={recordId} onAfterSave={onAfterAdd} />;
+  return <SleepCreate onAfterAdd={onAfterAdd} />;
+}
+
+/**
  * @param {{ onAfterAdd?: () => void }} props
  */
-export default function SleepBespoke({ onAfterAdd }) {
+function SleepCreate({ onAfterAdd }) {
   // Sugestões padrão pra reduzir fricção: 23:00 / 07:00 (fica em placeholder).
   const [bedTime, setBedTime] = useState("");
   const [wakeTime, setWakeTime] = useState("");
@@ -138,63 +155,273 @@ export default function SleepBespoke({ onAfterAdd }) {
         >
           Como se sente hoje
         </Text>
-        <View className="flex-row gap-2">
-          {QUALITY.map((q) => {
-            const selected = quality === q.score;
-            return (
-              <Pressable
-                key={q.key}
-                accessibilityRole="button"
-                accessibilityLabel={`Qualidade: ${q.label}`}
-                accessibilityState={{ selected }}
-                onPress={() => setQuality(q.score)}
-                className={`flex-1 items-center rounded-xl py-3 ${
-                  selected
-                    ? "border-2 border-primary dark:border-primary-dark bg-tint-blue dark:bg-tint-blue-dark"
-                    : "border border-border-strong dark:border-border-strong-dark bg-white dark:bg-card-dark"
-                }`}
-              >
-                <Text
-                  className={`text-xs ${
-                    selected
-                      ? "text-primary dark:text-primary-dark"
-                      : "text-body-secondary dark:text-body-secondary-dark"
-                  }`}
-                  style={{
-                    fontFamily: selected
-                      ? "Inter_600SemiBold"
-                      : "Inter_400Regular",
-                  }}
-                >
-                  {q.label}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <QualityPills value={quality} onChange={setQuality} />
       </View>
 
       {/* registrar */}
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel="Registrar sono"
-        accessibilityState={{ disabled: !canSave }}
-        disabled={!canSave}
+      <PrimaryButton
+        label="Registrar"
         onPress={handleSave}
-        className={`mt-2 items-center rounded-2xl py-4 ${
-          canSave
-            ? "bg-primary dark:bg-primary-dark active:opacity-70"
-            : "bg-border-strong dark:bg-border-strong-dark"
-        }`}
-      >
-        <Text
-          className="text-base text-white dark:text-on-primary-dark"
-          style={{ fontFamily: "Inter_600SemiBold" }}
-        >
-          Registrar
-        </Text>
-      </Pressable>
+        disabled={!canSave}
+        accessibilityLabel="Registrar sono"
+      />
     </View>
+  );
+}
+
+/**
+ * Edição de um registro de sono pelo HistoryCard. O registro só guarda duração
+ * + score, então a edição opera nesses campos (não em bed/wake times).
+ * Score fora do range QUALITY (registros antigos) preserva-se se a pill não
+ * for tocada. Legacy min/max/ideal também são preservados.
+ * @param {{ recordId: string, onAfterSave?: () => void }} props
+ */
+function SleepEdit({ recordId, onAfterSave }) {
+  const [hour, setHour] = useState("");
+  const [minute, setMinute] = useState("");
+  const [note, setNote] = useState("");
+  const [quality, setQuality] = useState(/** @type {number|null} */ (null));
+  const [qualityTouched, setQualityTouched] = useState(false);
+  const [loaded, setLoaded] = useState(/** @type {any} */ (null));
+
+  useEffect(() => {
+    const r = getById(recordId);
+    if (!r) return;
+    setLoaded(r);
+    const [h, m] = minutesToHHMM(r.quantity).split(":");
+    setHour(h);
+    setMinute(m);
+    setNote(r.note ?? r.observation ?? "");
+    // Só pré-seleciona a pill se o score bater com os valores canônicos v2.
+    // Scores fora disso (registros antigos com 0/1) ficam sem pill mas são
+    // preservados no save via qualityTouched=false.
+    if (QUALITY.some((q) => q.score === r.score)) {
+      setQuality(r.score);
+    }
+  }, [recordId]);
+
+  const parsedH = Number(hour) || 0;
+  const parsedM = Number(minute) || 0;
+  const totalMin = parsedH * 60 + parsedM;
+  const canSave =
+    loaded != null &&
+    totalMin > 0 &&
+    parsedH >= 0 &&
+    parsedM >= 0 &&
+    parsedM < 60;
+
+  function handlePickQuality(score) {
+    setQuality(score);
+    setQualityTouched(true);
+  }
+
+  function handleSave() {
+    if (!canSave) return;
+    update(recordId, {
+      unit: "min",
+      quantity: totalMin,
+      note,
+      score: qualityTouched ? quality : loaded.score,
+      min: loaded.min,
+      max: loaded.max,
+      ideal: loaded.ideal,
+    });
+    onAfterSave?.();
+  }
+
+  return (
+    <View className="gap-4">
+      {/* Duração */}
+      <View className="gap-2 rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark px-5 py-4">
+        <Text
+          className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
+          style={{ fontFamily: "JetBrainsMono_500Medium" }}
+        >
+          Duração
+        </Text>
+        <View className="flex-row items-baseline gap-2">
+          <DurationInput
+            value={hour}
+            onChange={setHour}
+            accessibilityLabel="Horas"
+            maxLength={2}
+          />
+          <UnitLabel>h</UnitLabel>
+          <DurationInput
+            value={minute}
+            onChange={setMinute}
+            accessibilityLabel="Minutos"
+            maxLength={2}
+          />
+          <UnitLabel>min</UnitLabel>
+        </View>
+      </View>
+
+      {/* Qualidade */}
+      <View>
+        <Text
+          className="mb-3 text-xs uppercase tracking-wider text-label dark:text-label-dark"
+          style={{ fontFamily: "JetBrainsMono_500Medium" }}
+        >
+          Como se sentiu
+        </Text>
+        <QualityPills value={quality} onChange={handlePickQuality} />
+      </View>
+
+      {/* OBS */}
+      <View className="gap-2 rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark px-5 py-4">
+        <Text
+          className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
+          style={{ fontFamily: "JetBrainsMono_500Medium" }}
+        >
+          OBS
+        </Text>
+        <NoteInput value={note} onChange={setNote} />
+      </View>
+
+      {/* Salvar */}
+      <PrimaryButton
+        label="Salvar alterações"
+        onPress={handleSave}
+        disabled={!canSave}
+        accessibilityLabel="Salvar alterações"
+      />
+    </View>
+  );
+}
+
+/** @param {{ value: number|null, onChange: (score: number) => void }} props */
+function QualityPills({ value, onChange }) {
+  return (
+    <View className="flex-row gap-2">
+      {QUALITY.map((q) => {
+        const selected = value === q.score;
+        return (
+          <Pressable
+            key={q.key}
+            accessibilityRole="button"
+            accessibilityLabel={`Qualidade: ${q.label}`}
+            accessibilityState={{ selected }}
+            onPress={() => onChange(q.score)}
+            className={`flex-1 items-center rounded-xl py-3 ${
+              selected
+                ? "border-2 border-primary dark:border-primary-dark bg-tint-blue dark:bg-tint-blue-dark"
+                : "border border-border-strong dark:border-border-strong-dark bg-white dark:bg-card-dark"
+            }`}
+          >
+            <Text
+              className={`text-xs ${
+                selected
+                  ? "text-primary dark:text-primary-dark"
+                  : "text-body-secondary dark:text-body-secondary-dark"
+              }`}
+              style={{
+                fontFamily: selected ? "Inter_600SemiBold" : "Inter_400Regular",
+              }}
+            >
+              {q.label}
+            </Text>
+          </Pressable>
+        );
+      })}
+    </View>
+  );
+}
+
+/**
+ * @param {{
+ *   label: string,
+ *   onPress: () => void,
+ *   disabled: boolean,
+ *   accessibilityLabel: string,
+ * }} props
+ */
+function PrimaryButton({ label, onPress, disabled, accessibilityLabel }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled }}
+      disabled={disabled}
+      onPress={onPress}
+      className={`mt-2 items-center rounded-2xl py-4 ${
+        disabled
+          ? "bg-border-strong dark:bg-border-strong-dark"
+          : "bg-primary dark:bg-primary-dark active:opacity-70"
+      }`}
+    >
+      <Text
+        className="text-base text-white dark:text-on-primary-dark"
+        style={{ fontFamily: "Inter_600SemiBold" }}
+      >
+        {label}
+      </Text>
+    </Pressable>
+  );
+}
+
+/**
+ * @param {{
+ *   value: string,
+ *   onChange: (v: string) => void,
+ *   accessibilityLabel: string,
+ *   maxLength: number,
+ * }} props
+ */
+function DurationInput({ value, onChange, accessibilityLabel, maxLength }) {
+  const t = useThemeTokens();
+  return (
+    <TextInput
+      value={value}
+      onChangeText={onChange}
+      placeholder="0"
+      placeholderTextColor={t.iconDim}
+      keyboardType="numeric"
+      maxLength={maxLength}
+      accessibilityLabel={accessibilityLabel}
+      style={{
+        fontFamily: "JetBrainsMono_500Medium",
+        fontSize: 32,
+        color: t.ink,
+        padding: 0,
+        minWidth: 44,
+      }}
+    />
+  );
+}
+
+/** @param {{ children: any }} props */
+function UnitLabel({ children }) {
+  return (
+    <Text
+      className="text-label dark:text-label-dark"
+      style={{ fontFamily: "JetBrainsMono_500Medium", fontSize: 18 }}
+    >
+      {children}
+    </Text>
+  );
+}
+
+/** @param {{ value: string, onChange: (v: string) => void }} props */
+function NoteInput({ value, onChange }) {
+  const t = useThemeTokens();
+  return (
+    <TextInput
+      value={value}
+      onChangeText={onChange}
+      placeholder="Observações sobre sono..."
+      placeholderTextColor={t.iconDim}
+      multiline
+      accessibilityLabel="Observações"
+      style={{
+        fontFamily: "Inter_400Regular",
+        fontSize: 14,
+        color: t.ink,
+        padding: 0,
+        minHeight: 44,
+        textAlignVertical: "top",
+      }}
+    />
   );
 }
 
