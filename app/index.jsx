@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { router } from "expo-router";
-import { useTable } from "tinybase/ui-react";
+import { useTable, useValue } from "tinybase/ui-react";
 
 import MyView from "@/components/MyView";
 import InstallApp from "@/components/InstallApp";
@@ -30,15 +30,28 @@ function formatValue(unit, total) {
   return `${total} ${unit}`;
 }
 
-// Saudação por horário. Design v2 usa "Bom dia, Ana." — nome vem do email
-// do usuário logado; deslogado usa só o cumprimento.
-function getGreeting(user) {
+// Saudação por horário. Design v2 usa "Bom dia, Ana." — o nome vem do
+// `displayName` que o usuário definiu em Ajustes; se não houver, cai no
+// primeiro nome do email (localpart até o primeiro `.`, pra que
+// "matheus.mhddn@gmail.com" vire "Matheus" e não "Matheus.mhddn"). Deslogado
+// sem displayName usa só o cumprimento.
+function getGreeting(user, displayName) {
   const h = new Date().getHours();
   const g = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
-  if (!user?.email) return `${g}.`;
-  const raw = user.email.split("@")[0];
-  const name = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
+  const name = pickName(user, displayName);
+  if (!name) return `${g}.`;
   return `${g}, ${name}.`;
+}
+
+function pickName(user, displayName) {
+  const stored = String(displayName ?? "").trim();
+  if (stored) return stored;
+  const email = user?.email;
+  if (!email) return "";
+  const localpart = String(email).split("@")[0] || "";
+  const first = localpart.split(".")[0] || "";
+  if (!first) return "";
+  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
 }
 
 // Dias corridos desde o último registro em qualquer métrica. Null se o store
@@ -94,6 +107,7 @@ export default function Home() {
   // tela lia a store ainda vazia e nunca era avisada quando os dados chegavam,
   // então a Home só mostrava algo depois de ir a outra tela e voltar (#108).
   const records = useTable("records", store);
+  const displayName = useValue("displayName", store);
   // `records` é gatilho de propósito: muda quando a tabela muda (inclui o fim do
   // autoLoad) e força o getToday a reler. O exhaustive-deps não vê que os dois
   // olham os mesmos dados e sugere remover — o que reintroduziria o #108.
@@ -195,7 +209,7 @@ export default function Home() {
               className="text-2xl text-ink dark:text-ink-dark"
               style={{ fontFamily: "Inter_600SemiBold" }}
             >
-              {getGreeting(user)}
+              {getGreeting(user, displayName)}
             </Text>
             <View
               className="items-center justify-center rounded-lg bg-primary dark:bg-primary-dark"
