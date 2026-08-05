@@ -5,8 +5,14 @@
 // handshake HTTP → WebSocket. Testa o CÓDIGO da auth, sem depender de rede.
 
 import { spawn } from "node:child_process";
-import { createHmac } from "node:crypto";
+import {
+  createHmac,
+  generateKeyPairSync,
+  randomUUID,
+  sign as cryptoSign,
+} from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
+import { createServer } from "node:http";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -41,6 +47,45 @@ function signJwt(payload, { secret = JWT_SECRET, alg = "HS256" } = {}) {
     createHmac("sha256", secret).update(signingInput).digest(),
   );
   return `${signingInput}.${sig}`;
+}
+
+// --- Helpers ES256 (o que o Supabase usa hoje) ----------------------------
+
+/** Gera par ECC P-256 + o JWK público com um kid. */
+function makeEs256Key(kid = randomUUID()) {
+  const { publicKey, privateKey } = generateKeyPairSync("ec", {
+    namedCurve: "P-256",
+  });
+  const jwk = { ...publicKey.export({ format: "jwk" }), kid, alg: "ES256" };
+  return { kid, jwk, privateKey };
+}
+
+/** Assina um JWT ES256. Assinatura é R||S cru (ieee-p1363), como manda o JWS. */
+function signEs256({ payload, kid, privateKey }) {
+  const header = b64url(JSON.stringify({ alg: "ES256", kid, typ: "JWT" }));
+  const body = b64url(JSON.stringify(payload));
+  const signingInput = `${header}.${body}`;
+  const sig = cryptoSign("sha256", Buffer.from(signingInput), {
+    key: privateKey,
+    dsaEncoding: "ieee-p1363",
+  });
+  return `${signingInput}.${b64urlSig(sig)}`;
+}
+
+/** Sobe um http server servindo /auth/v1/.well-known/jwks.json. */
+async function startJwksServer(jwks) {
+  const server = createServer((req, res) => {
+    if (req.url === "/auth/v1/.well-known/jwks.json") {
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ keys: jwks }));
+      return;
+    }
+    res.writeHead(404);
+    res.end();
+  });
+  await new Promise((r) => server.listen(0, "127.0.0.1", r));
+  const { port } = server.address();
+  return { server, url: `http://127.0.0.1:${port}` };
 }
 
 function futureExp(seconds = 3600) {
@@ -220,5 +265,89 @@ describe("AUTH_MODE=required (fase final, após migração)", () => {
     const token = signJwt({ sub: "alice", exp: futureExp() });
     const res = await tryConnect(server.port, "alice", token);
     expect(res).toEqual({ open: true });
+  });
+});
+
+// --- ES256 via JWKS (o que o Supabase assina hoje) ------------------------
+//
+// Regressão do bug real: o Supabase migrou pra chaves assimétricas e passou a
+// assinar com ES256+kid. O server só aceitava HS256, então rejeitava TODO
+// cliente logado com 401 — sync silenciosamente morto em web e mobile.
+
+describe("ES256 via JWKS", () => {
+  let server;
+  let jwksServer;
+  let key;
+  let otherKey;
+
+  beforeAll(async () => {
+    key = makeEs256Key();
+    otherKey = makeEs256Key();
+    // Só a chave "boa" é publicada no JWKS; a outra serve pra forjar token.
+    jwksServer = await startJwksServer([key.jwk]);
+    server = await startServer({
+      AUTH_MODE: "required",
+      SUPABASE_URL: jwksServer.url,
+    });
+  }, 10000);
+
+  afterAll(async () => {
+    await stopServer(server);
+    if (jwksServer) await new Promise((r) => jwksServer.server.close(r));
+  });
+
+  test("ES256 válido + sub === pathId: aceita", async () => {
+    const token = signEs256({
+      payload: { sub: "alice", exp: futureExp() },
+      kid: key.kid,
+      privateKey: key.privateKey,
+    });
+    const res = await tryConnect(server.port, "alice", token);
+    expect(res).toEqual({ open: true });
+  });
+
+  test("ES256 válido + sub !== pathId: rejeita com 403", async () => {
+    const token = signEs256({
+      payload: { sub: "alice", exp: futureExp() },
+      kid: key.kid,
+      privateKey: key.privateKey,
+    });
+    const res = await tryConnect(server.port, "bob", token);
+    expect(res.open).toBe(false);
+    expect(res.code).toBe(403);
+  });
+
+  test("ES256 assinado por chave fora do JWKS: rejeita com 401", async () => {
+    // kid conhecido, chave privada errada — assinatura não confere.
+    const token = signEs256({
+      payload: { sub: "alice", exp: futureExp() },
+      kid: key.kid,
+      privateKey: otherKey.privateKey,
+    });
+    const res = await tryConnect(server.port, "alice", token);
+    expect(res.open).toBe(false);
+    expect(res.code).toBe(401);
+  });
+
+  test("ES256 com kid desconhecido: rejeita com 401", async () => {
+    const token = signEs256({
+      payload: { sub: "alice", exp: futureExp() },
+      kid: otherKey.kid,
+      privateKey: otherKey.privateKey,
+    });
+    const res = await tryConnect(server.port, "alice", token);
+    expect(res.open).toBe(false);
+    expect(res.code).toBe(401);
+  });
+
+  test("ES256 expirado: rejeita com 401", async () => {
+    const token = signEs256({
+      payload: { sub: "alice", exp: pastExp() },
+      kid: key.kid,
+      privateKey: key.privateKey,
+    });
+    const res = await tryConnect(server.port, "alice", token);
+    expect(res.open).toBe(false);
+    expect(res.code).toBe(401);
   });
 });

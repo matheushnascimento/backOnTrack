@@ -90,36 +90,57 @@ Se apertar (concorrência alta, integridade, queries futuras), trocar por SQLite
 
 ## Autenticação (M6 fatia B, #211, ADR-010)
 
-O server valida JWT do Supabase se o cliente mandar `?token=<JWT>` na URL. HS256 verificado com `crypto` nativo (zero dep). Enforça `jwt.sub === pathId` — quem sabe o path sem o token do dono não conecta (403).
+O server valida JWT do Supabase se o cliente mandar `?token=<JWT>` na URL, com `crypto` nativo (zero dep). Enforça `jwt.sub === pathId` — quem sabe o path sem o token do dono não conecta (403).
 
-Duas envs controlam o comportamento:
+**Dois algoritmos são aceitos:**
 
-| Env                   | Default    | Efeito                                                                                                      |
-| --------------------- | ---------- | ----------------------------------------------------------------------------------------------------------- |
-| `AUTH_MODE`           | `optional` | `optional`: aceita anônimo se sem token. `required`: rejeita sem token (401).                               |
-| `SUPABASE_JWT_SECRET` | vazio      | Secret HS256 do projeto Supabase. Obrigatório se `AUTH_MODE=required` OU se algum cliente mandar `?token=`. |
+- **ES256** — o que o Supabase assina hoje. Chaves assimétricas ECC P-256, com `kid` no header. A chave pública vem do JWKS do projeto (`$SUPABASE_URL/auth/v1/.well-known/jwks.json`), cacheada em memória por `kid`. `kid` desconhecido dispara refetch (throttle de 60s pra token forjado não virar DoS contra o endpoint).
+- **HS256** — legado, secret simétrico compartilhado. Mantido pra compat e pros testes.
 
-**Onde pegar o `SUPABASE_JWT_SECRET`:** Supabase Dashboard → Project Settings → API → **JWT Settings** → "JWT Secret". Rotate lá também se precisar. É diferente da `anon key` (que é pública, vai no bundle do app); o JWT Secret NUNCA deve ir pro cliente.
+Envs que controlam o comportamento:
+
+| Env                   | Default    | Efeito                                                                                                             |
+| --------------------- | ---------- | ------------------------------------------------------------------------------------------------------------------ |
+| `AUTH_MODE`           | `optional` | `optional`: aceita anônimo se sem token. `required`: rejeita sem token (401).                                      |
+| `SUPABASE_URL`        | vazio      | URL base do projeto (ex.: `https://abc.supabase.co`). Necessária pra validar **ES256** — dela sai o endpoint JWKS. |
+| `SUPABASE_JWT_SECRET` | vazio      | Secret **HS256** legado. Só necessária se o projeto ainda assina com HS256.                                        |
+
+`AUTH_MODE=required` exige **pelo menos uma** das duas (`SUPABASE_URL` ou `SUPABASE_JWT_SECRET`); sem nenhuma o server aborta no boot. Com `AUTH_MODE=optional` e nenhuma das duas, um cliente que mandar `?token=` leva 500 (recusar é mais seguro que aceitar sem checar).
+
+> ⚠️ **Migração ES256 (agosto/2026).** O Supabase migrou pra chaves assimétricas e passou a assinar com ES256. O server só aceitava HS256, então rejeitava **todo** cliente logado com `401 unsupported alg: ES256` — sync silenciosamente morto em web e mobile (falha só aparecia no console do navegador). Se o seu `.env` só tem `SUPABASE_JWT_SECRET`, **adicione `SUPABASE_URL`** e recrie o container.
+
+**Onde pegar cada uma:**
+
+- `SUPABASE_URL`: Dashboard → Project Settings → API → **Project URL**. É pública (a mesma que vai no bundle do app).
+- `SUPABASE_JWT_SECRET` (legado): Dashboard → Project Settings → API → **JWT Settings** → "JWT Secret". NUNCA deve ir pro cliente.
 
 Adicionar ao `.env` local do server:
 
 ```bash
 cd server
 echo 'AUTH_MODE=optional' >> .env
-echo 'SUPABASE_JWT_SECRET=<colar-o-secret-aqui>' >> .env
+echo 'SUPABASE_URL=https://<project-ref>.supabase.co' >> .env
 chmod 600 .env
 docker compose up -d --build
 ```
 
+Confere no log do boot qual verificador subiu:
+
+```
+[sync] listening on ws://0.0.0.0:8787 — data dir: /data — auth: optional (ES256 via jwks)
+```
+
 ### Matriz de comportamento
 
-| Requisição                          | `AUTH_MODE=optional` | `AUTH_MODE=required` |
-| ----------------------------------- | -------------------- | -------------------- |
-| Sem `?token=`                       | ✅ aceita anônimo    | ❌ 401               |
-| `?token=` válido + `sub === pathId` | ✅ aceita            | ✅ aceita            |
-| `?token=` válido + `sub !== pathId` | ❌ 403               | ❌ 403               |
-| `?token=` assinatura inválida       | ❌ 401               | ❌ 401               |
-| `?token=` expirado                  | ❌ 401               | ❌ 401               |
+| Requisição                             | `AUTH_MODE=optional` | `AUTH_MODE=required` |
+| -------------------------------------- | -------------------- | -------------------- |
+| Sem `?token=`                          | ✅ aceita anônimo    | ❌ 401               |
+| `?token=` válido + `sub === pathId`    | ✅ aceita            | ✅ aceita            |
+| `?token=` válido + `sub !== pathId`    | ❌ 403               | ❌ 403               |
+| `?token=` assinatura inválida          | ❌ 401               | ❌ 401               |
+| `?token=` expirado                     | ❌ 401               | ❌ 401               |
+| `?token=` ES256 com `kid` fora do JWKS | ❌ 401               | ❌ 401               |
+| `?token=` alg não suportado (RS256…)   | ❌ 401               | ❌ 401               |
 
 ### Rollout
 
