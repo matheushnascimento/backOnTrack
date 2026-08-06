@@ -5,6 +5,7 @@ import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { router } from "expo-router";
 import Svg, { Path } from "react-native-svg";
 
+import { goBack } from "@/constants/navigation";
 import MyView from "@/components/MyView";
 
 import { useSession } from "@/infra/session";
@@ -56,7 +57,7 @@ export default function Login() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Voltar"
-            onPress={() => router.back()}
+            onPress={() => goBack()}
             className="flex-row items-center gap-1 rounded-full p-1 pr-2 active:opacity-70"
           >
             <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">

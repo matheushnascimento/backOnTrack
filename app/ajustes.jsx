@@ -14,11 +14,13 @@ import { useColorScheme } from "nativewind";
 import Svg, { Path } from "react-native-svg";
 import { useValue } from "tinybase/ui-react";
 
+import { goBack } from "@/constants/navigation";
 import MyView from "@/components/MyView";
 
 import { clearAll, setDisplayName, store } from "@/infra/database";
 import { useSession } from "@/infra/session";
 import { AUTH_ENABLED } from "@/infra/supabase";
+import { saveThemePreference } from "@/infra/theme";
 import { confirmAction } from "@/constants/dialogs";
 import { getEnvironmentInfo } from "@/constants/environment";
 import { useThemeTokens } from "@/constants/themeTokens";
@@ -52,7 +54,7 @@ const METAS = [
 ];
 
 export default function Ajustes() {
-  const { colorScheme, toggleColorScheme } = useColorScheme();
+  const { colorScheme, setColorScheme } = useColorScheme();
   const { user, signOut } = useSession();
   const isDark = colorScheme === "dark";
   const t = useThemeTokens();
@@ -80,7 +82,7 @@ export default function Ajustes() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Voltar"
-            onPress={() => router.back()}
+            onPress={() => goBack()}
             className="flex-row items-center gap-1 rounded-full p-1 pr-2 active:opacity-70"
           >
             <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
@@ -154,7 +156,11 @@ export default function Ajustes() {
             valueChevron
             onPress={() => setNameModalOpen(true)}
           />
-          {/* Tema com switch inline (mesmo controle do MenuModal antigo) */}
+          {/* Tema com switch inline. Usa `setColorScheme` com o valor que o
+              Switch entrega, não `toggleColorScheme()`: quando o usuário
+              ainda não escolheu, o colorScheme pode vir indefinido e o
+              "flip a partir do atual" fica ambíguo. E persiste a escolha —
+              sem isso o tema voltava pro sistema a cada reload. */}
           <View className="flex-row items-center justify-between border-t border-surface-subtle px-4 py-3">
             <Text
               className="text-sm text-ink dark:text-ink-dark"
@@ -164,7 +170,11 @@ export default function Ajustes() {
             </Text>
             <Switch
               value={isDark}
-              onValueChange={() => toggleColorScheme()}
+              onValueChange={(next) => {
+                const scheme = next ? "dark" : "light";
+                setColorScheme(scheme);
+                saveThemePreference(scheme);
+              }}
               accessibilityLabel="Alternar tema escuro"
             />
           </View>

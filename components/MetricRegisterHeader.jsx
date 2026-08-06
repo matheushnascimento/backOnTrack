@@ -1,8 +1,8 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 import { Pressable, Text, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
-import { router } from "expo-router";
 
+import { goBack } from "@/constants/navigation";
 import MetricIcon from "./MetricIcon";
 import { useThemeTokens } from "@/constants/themeTokens";
 
@@ -36,7 +36,7 @@ export default function MetricRegisterHeader({
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Voltar"
-          onPress={() => router.back()}
+          onPress={() => goBack()}
           className="flex-row items-center gap-1 rounded-md p-1"
         >
           <Svg

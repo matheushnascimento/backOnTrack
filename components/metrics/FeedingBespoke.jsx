@@ -1,7 +1,6 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 import { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
-import { router } from "expo-router";
 import { useTable } from "tinybase/ui-react";
 
 import {
@@ -12,6 +11,7 @@ import {
   store,
   update,
 } from "@/infra/database";
+import { goBack } from "@/constants/navigation";
 import getDate from "@/constants/getDate";
 import { useThemeTokens } from "@/constants/themeTokens";
 
@@ -199,7 +199,7 @@ function FeedingCreate({ onAfterAdd }) {
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Concluir e voltar"
-        onPress={() => router.back()}
+        onPress={() => goBack()}
         className="mt-1 items-center rounded-2xl bg-primary dark:bg-primary-dark py-4 active:opacity-70"
       >
         <Text
