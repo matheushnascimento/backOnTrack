@@ -17,7 +17,7 @@ import {
 
 import { useRegistrosPersistencia } from "@/infra/persistence";
 import { SessionProvider } from "@/infra/session";
-import { useRegistrosSync } from "@/infra/sync";
+import { SyncStatusProvider } from "@/infra/sync";
 import { useRestoreThemePreference } from "@/infra/theme";
 import UpdateBanner from "@/components/UpdateBanner";
 
@@ -41,23 +41,21 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       {/* SessionProvider envolve tudo (M6 auth fatia A, #207) — expõe a
-          sessão do Supabase pros filhos via useSession. useRegistrosSync
-          precisa vir por DENTRO do provider senão useSession retorna o
-          default do contexto (user: null) e o sync nunca sai da sala
-          anônima após login. */}
+          sessão do Supabase pros filhos via useSession. O SyncStatusProvider
+          precisa vir por DENTRO dele: roda useRegistrosSync, que chama
+          useSession por baixo — acima do provider receberia o default do
+          contexto (user: null) e o sync nunca sairia da sala anônima após
+          login (bug do #217). */}
       <SessionProvider>
-        <AppTree />
+        <SyncStatusProvider>
+          <AppTree />
+        </SyncStatusProvider>
       </SessionProvider>
     </SafeAreaProvider>
   );
 }
 
-// Filho do SessionProvider — usa `useSession` via useRegistrosSync.
 function AppTree() {
-  // Sync depende do syncRoomId (carregado por useRegistrosPersistencia no
-  // root) E da session — deve rodar DENTRO do SessionProvider.
-  useRegistrosSync();
-
   return (
     <View className="flex-1">
       <Stack screenOptions={{ headerShown: false }}>
