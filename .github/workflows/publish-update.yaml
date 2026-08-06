@@ -1,12 +1,27 @@
 name: Publish Update
 
+# Todo merge na main publica OTA na branch `staging` — NÃO direto pros
+# testers. Quem serve os testers é a branch `preview`, que só recebe update
+# via promoção manual (`promote-update.yaml`).
+#
+# Antes daqui, esta workflow publicava direto na `preview`: merge na main
+# chegava nos 6 testers em segundos, sem gate. O histórico cobrou o preço —
+# o #126 passou por CI verde e foi pra produção via OTA, o #218 deixou os
+# testers em crash loop, e as duas quebras de fonte no Android (#239, #249)
+# passaram por CI E pelo preview da Vercel porque só se manifestam no APK.
+#
+# `--environment preview` é o conjunto de env vars do EAS (Supabase etc.),
+# não o canal — staging e produção compartilham o mesmo backend de propósito.
+#
+# Ver docs/10-canais-e-promocao.md.
+
 on:
   push:
     branches: [main]
 
 jobs:
   publish:
-    name: Publica OTA no canal preview
+    name: Publica OTA na branch staging
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -22,7 +37,19 @@ jobs:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
 
-      - name: Publica OTA
+      - name: Publica OTA em staging
         env:
           MSG: ${{ github.event.head_commit.message }}
-        run: eas update --branch preview --environment preview --message "$MSG" --non-interactive
+        run: eas update --branch staging --environment preview --message "$MSG" --non-interactive
+
+      - name: Lembrete de promoção
+        run: |
+          {
+            echo "## OTA publicada em \`staging\`"
+            echo ""
+            echo "Os testers **não** recebem ainda — a branch \`preview\` está congelada até você promover."
+            echo ""
+            echo "Pra validar: abra o **BoT staging** no seu aparelho (canal \`staging\`)."
+            echo ""
+            echo "Pra liberar pros testers: rode a workflow **Promote Update**."
+          } >> "$GITHUB_STEP_SUMMARY"

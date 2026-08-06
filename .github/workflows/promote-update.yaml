@@ -1,0 +1,90 @@
+name: Promote Update
+
+# Promove o último OTA de `staging` pra `preview` — ou seja, libera pros 6
+# testers o que já foi validado no BoT staging.
+#
+# Roda só sob demanda (`workflow_dispatch`) de propósito: o gate existe pra
+# VOCÊ escolher o momento e o lote. Merges na main se acumulam em staging até
+# alguém rodar isto aqui.
+#
+# Mecanismo: `eas update:republish` copia um grupo de update de uma branch pra
+# outra. O APK dos testers não muda — ele é assado com o CANAL `preview`, e o
+# canal aponta pra branch `preview`. Ninguém reinstala nada.
+#
+# Ver docs/10-canais-e-promocao.md.
+
+on:
+  workflow_dispatch:
+    inputs:
+      message:
+        description: "Nota da promoção (aparece no histórico de updates)"
+        required: false
+        default: "Promoção de staging para os testers"
+
+jobs:
+  promote:
+    name: staging -> preview
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "lts/jod"
+
+      - run: npm ci
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      # Resolve o grupo explicitamente em vez de deixar o republish escolher:
+      # deixa registrado no log QUAL update foi promovido, e falha claro se a
+      # staging estiver vazia.
+      - name: Descobre o último update de staging
+        id: alvo
+        run: |
+          JSON=$(eas update:list --branch staging --limit 1 --json --non-interactive)
+          GROUP=$(echo "$JSON" | jq -r '.currentPage[0].group // empty')
+          DESC=$(echo "$JSON" | jq -r '.currentPage[0].message // "(sem mensagem)"')
+          if [ -z "$GROUP" ]; then
+            echo "Nenhum update na branch staging — nada a promover." >&2
+            exit 1
+          fi
+          echo "group=$GROUP" >> "$GITHUB_OUTPUT"
+          {
+            echo "desc<<EOF"
+            echo "$DESC"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Promove pra preview
+        env:
+          GROUP: ${{ steps.alvo.outputs.group }}
+          MSG: ${{ inputs.message }}
+        run: |
+          eas update:republish \
+            --group "$GROUP" \
+            --destination-branch preview \
+            --message "$MSG" \
+            --non-interactive
+
+      - name: Resumo
+        env:
+          GROUP: ${{ steps.alvo.outputs.group }}
+          DESC: ${{ steps.alvo.outputs.desc }}
+        run: |
+          {
+            echo "## Promovido pros testers"
+            echo ""
+            echo "Grupo \`${GROUP}\` saiu de \`staging\` e entrou em \`preview\`."
+            echo ""
+            echo "Update promovido:"
+            echo ""
+            echo '```'
+            echo "${DESC}"
+            echo '```'
+            echo ""
+            echo "Os 6 testers recebem na próxima abertura do app. Se algo der errado, rode esta workflow de novo apontando pro grupo bom anterior — ou use \`eas update:roll-back-to-embedded\`."
+          } >> "$GITHUB_STEP_SUMMARY"
