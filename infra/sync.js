@@ -1,5 +1,13 @@
 // @ts-nocheck -- useSession retorna contexto tipado como never no tsc (ADR-002)
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { AppState } from "react-native";
 import { createWsSynchronizer } from "tinybase/synchronizers/synchronizer-ws-client";
 import { useCreateSynchronizer, useValue } from "tinybase/ui-react";
@@ -52,7 +60,10 @@ export const SYNC_OFFLINE = "offline";
  * Depende do `useRegistrosPersistencia` já ter rodado — é ele quem carrega o
  * `syncRoomId` do disco (ou gera no 1º launch).
  *
- * @returns {"off"|"connecting"|"online"|"offline"} Estado atual, pra UI.
+ * Chamado uma única vez, pelo `SyncStatusProvider`. Telas leem o resultado
+ * via `useSyncStatus()` — montar o hook duas vezes abriria dois sockets.
+ *
+ * @returns {{ status: "off"|"connecting"|"online"|"offline", reconnect: () => void }}
  */
 export function useRegistrosSync() {
   const { user, session } = useSession();
@@ -175,5 +186,42 @@ export function useRegistrosSync() {
     [url, generation],
   );
 
-  return status;
+  return useMemo(
+    () => ({ status, reconnect: reconnectNow }),
+    [status, reconnectNow],
+  );
+}
+
+// --- Status pra UI (M6, "UI de status de sync") -------------------------
+
+const SyncStatusContext = createContext({
+  status: SYNC_OFF,
+  reconnect: () => {},
+});
+
+/**
+ * Roda o sync uma vez e publica o estado pra árvore.
+ *
+ * Precisa ficar DENTRO do `SessionProvider`: `useRegistrosSync` chama
+ * `useSession` por baixo, e acima do provider ele devolveria o default do
+ * contexto (`user: null`) — o sync ficaria eternamente anônimo mesmo logado.
+ * Foi exatamente o bug do #217.
+ *
+ * @param {{ children: any }} props
+ */
+export function SyncStatusProvider({ children }) {
+  const value = useRegistrosSync();
+  return (
+    <SyncStatusContext.Provider value={value}>
+      {children}
+    </SyncStatusContext.Provider>
+  );
+}
+
+/**
+ * Estado do sync pra telas. Não abre conexão — só lê o que o provider publica.
+ * @returns {{ status: "off"|"connecting"|"online"|"offline", reconnect: () => void }}
+ */
+export function useSyncStatus() {
+  return useContext(SyncStatusContext);
 }

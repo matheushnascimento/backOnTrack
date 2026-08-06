@@ -20,6 +20,13 @@ import MyView from "@/components/MyView";
 import { clearAll, setDisplayName, store } from "@/infra/database";
 import { useSession } from "@/infra/session";
 import { AUTH_ENABLED } from "@/infra/supabase";
+import {
+  SYNC_CONNECTING,
+  SYNC_OFF,
+  SYNC_OFFLINE,
+  SYNC_ONLINE,
+  useSyncStatus,
+} from "@/infra/sync";
 import { saveThemePreference } from "@/infra/theme";
 import { confirmAction } from "@/constants/dialogs";
 import { getEnvironmentInfo } from "@/constants/environment";
@@ -193,6 +200,7 @@ export default function Ajustes() {
             valueChevron
             onPress={() => router.navigate("/export")}
           />
+          <SyncRow />
           <Row label="Sobre" value={`v${ENV.appVersion}`} valueMono disabled />
         </Section>
 
@@ -381,6 +389,91 @@ function NameEditModal({ current, onClose }) {
 }
 
 /** @param {{ title: string, children: any }} props */
+// Estado do sync, em linguagem de gente. Fecha o item "UI de status de sync"
+// do M6: o auto-reconnect (#263) resolveu a queda silenciosa, mas o usuário
+// ainda não tinha ONDE conferir se estava sincronizando — e a quebra do ES256
+// mostrou que "não aparece no outro aparelho" pode passar semanas invisível.
+//
+// Estar offline NÃO é erro aqui: o app é local-first, os registros ficam
+// salvos no aparelho e sobem quando a conexão volta. Por isso nada de
+// vermelho — o `danger` fica reservado pro destrutivo (regra 2 do Turno 3).
+// Offline usa cinza de label e a copy tranquiliza em vez de cobrar.
+const SYNC_UI = {
+  [SYNC_ONLINE]: {
+    dot: "bg-secondary dark:bg-secondary-dark",
+    text: "em dia",
+    hint: null,
+  },
+  [SYNC_CONNECTING]: {
+    dot: "bg-primary dark:bg-primary-dark",
+    text: "conectando…",
+    hint: null,
+  },
+  [SYNC_OFFLINE]: {
+    dot: "bg-border-strong dark:bg-border-strong-dark",
+    text: "sem conexão",
+    hint: "Seus registros ficam salvos aqui e sobem quando voltar.",
+  },
+  [SYNC_OFF]: {
+    dot: "bg-border-strong dark:bg-border-strong-dark",
+    text: "desligado",
+    hint: null,
+  },
+};
+
+function SyncRow() {
+  const { status, reconnect } = useSyncStatus();
+  const ui = SYNC_UI[status] ?? SYNC_UI[SYNC_OFF];
+  // Só oferece "tentar de novo" quando há o que retentar. Em `off` não há
+  // servidor configurado; em `connecting`/`online` já está acontecendo.
+  const canRetry = status === SYNC_OFFLINE;
+
+  return (
+    <View className="gap-1 border-t border-surface-subtle dark:border-surface-subtle-dark px-4 py-3">
+      <View className="flex-row items-center justify-between">
+        <Text
+          className="text-sm text-ink dark:text-ink-dark"
+          style={{ fontFamily: "Inter_400Regular" }}
+        >
+          Sincronização
+        </Text>
+        <View className="flex-row items-center gap-2">
+          <View className={`h-2 w-2 rounded-full ${ui.dot}`} />
+          <Text
+            className="text-sm text-body-secondary dark:text-body-secondary-dark"
+            style={{ fontFamily: "Inter_400Regular" }}
+          >
+            {ui.text}
+          </Text>
+        </View>
+      </View>
+      {ui.hint ? (
+        <Text
+          className="text-xs text-label dark:text-label-dark"
+          style={{ fontFamily: "Inter_400Regular" }}
+        >
+          {ui.hint}
+        </Text>
+      ) : null}
+      {canRetry ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Tentar sincronizar de novo"
+          onPress={reconnect}
+          className="mt-1 self-start rounded-xl bg-surface-subtle dark:bg-surface-subtle-dark px-3 py-1.5 active:opacity-70"
+        >
+          <Text
+            className="text-xs text-primary dark:text-primary-dark"
+            style={{ fontFamily: "Inter_500Medium" }}
+          >
+            Tentar de novo
+          </Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
 function Section({ title, children }) {
   return (
     <View className="overflow-hidden rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark">
