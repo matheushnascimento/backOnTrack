@@ -18,10 +18,14 @@ import {
 import { useRegistrosPersistencia } from "@/infra/persistence";
 import { SessionProvider } from "@/infra/session";
 import { useRegistrosSync } from "@/infra/sync";
+import { useRestoreThemePreference } from "@/infra/theme";
 import UpdateBanner from "@/components/UpdateBanner";
 
 export default function RootLayout() {
   useRegistrosPersistencia();
+  // Restaura claro/escuro escolhido em Ajustes. Sem isso o toggle só valia
+  // até o próximo reload (o NativeWind guarda em memória). Ver infra/theme.js.
+  useRestoreThemePreference();
   // Fontes do design v2 (M5-B fatia 0). Carrega em background; se ainda não
   // tiver terminado, sistema serve o fallback e a UI re-renderiza quando
   // ficarem prontas. Não bloqueia boot pra não introduzir splash extra —

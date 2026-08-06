@@ -1,10 +1,10 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 import { useMemo } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
-import { router } from "expo-router";
 import Svg, { Path } from "react-native-svg";
 import { useTable } from "tinybase/ui-react";
 
+import { goBack } from "@/constants/navigation";
 import MyView from "@/components/MyView";
 import WeekStrip from "@/components/WeekStrip";
 
@@ -35,7 +35,7 @@ export default function Semana() {
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Voltar"
-            onPress={() => router.back()}
+            onPress={() => goBack()}
             className="flex-row items-center gap-1 rounded-full p-1 pr-2 active:opacity-70"
           >
             <Svg width={18} height={18} viewBox="0 0 24 24" fill="none">
