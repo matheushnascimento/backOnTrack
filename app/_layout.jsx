@@ -67,7 +67,13 @@ function AppTree() {
         <Stack.Screen name="export" options={{ title: "Exportação" }} />
         <Stack.Screen name="history" options={{ title: "Histórico" }} />
         <Stack.Screen name="semana" options={{ title: "Semana" }} />
-        <Stack.Screen name="ajustes" options={{ title: "Ajustes" }} />
+        {/* Aberta pelo hamburger (canto esquerdo) — entra da esquerda pra
+            casar com o ícone, em vez do slide-from-right padrão de "avançar
+            no conteúdo" que as outras telas usam. */}
+        <Stack.Screen
+          name="ajustes"
+          options={{ title: "Ajustes", animation: "slide_from_left" }}
+        />
         <Stack.Screen name="feedback" options={{ title: "Feedback" }} />
         {/* Rota de admin (testers) — acesso só por deep link backontrack://admin */}
         <Stack.Screen name="admin" options={{ title: "Admin" }} />
