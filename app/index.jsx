@@ -16,6 +16,7 @@ import { useSession } from "@/infra/session";
 import { useThemeTokens } from "@/constants/themeTokens";
 import { CATEGORY_MAP } from "@/components/categoryUtils";
 import { minutesToHHMM } from "@/constants/duration";
+import { getGreeting } from "@/constants/greeting";
 //#endregion
 
 const METRICS = Object.keys(CATEGORY_MAP);
@@ -28,30 +29,6 @@ function formatValue(unit, total) {
     return `${total} ${total === 1 ? "refeição" : "refeições"}`;
   if (unit === "ml") return `${total.toLocaleString("pt-BR")} ml`;
   return `${total} ${unit}`;
-}
-
-// Saudação por horário. Design v2 usa "Bom dia, Ana." — o nome vem do
-// `displayName` que o usuário definiu em Ajustes; se não houver, cai no
-// primeiro nome do email (localpart até o primeiro `.`, pra que
-// "matheus.mhddn@gmail.com" vire "Matheus" e não "Matheus.mhddn"). Deslogado
-// sem displayName usa só o cumprimento.
-function getGreeting(user, displayName) {
-  const h = new Date().getHours();
-  const g = h < 12 ? "Bom dia" : h < 18 ? "Boa tarde" : "Boa noite";
-  const name = pickName(user, displayName);
-  if (!name) return `${g}.`;
-  return `${g}, ${name}.`;
-}
-
-function pickName(user, displayName) {
-  const stored = String(displayName ?? "").trim();
-  if (stored) return stored;
-  const email = user?.email;
-  if (!email) return "";
-  const localpart = String(email).split("@")[0] || "";
-  const first = localpart.split(".")[0] || "";
-  if (!first) return "";
-  return first.charAt(0).toUpperCase() + first.slice(1).toLowerCase();
 }
 
 // Dias corridos desde o último registro em qualquer métrica. Null se o store
@@ -204,10 +181,18 @@ export default function Home() {
           >
             {formatDateLabel()}
           </Text>
-          <View className="flex-row items-center justify-between">
+          <View className="flex-row items-center justify-between gap-3">
+            {/* `flex-1` dá largura limitada pro Text — sem isso ele não tem
+                onde quebrar e o nome longo vaza. Com a largura definida, a
+                quebra natural cai no espaço depois da vírgula: "Bom dia," na
+                primeira linha, nome na segunda. `numberOfLines={2}` fecha o
+                caso extremo (nome que sozinho não cabe numa linha), cortando
+                com reticências em vez de empurrar o ícone pra fora. */}
             <Text
-              className="text-2xl text-ink dark:text-ink-dark"
+              className="flex-1 text-2xl text-ink dark:text-ink-dark"
               style={{ fontFamily: "Inter_600SemiBold" }}
+              numberOfLines={2}
+              ellipsizeMode="tail"
             >
               {getGreeting(user, displayName)}
             </Text>
