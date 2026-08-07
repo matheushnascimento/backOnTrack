@@ -519,20 +519,27 @@ function Row({
             accessibilityLabel: label,
           }
         : {})}
-      className={`flex-row items-center justify-between border-t border-surface-subtle px-4 py-3 ${
+      className={`flex-row items-center justify-between gap-3 border-t border-surface-subtle px-4 py-3 ${
         onPress && !disabled ? "active:opacity-70" : ""
       }`}
     >
+      {/* Sem flex/shrink explícito, RN não encolhe ninguém por padrão (ao
+          contrário do CSS web) — label + value longos (ex: "Logado como" +
+          email, ou o nome customizado do usuário) podiam somar mais que a
+          largura da row e cortar sem reticências no Android. `label` fica no
+          tamanho natural (são strings curtas e fixas do app); `value` é o
+          lado que recebe conteúdo do usuário, então é ele que ganha o
+          container flex-1 + Text com shrink pra ellipsize de verdade. */}
       <Text
         className={`text-sm ${destructive ? "text-danger dark:text-danger" : "text-ink dark:text-ink-dark"}`}
         style={{ fontFamily: "Inter_400Regular" }}
       >
         {label}
       </Text>
-      <View className="flex-row items-center gap-1">
+      <View className="flex-1 flex-row items-center justify-end gap-1">
         {value ? (
           <Text
-            className="text-sm text-body-secondary dark:text-body-secondary-dark"
+            className="shrink text-sm text-body-secondary dark:text-body-secondary-dark"
             style={{
               fontFamily: valueMono
                 ? "JetBrainsMono_400Regular"
