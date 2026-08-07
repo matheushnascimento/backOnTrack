@@ -1,10 +1,18 @@
 name: Promote Update
 
-# Promove o último OTA de `staging` pra `preview` — ou seja, libera pros 6
-# testers o que já foi validado no BoT staging.
+# Promove o último OTA de `release` pra `preview` — libera pros 6 testers.
+#
+# ## Por que a fonte é `release` e não `staging`
+#
+# `staging` é bancada de validação: recebe PRs AINDA NÃO MERGEADOS
+# (`test-pr-on-staging.yaml`), porque validar no aparelho só vale antes do
+# merge. Promover de lá poderia mandar código não-mergeado pros testers.
+#
+# `release` só é alimentada por push na main. Promover de lá é barreira
+# ESTRUTURAL contra isso — não depende de ninguém lembrar da regra.
 #
 # Roda só sob demanda (`workflow_dispatch`) de propósito: o gate existe pra
-# VOCÊ escolher o momento e o lote. Merges na main se acumulam em staging até
+# VOCÊ escolher o momento e o lote. Merges na main se acumulam em release até
 # alguém rodar isto aqui.
 #
 # Mecanismo: `eas update:republish` copia um grupo de update de uma branch pra
@@ -19,11 +27,11 @@ on:
       message:
         description: "Nota da promoção (aparece no histórico de updates)"
         required: false
-        default: "Promoção de staging para os testers"
+        default: "Promoção para os testers"
 
 jobs:
   promote:
-    name: staging -> preview
+    name: release -> preview
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -41,15 +49,15 @@ jobs:
 
       # Resolve o grupo explicitamente em vez de deixar o republish escolher:
       # deixa registrado no log QUAL update foi promovido, e falha claro se a
-      # staging estiver vazia.
-      - name: Descobre o último update de staging
+      # release estiver vazia.
+      - name: Descobre o último update de release
         id: alvo
         run: |
-          JSON=$(eas update:list --branch staging --limit 1 --json --non-interactive)
+          JSON=$(eas update:list --branch release --limit 1 --json --non-interactive)
           GROUP=$(echo "$JSON" | jq -r '.currentPage[0].group // empty')
           DESC=$(echo "$JSON" | jq -r '.currentPage[0].message // "(sem mensagem)"')
           if [ -z "$GROUP" ]; then
-            echo "Nenhum update na branch staging — nada a promover." >&2
+            echo "Nenhum update na branch release — nada a promover." >&2
             exit 1
           fi
           echo "group=$GROUP" >> "$GITHUB_OUTPUT"
@@ -78,7 +86,7 @@ jobs:
           {
             echo "## Promovido pros testers"
             echo ""
-            echo "Grupo \`${GROUP}\` saiu de \`staging\` e entrou em \`preview\`."
+            echo "Grupo \`${GROUP}\` saiu de \`release\` e entrou em \`preview\`."
             echo ""
             echo "Update promovido:"
             echo ""

@@ -17,34 +17,54 @@ O ponto comum: nada disso é pegável por lint, teste ou preview web. Precisa ro
 ## Como funciona agora
 
 ```
-merge na main
+PR com label `staging`  ──┐
+(ainda não mergeado)      │
+                          ├──> branch staging ──> canal staging ──> BoT staging
+merge na main  ───────────┘                                         (seu aparelho)
      │
-     ▼
-branch  staging  ──────> canal staging ──> BoT staging (seu aparelho)
-     │
-     │  [workflow "Promote Update", manual]
-     ▼
-branch  preview  ──────> canal preview ──> Back on Track (6 testers)
+     └────────────────────────> branch release
+                                     │
+                                     │  [workflow "Promote Update", manual]
+                                     ▼
+                               branch preview ──> canal preview ──> 6 testers
 ```
+
+Três branches, dois canais, dois apps no seu aparelho:
+
+| branch    | quem alimenta        | pra quê                            |
+| --------- | -------------------- | ---------------------------------- |
+| `staging` | PRs com label + main | bancada de validação (BoT staging) |
+| `release` | só main              | única fonte da promoção            |
+| `preview` | só promoção manual   | os 6 testers                       |
 
 Duas coisas fazem isso funcionar sem ninguém reinstalar nada:
 
 1. **O APK é assado com um _canal_, não com uma branch.** O canal aponta pra uma branch, e esse mapeamento vive no servidor. O APK 1.2.0 que os testers já têm segue no canal `preview`; mudamos só o que alimenta a branch `preview`.
 2. **`eas update:republish` copia um grupo de update entre branches.** Promover não é rebuildar nem republicar do zero — é apontar pro mesmo artefato já validado.
 
+### Por que `release` existe
+
+Validar no aparelho só vale **antes** do merge — os bugs que motivaram todo esse gate (quebra de fonte no Android, #239/#249) não aparecem no CI nem no preview da Vercel, só no APK. Validar depois do merge deixa a main carregando o bug até sair um segundo PR de correção, que foi exatamente o padrão do #239 → #249.
+
+Mas isso torna `staging` uma fonte insegura pra promoção: se ela recebe PRs não-mergeados, promover de lá poderia mandar código não-mergeado pros testers. A `release`, alimentada só por push na main, é **barreira estrutural** contra isso — não depende de ninguém lembrar da regra na hora de promover.
+
 ## O fluxo do dia a dia
 
-**1. Merge na main** → `publish-update.yaml` publica em `staging` automaticamente. Testers não recebem nada.
+**1. Validar um PR antes de mergear** → colocar a label `staging` no PR. A partir daí todo push nele republica em `staging` automaticamente; abra o **BoT staging** no aparelho e confira. Iterar (corrige → empurra → confere) não exige voltar no GitHub.
 
-**2. Validar** → abrir o **BoT staging** no aparelho. Ele convive com o app de produção (applicationId diferente), então dá pra comparar lado a lado.
+⚠️ **Uma label por vez.** Dois PRs com a label brigariam pela mesma branch e o último push venceria.
 
-**3. Promover** → rodar a workflow **Promote Update** (aba Actions, `workflow_dispatch`). Ela pega o último grupo de `staging` e republica em `preview`. Os testers recebem na próxima abertura do app.
+Alternativa sem label: workflow **Test PR on Staging** no `workflow_dispatch`, passando o número do PR.
 
-Merges se acumulam em staging até você promover — dá pra soltar um lote coerente em vez de pingar mudança solta.
+**2. Merge na main** → `publish-update.yaml` publica em `release` (fonte da promoção) e em `staging` (o BoT staging volta a refletir a main). Testers não recebem nada.
+
+**3. Promover** → rodar a workflow **Promote Update** (aba Actions). Ela pega o último grupo de `release` e republica em `preview`. Os testers recebem na próxima abertura do app.
+
+Merges se acumulam em `release` até você promover — dá pra soltar um lote coerente em vez de pingar mudança solta.
 
 ## Rollback
 
-Promoveu algo ruim? A workflow sempre pega o **último** de staging, então ela não serve pra voltar. Na mão:
+Promoveu algo ruim? A workflow sempre pega o **último** de `release`, então ela não serve pra voltar. Na mão:
 
 ```bash
 # 1. achar o grupo bom anterior, na branch que os testers consomem
@@ -65,7 +85,7 @@ eas update:roll-back-to-embedded --branch preview --runtime-version 1.2.0 --plat
 
 ## O APK de staging
 
-Cortado sob demanda — só quando uma mudança **nativa** precisa de validação (dep nova, plugin, ícone, splash). Mudança só-JS não precisa: o OTA de staging chega sozinho no BoT staging que você já tem instalado.
+Cortado sob demanda — só quando uma mudança **nativa** precisa de validação (dep nova, plugin, ícone, splash). Mudança só-JS não precisa: o OTA chega sozinho no BoT staging que você já tem instalado (seja de um PR com label, seja da main).
 
 ```bash
 eas build --platform android --profile staging
