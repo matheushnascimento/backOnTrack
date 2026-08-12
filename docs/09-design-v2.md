@@ -45,6 +45,8 @@ Duas famílias, ambas via `expo-font` + `@expo-google-fonts/*` (OTA-safe, sem na
 - **Inter** (400/500/600) — corpo e headings
 - **JetBrains Mono** (400/500) — labels em uppercase (section headers, chips)
 
+⚠️ **O boot BLOQUEIA até as fontes carregarem** (`app/_layout.jsx` retorna `null` enquanto `useFonts` não resolve, com o splash nativo segurado pelo `expo-splash-screen`). A fatia 0 tinha feito o contrário — carregava em background pra "não introduzir splash extra" — e isso custou caro: no Android a UI montava com a fonte de fallback, o sistema media o texto com ela, e quando a Inter chegava o glifo real não cabia mais na caixa já dimensionada. A última letra cortava ("Depois" virava "Depoi"). Foi diagnosticado errado três vezes (#239, #249, #268) antes de achar a corrida. Não voltar a descartar o retorno do `useFonts`.
+
 ### Escala (px direto — sem rem, sem `62.5%`)
 
 | Papel         | Size / Weight / Family            | Nota                                       |

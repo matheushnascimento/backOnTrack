@@ -1,10 +1,12 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 import "@/global.css";
 
+import { useEffect } from "react";
 import { Stack } from "expo-router";
 import { View } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useFonts } from "expo-font";
+import * as SplashScreen from "expo-splash-screen";
 import {
   Inter_400Regular,
   Inter_500Medium,
@@ -21,22 +23,48 @@ import { SyncStatusProvider } from "@/infra/sync";
 import { useRestoreThemePreference } from "@/infra/theme";
 import UpdateBanner from "@/components/UpdateBanner";
 
+// Segura o splash nativo até as fontes carregarem. Fora do componente porque
+// precisa rodar UMA vez, antes do primeiro render.
+SplashScreen.preventAutoHideAsync().catch(() => {
+  // Já escondido ou indisponível (web/dev) — seguir sem travar o boot.
+});
+
 export default function RootLayout() {
   useRegistrosPersistencia();
   // Restaura claro/escuro escolhido em Ajustes. Sem isso o toggle só valia
   // até o próximo reload (o NativeWind guarda em memória). Ver infra/theme.js.
   useRestoreThemePreference();
-  // Fontes do design v2 (M5-B fatia 0). Carrega em background; se ainda não
-  // tiver terminado, sistema serve o fallback e a UI re-renderiza quando
-  // ficarem prontas. Não bloqueia boot pra não introduzir splash extra —
-  // fatia 1+ é que começa a usar essas famílias. Ver docs/09-design-v2.md.
-  useFonts({
+
+  // ⚠️ O retorno do useFonts NÃO pode ser descartado.
+  //
+  // Antes ele era, com a justificativa de "não bloquear o boot". O custo
+  // apareceu como bug de renderização recorrente no Android: a UI montava com
+  // a fonte de fallback do sistema, o Android MEDIA o texto com ela, e quando
+  // a Inter terminava de carregar o glifo real vinha mais largo que a caixa já
+  // dimensionada — a última letra cortava ("Depois" virava "Depoi").
+  //
+  // Foi diagnosticado errado três vezes (#239 fontWeight+letterSpacing, #249
+  // underline, #268 flex): cada patch mexia num sintoma diferente da mesma
+  // corrida. A causa é uma só, e é aqui.
+  const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
     JetBrainsMono_400Regular,
     JetBrainsMono_500Medium,
   });
+
+  // Erro de fonte não pode deixar o app preso no splash pra sempre — nesse
+  // caso segue com o fallback do sistema, que é degradação aceitável.
+  const pronto = fontsLoaded || !!fontError;
+
+  useEffect(() => {
+    if (pronto) SplashScreen.hideAsync().catch(() => {});
+  }, [pronto]);
+
+  // Nada de árvore antes da fonte existir: é isso que garante que a primeira
+  // medição de texto já use a métrica definitiva.
+  if (!pronto) return null;
 
   return (
     <SafeAreaProvider>
