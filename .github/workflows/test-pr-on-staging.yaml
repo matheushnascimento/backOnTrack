@@ -1,25 +1,25 @@
 name: Test PR on Staging
 
-# Publica o código de um PR **ainda não mergeado** na branch `staging` — é o
-# que o BoT staging consome. Serve pra validar no aparelho ANTES do merge.
+# TODO PR publica na branch `staging` — é o que o BoT staging consome. Serve
+# pra validar no aparelho ANTES do merge.
 #
-# ## Por que isto existe
+# ## Por que sem label
 #
-# O gate do #266 só publicava a main em staging, ou seja: a validação no
-# aparelho acontecia DEPOIS do merge. Protegia os testers, mas deixava a main
-# carregando o bug até sair um segundo PR de correção — foi exatamente o
-# padrão do #239 seguido do #249. Os bugs que motivaram o gate (quebra de
-# fonte no Android) só aparecem no APK: nem CI nem preview da Vercel pegam.
-# Então o lugar certo de validar é antes de mergear.
+# O #269 exigia a label `staging` no PR. Como a regra virou "toda feature
+# branch vai pro staging", a label passaria a estar em todo PR — e uma marca
+# que está em tudo não marca nada. Pior: dava a impressão de escolher qual PR
+# está carregado, o que ela nunca fez. Existe UM canal `staging` e UM app no
+# aparelho, então é sempre um PR por vez: **o staging mostra o push mais
+# recente**, seja de qual PR for. Automatizar a label só tornaria a colisão
+# silenciosa. Melhor tirar a cerimônia e deixar a regra explícita aqui.
 #
-# ## Como usar
+# ## Quem NÃO publica
 #
-# Coloque a label `staging` no PR. A partir daí, todo push nele republica em
-# staging automaticamente — dá pra iterar (corrige, empurra, confere no
-# aparelho) sem voltar aqui. Tirar a label para de publicar.
-#
-# **Uma label por vez.** Dois PRs com a label brigariam pela mesma branch e o
-# último push venceria. O resumo da run sempre diz o que ficou carregado.
+# - **Draft** — trabalho em andamento não precisa ocupar a bancada.
+# - **Label `skip-staging`** — escape hatch manual.
+# - **PR de fork** — não recebe `EXPO_TOKEN`, falharia com erro confuso.
+# - **Mudança só de docs/workflow** — `paths-ignore` abaixo; não altera o
+#   bundle, publicar seria gasto de update à toa.
 #
 # ## O que garante que isto não vaze pros testers
 #
@@ -29,21 +29,25 @@ name: Test PR on Staging
 
 on:
   pull_request:
-    types: [labeled, synchronize]
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+      - ".github/**"
   workflow_dispatch:
     inputs:
       pr:
-        description: "Número do PR a carregar no BoT staging"
+        description: "Número do PR a carregar no BoT staging (força, ignora os filtros)"
         required: true
 
 jobs:
   publish:
     name: PR -> branch staging
-    # No `synchronize` o evento dispara a cada push, com ou sem label — daí a
-    # checagem explícita. O dispatch manual não depende de label.
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      contains(github.event.pull_request.labels.*.name, 'staging')
+      (github.event.pull_request.draft == false &&
+       github.event.pull_request.head.repo.full_name == github.repository &&
+       !contains(github.event.pull_request.labels.*.name, 'skip-staging'))
     runs-on: ubuntu-latest
     steps:
       - name: Resolve o PR alvo
@@ -88,7 +92,7 @@ jobs:
             echo ""
             echo "Abra o **BoT staging** no aparelho pra validar (pode precisar fechar e reabrir)."
             echo ""
-            echo "Enquanto a label \`staging\` estiver no PR, todo push republica aqui automaticamente."
+            echo "Se você tinha outro PR carregado, ele foi substituído — a bancada é um slot só, sempre com o push mais recente."
             echo ""
-            echo "Isto **não** chega nos testers — a promoção sai da branch \`release\`, que só a main alimenta."
+            echo "Isto **não** chega nos testers: a promoção sai da branch \`release\`, que só a main alimenta."
           } >> "$GITHUB_STEP_SUMMARY"

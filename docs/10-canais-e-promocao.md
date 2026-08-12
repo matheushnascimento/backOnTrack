@@ -17,7 +17,7 @@ O ponto comum: nada disso é pegável por lint, teste ou preview web. Precisa ro
 ## Como funciona agora
 
 ```
-PR com label `staging`  ──┐
+todo PR (a cada push)  ───┐
 (ainda não mergeado)      │
                           ├──> branch staging ──> canal staging ──> BoT staging
 merge na main  ───────────┘                                         (seu aparelho)
@@ -31,11 +31,11 @@ merge na main  ───────────┘                             
 
 Três branches, dois canais, dois apps no seu aparelho:
 
-| branch    | quem alimenta        | pra quê                            |
-| --------- | -------------------- | ---------------------------------- |
-| `staging` | PRs com label + main | bancada de validação (BoT staging) |
-| `release` | só main              | única fonte da promoção            |
-| `preview` | só promoção manual   | os 6 testers                       |
+| branch    | quem alimenta      | pra quê                            |
+| --------- | ------------------ | ---------------------------------- |
+| `staging` | todo PR + main     | bancada de validação (BoT staging) |
+| `release` | só main            | única fonte da promoção            |
+| `preview` | só promoção manual | os 6 testers                       |
 
 Duas coisas fazem isso funcionar sem ninguém reinstalar nada:
 
@@ -50,11 +50,13 @@ Mas isso torna `staging` uma fonte insegura pra promoção: se ela recebe PRs n�
 
 ## O fluxo do dia a dia
 
-**1. Validar um PR antes de mergear** → colocar a label `staging` no PR. A partir daí todo push nele republica em `staging` automaticamente; abra o **BoT staging** no aparelho e confira. Iterar (corrige → empurra → confere) não exige voltar no GitHub.
+**1. Validar um PR antes de mergear** → não precisa fazer nada. **Todo PR publica em `staging` a cada push**; abra o **BoT staging** no aparelho e confira. Iterar (corrige → empurra → confere) não exige tocar no GitHub.
 
-⚠️ **Uma label por vez.** Dois PRs com a label brigariam pela mesma branch e o último push venceria.
+⚠️ **A bancada é um slot só.** Existe um canal `staging` e um app no aparelho, então o BoT staging mostra sempre **o push mais recente**, seja de qual PR for — e um merge na main também sobrescreve. Não dá pra ter dois PRs carregados ao mesmo tempo; o resumo de cada run diz o que ficou.
 
-Alternativa sem label: workflow **Test PR on Staging** no `workflow_dispatch`, passando o número do PR.
+**Quem não publica:** PR em draft, PR com a label `skip-staging`, PR de fork (não recebe o `EXPO_TOKEN`) e mudança que só toca `docs/**`, `**/*.md` ou `.github/**` (não altera o bundle).
+
+Pra forçar qualquer PR ignorando esses filtros: workflow **Test PR on Staging** no `workflow_dispatch`, passando o número.
 
 **2. Merge na main** → `publish-update.yaml` publica em `release` (fonte da promoção) e em `staging` (o BoT staging volta a refletir a main). Testers não recebem nada.
 
