@@ -16,6 +16,7 @@ import { store } from "./database";
 import { useSession } from "./session";
 import { buildSyncUrl } from "./sync-url";
 import { retryDelay } from "./sync-retry";
+import { isTokenExpired, resolveRoomId } from "./sync-session";
 
 // Re-exporta pra manter API estável (callers antigos podem importar de sync.js).
 // A implementação vive em infra/sync-url.js pra ficar testável isolado
@@ -31,10 +32,21 @@ export const SYNC_OFFLINE = "offline";
 /**
  * Conecta o MergeableStore ao server WS de sync, com reconexão automática.
  *
+ * - **Sessão carregando** (`ready` false): não conecta em nada. Ver abaixo.
  * - **Deslogado** (session null): usa `syncRoomId` (UUID por-install) como
  *   pathId, sem `?token=`. É o comportamento pré-auth (M6 fatia 3, #202).
  * - **Logado** (session presente): usa `user.id` como pathId + JWT do Supabase
  *   em `?token=`. Server valida a assinatura e enforça `sub === pathId`.
+ *
+ * ## Por que esperar o `ready` antes de abrir qualquer conexão
+ *
+ * `getSession()` é assíncrono: no 1º render, quem está logado ainda aparece
+ * como `user: null`. Conectar aí resolvia pra sala **anônima**, e o
+ * `startSync()` logo atrás empurrava a store inteira pra lá — com
+ * `AUTH_MODE=optional`, uma cópia completa dos dados autenticados numa sala
+ * que conecta sem token (#275). Por isso `resolveRoomId` devolve `null`
+ * enquanto a sessão não resolveu, e `null` aqui significa "espera", não
+ * "desligado".
  *
  * ## Por que a reconexão precisa observar o socket na mão
  *
@@ -66,16 +78,24 @@ export const SYNC_OFFLINE = "offline";
  * @returns {{ status: "off"|"connecting"|"online"|"offline", reconnect: () => void }}
  */
 export function useRegistrosSync() {
-  const { user, session } = useSession();
+  const { user, session, ready } = useSession();
   const anonRoomId = useValue("syncRoomId", store);
 
-  // roomId: user.id se logado; senão o UUID anônimo.
+  // roomId: user.id se logado; senão o UUID anônimo. `null` enquanto a sessão
+  // não resolveu — ver `resolveRoomId`, e o porquê logo abaixo em `waiting`.
   // token: JWT se logado; senão null (server em optional-mode aceita anônimo).
-  const roomId = user?.id ?? anonRoomId;
+  const roomId = resolveRoomId(ready, user, anonRoomId);
   const token = session?.access_token ?? null;
   const url = buildSyncUrl(SYNC_URL, roomId, token);
 
-  const [status, setStatus] = useState(url ? SYNC_CONNECTING : SYNC_OFF);
+  // Sem URL por dois motivos bem diferentes: sync desligado (SYNC_URL vazio)
+  // ou sessão ainda resolvendo. Tratar o segundo como `off` faria a Home
+  // piscar "sync desligado" em toda abertura pra quem está logado.
+  const waiting = !ready;
+
+  const [status, setStatus] = useState(
+    url || waiting ? SYNC_CONNECTING : SYNC_OFF,
+  );
   // Só cresce; entra nas deps pra forçar recriação do synchronizer.
   const [generation, setGeneration] = useState(0);
 
@@ -124,18 +144,23 @@ export function useRegistrosSync() {
     // build. Native sempre devolve subscription.
     const sub = AppState.addEventListener?.("change", (next) => {
       if (next !== "active") return;
+      // Token vencido enquanto o app dormia: reconectar agora seria rejeitado
+      // pelo server e só geraria ruído. O `startAutoRefresh` (session.js)
+      // renova, o `onAuthStateChange` publica a sessão nova, a `url` muda e o
+      // synchronizer é recriado sozinho — com token que presta.
+      if (isTokenExpired(session)) return;
       const ws = currentWsRef.current;
       // readyState 1 = OPEN. Qualquer outra coisa = reconectar.
       if (!ws || ws.readyState !== 1) reconnectNow();
     });
     return () => sub?.remove?.();
-  }, [reconnectNow]);
+  }, [reconnectNow, session]);
 
   useCreateSynchronizer(
     store,
     async (s) => {
       if (!url) {
-        setStatus(SYNC_OFF);
+        setStatus(waiting ? SYNC_CONNECTING : SYNC_OFF);
         return undefined;
       }
       setStatus(SYNC_CONNECTING);
@@ -182,8 +207,10 @@ export function useRegistrosSync() {
       }
     },
     // Reconecta em troca de URL (login/logout/token refresh) e a cada
-    // tentativa agendada pelo backoff.
-    [url, generation],
+    // tentativa agendada pelo backoff. `waiting` entra porque com SYNC_URL
+    // vazio a URL é null antes e depois da sessão resolver — sem ele o
+    // callback não rodaria de novo e o status ficaria preso em `connecting`.
+    [url, generation, waiting],
   );
 
   return useMemo(
