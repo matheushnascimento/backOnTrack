@@ -17,23 +17,21 @@ O ponto comum: nada disso é pegável por lint, teste ou preview web. Precisa ro
 ## Como funciona agora
 
 ```
-todo PR (a cada push)  ───┐
-(ainda não mergeado)      │
-                          ├──> branch staging ──> canal staging ──> BoT staging
-merge na main  ───────────┘                                         (seu aparelho)
-     │
-     └────────────────────────> branch release
-                                     │
-                                     │  [workflow "Promote Update", manual]
-                                     ▼
-                               branch preview ──> canal preview ──> 6 testers
+todo PR (a cada push) ──────> branch staging ──> canal staging ──> BoT staging
+(ainda não mergeado)                                               (seu aparelho)
+
+merge na main ──────────────> branch release
+                                   │
+                                   │  [workflow "Promote Update", manual]
+                                   ▼
+                             branch preview ──> canal preview ──> 6 testers
 ```
 
 Três branches, dois canais, dois apps no seu aparelho:
 
 | branch    | quem alimenta      | pra quê                            |
 | --------- | ------------------ | ---------------------------------- |
-| `staging` | todo PR + main     | bancada de validação (BoT staging) |
+| `staging` | **só PR**          | bancada de validação (BoT staging) |
 | `release` | só main            | única fonte da promoção            |
 | `preview` | só promoção manual | os 6 testers                       |
 
@@ -52,13 +50,15 @@ Mas isso torna `staging` uma fonte insegura pra promoção: se ela recebe PRs n�
 
 **1. Validar um PR antes de mergear** → não precisa fazer nada. **Todo PR publica em `staging` a cada push**; abra o **BoT staging** no aparelho e confira. Iterar (corrige → empurra → confere) não exige tocar no GitHub.
 
-⚠️ **A bancada é um slot só.** Existe um canal `staging` e um app no aparelho, então o BoT staging mostra sempre **o push mais recente**, seja de qual PR for — e um merge na main também sobrescreve. Não dá pra ter dois PRs carregados ao mesmo tempo; o resumo de cada run diz o que ficou.
+⚠️ **A bancada é um slot só.** Existe um canal `staging` e um app no aparelho, então o BoT staging mostra sempre **o push mais recente**, seja de qual PR for. Não dá pra ter dois PRs carregados ao mesmo tempo; o resumo de cada run diz o que ficou.
+
+**Merge na main NÃO toca a bancada.** Publicava antes, e o efeito era o merge sobrescrever em silêncio o PR que estava sendo validado — aconteceu três vezes, com PRs sendo reportados como "não funciona" quando o código deles nem estava no aparelho. Hoje a bancada é exclusiva de PR.
 
 **Quem não publica:** PR em draft, PR com a label `skip-staging`, PR de fork (não recebe o `EXPO_TOKEN`) e mudança que só toca `docs/**`, `**/*.md` ou `.github/**` (não altera o bundle).
 
 Pra forçar qualquer PR ignorando esses filtros: workflow **Test PR on Staging** no `workflow_dispatch`, passando o número.
 
-**2. Merge na main** → `publish-update.yaml` publica em `release` (fonte da promoção) e em `staging` (o BoT staging volta a refletir a main). Testers não recebem nada.
+**2. Merge na main** → `publish-update.yaml` publica só em `release` (fonte da promoção). Testers não recebem nada, e o BoT staging continua com o que você estava testando.
 
 **3. Promover** → rodar a workflow **Promote Update** (aba Actions). Ela pega o último grupo de `release` e republica em `preview`. Os testers recebem na próxima abertura do app.
 
