@@ -1,23 +1,24 @@
 name: Publish Update
 
-# Todo merge na main publica OTA em DUAS branches:
+# Todo merge na main publica OTA na branch `release` — e SÓ nela.
 #
 #   release  — linhagem só-main. Única fonte da promoção pros testers.
-#   staging  — bancada de validação, o que o BoT staging consome.
+#   staging  — bancada de validação, alimentada SÓ por PR. Não é tocada aqui.
 #
-# ## Por que duas
+# ## Por que a main não publica mais em staging
 #
-# A branch `staging` também recebe PRs não-mergeados (`test-pr-on-staging.yaml`),
-# porque validar no aparelho só vale se acontecer ANTES do merge — os bugs que
-# motivaram o gate (quebra de fonte no Android, #239/#249) não aparecem no CI
-# nem no preview da Vercel, só no APK.
+# Publicava, com a ideia de manter o BoT staging refletindo a main quando não
+# havia PR em teste. O efeito prático foi outro: como `staging` é um slot só,
+# todo merge SOBRESCREVIA em silêncio o PR que estava sendo validado no
+# aparelho. Aconteceu três vezes seguidas — o #268 e o #270 foram reportados
+# como "não funciona" quando o código deles nem estava no aparelho.
 #
-# Isso torna `staging` uma fonte insegura pra promoção: promover de lá poderia
-# mandar código não-mergeado pros 6 testers. Daí a `release`, que só a main
-# alimenta — é barreira estrutural, não disciplina.
+# Agora a bancada é exclusiva de PR: um merge nunca rouba o teste em curso.
+# Pra ver a main no aparelho, é só rodar `Test PR on Staging` sem PR aberto
+# ou esperar o próximo PR — o custo é bem menor que o da confusão.
 #
-# Publicar main nas duas mantém o BoT staging refletindo a main quando você não
-# está testando um PR específico, e dá o teste de integração da main mesclada.
+# A `release` segue sendo a única fonte da promoção, o que impede código
+# não-mergeado de chegar nos 6 testers. Barreira estrutural, não disciplina.
 #
 # `--environment preview` é o conjunto de env vars do EAS (Supabase etc.), não
 # o canal — todos os ambientes compartilham o mesmo backend de propósito.
@@ -30,7 +31,7 @@ on:
 
 jobs:
   publish:
-    name: main -> release + staging
+    name: main -> release
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -51,19 +52,14 @@ jobs:
           MSG: ${{ github.event.head_commit.message }}
         run: eas update --branch release --environment preview --message "$MSG" --non-interactive
 
-      - name: Publica em staging (bancada)
-        env:
-          MSG: ${{ github.event.head_commit.message }}
-        run: eas update --branch staging --environment preview --message "$MSG" --non-interactive
-
       - name: Lembrete de promoção
         run: |
           {
-            echo "## OTA publicada em \`release\` e \`staging\`"
+            echo "## OTA publicada em \`release\`"
             echo ""
             echo "Os testers **não** recebem ainda — a branch \`preview\` só muda por promoção manual."
             echo ""
-            echo "O **BoT staging** já reflete esta main (se você estava testando um PR, ele foi sobrescrito)."
+            echo "O **BoT staging** não foi tocado: a bancada é exclusiva de PR, pra um merge nunca sobrescrever o que você está testando."
             echo ""
             echo "Pra liberar pros testers: rode a workflow **Promote Update**."
           } >> "$GITHUB_STEP_SUMMARY"
