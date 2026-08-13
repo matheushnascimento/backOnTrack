@@ -94,25 +94,26 @@ export default function RetomadaState({ daysSinceLast, onDismiss }) {
         </View>
       </View>
 
-      {/* Link "Depois" — sem `underline` porque no Android + custom font o
-          decoration bugava o advance width e clipava a última letra
-          ("Depoi"). Cor label + peso regular já hierarquiza como link
-          secundário; visualmente basta. */}
-      <View className="items-center">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Depois"
-          onPress={onDismiss}
-          className="p-4 active:opacity-70"
+      {/* Link "Depois".
+          O texto centraliza por `text-center`, NÃO por `items-center` no
+          container. Parece a mesma coisa e não é: `alignItems: center` faz o
+          filho encolher pra própria largura, e aí quem decide o tamanho da
+          caixa é a medição de texto do Android — que erra com a Inter e come
+          a última letra ("Depoi"). Com o Text ocupando a largura do pai, a
+          caixa vem do layout e a medição não decide nada. */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Depois"
+        onPress={onDismiss}
+        className="p-4 active:opacity-70"
+      >
+        <Text
+          className="text-center text-sm text-label dark:text-label-dark"
+          style={{ fontFamily: "Inter_400Regular" }}
         >
-          <Text
-            className="text-sm text-label dark:text-label-dark"
-            style={{ fontFamily: "Inter_400Regular" }}
-          >
-            Depois
-          </Text>
-        </Pressable>
-      </View>
+          Depois
+        </Text>
+      </Pressable>
     </View>
   );
 }
