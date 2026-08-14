@@ -1,8 +1,8 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //
-// Banners de atualização (evoluído do #131).
+// Banners do rodapé (evoluído do #131).
 //
-// Três estados, em ordem de prioridade (só um aparece):
+// Quatro estados, em ordem de prioridade (só um aparece):
 //
 //   1. NATIVE_OUTDATED  — versão do APK em execução é MENOR que a última
 //      publicada. Nesses casos o OTA não cobre (`runtimeVersion.policy:
@@ -18,6 +18,16 @@
 //   3. UPDATE_PENDING   — bundle baixado, esperando reload. Toque aplica.
 //      Comportamento original do #131.
 //
+//   4. NEEDS_AUTH       — o sync foi recusado por falta de login (#281). Vem
+//      por último de propósito: os três de cima são transitórios e se
+//      resolvem sozinhos, este persiste até a pessoa entrar. Se disputassem,
+//      o permanente esconderia os passageiros.
+//
+//      É o único **dispensável**, pela mesma razão: um aviso que não passa e
+//      não fecha vira ruído em cima de quem já decidiu não logar. Dispensar
+//      vale só pra sessão (mesmo critério do `RetomadaState` da Home) —
+//      próxima abertura convida de novo, que é o objetivo.
+//
 // Em dev/web/native sem update mecanismo os hooks retornam false — banner
 // não aparece. Fetch da última APK version só tenta em native com rede;
 // falha silenciosa mantém o banner desligado.
@@ -27,8 +37,11 @@ import { Linking, Platform, Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ProgressBar } from "react-native-paper";
 import Constants from "expo-constants";
+import { router } from "expo-router";
 import { useUpdates, reloadAsync } from "expo-updates";
 
+import { SYNC_NEEDS_AUTH, useSyncStatus } from "@/infra/sync";
+import { pickBanner } from "@/constants/bannerPriority";
 import { useThemeTokens } from "@/constants/themeTokens";
 
 // Fonte remota da última versão do APK cortada, atualizada manualmente no repo
@@ -60,6 +73,9 @@ export default function UpdateBanner() {
   const { isUpdatePending, isDownloading } = useUpdates();
   const insets = useSafeAreaInsets();
   const t = useThemeTokens();
+  const { status: syncStatus } = useSyncStatus();
+  // Dispensa só a sessão atual — ver a nota de prioridade no topo do arquivo.
+  const [authDismissed, setAuthDismissed] = useState(false);
 
   // Última APK conhecida — carrega em background, sem bloquear render.
   const [latestApk, setLatestApk] = useState(
@@ -87,8 +103,15 @@ export default function UpdateBanner() {
 
   const bottomPad = insets.bottom + 12;
 
-  // Prioridade: native outdated > downloading > pending.
-  if (nativeOutdated) {
+  const qual = pickBanner({
+    nativeOutdated,
+    isDownloading,
+    isUpdatePending,
+    needsAuth: syncStatus === SYNC_NEEDS_AUTH,
+    authDismissed,
+  });
+
+  if (qual === "native-outdated") {
     const url = latestApk.installUrl;
     return (
       <BannerBase
@@ -114,7 +137,7 @@ export default function UpdateBanner() {
     );
   }
 
-  if (isDownloading) {
+  if (qual === "downloading") {
     return (
       <BannerBase color={t.surfaceSubtle} bottomPad={bottomPad}>
         <Text
@@ -130,7 +153,7 @@ export default function UpdateBanner() {
     );
   }
 
-  if (isUpdatePending) {
+  if (qual === "update-pending") {
     return (
       <BannerBase
         color={t.accentToday}
@@ -148,18 +171,50 @@ export default function UpdateBanner() {
     );
   }
 
+  // Falta login (#281). Só chega aqui quando o server recusou por política —
+  // ver `SYNC_NEEDS_AUTH` em infra/sync.js. Copy sem cobrança e sem alarme: o
+  // registro local está intacto, o que falta é a cópia na conta.
+  if (qual === "needs-auth") {
+    return (
+      <BannerBase
+        color={t.surfaceSubtle}
+        bottomPad={bottomPad}
+        onPress={() => router.navigate("/login")}
+        accessibilityLabel="Entrar para sincronizar seus registros"
+        onDismiss={() => setAuthDismissed(true)}
+      >
+        <Text
+          className="text-center text-ink dark:text-ink-dark"
+          style={{ fontFamily: "Inter_600SemiBold", fontSize: 14 }}
+        >
+          Entre para guardar seus registros na sua conta
+        </Text>
+        <Text
+          className="text-center text-body-secondary dark:text-body-secondary-dark"
+          style={{ fontFamily: "Inter_400Regular", fontSize: 12, marginTop: 2 }}
+        >
+          Eles seguem salvos aqui no aparelho. Toque para entrar.
+        </Text>
+      </BannerBase>
+    );
+  }
+
   return null;
 }
 
 /**
- * Wrapper visual + safe-area comum aos 3 banners. Absoluto no rodapé porque
+ * Wrapper visual + safe-area comum aos banners. Absoluto no rodapé porque
  * cada tela já monta o próprio safe-area (MyView safe) e o app é edge-to-edge;
  * absoluto flutua sem mexer no layout de ninguém.
+ *
+ * `onDismiss` é opcional e só o banner de login usa (#281) — os de
+ * atualização não fecham porque somem sozinhos quando a causa passa.
  *
  * @param {{
  *   color: string,
  *   bottomPad: number,
  *   onPress?: () => void,
+ *   onDismiss?: () => void,
  *   accessibilityLabel?: string,
  *   children: any,
  * }} props
@@ -168,6 +223,7 @@ function BannerBase({
   color,
   bottomPad,
   onPress,
+  onDismiss,
   accessibilityLabel,
   children,
 }) {
@@ -185,7 +241,33 @@ function BannerBase({
       className="absolute right-0 bottom-0 left-0 px-4 pt-3"
       style={{ backgroundColor: color, paddingBottom: bottomPad }}
     >
-      {children}
+      {/* Reserva à direita pro botão de fechar não cobrir o fim do texto.
+          Sem isso a última palavra passa por baixo do × em telas estreitas. */}
+      <View style={onDismiss ? { paddingRight: 32 } : undefined}>
+        {children}
+      </View>
+      {onDismiss ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Dispensar aviso"
+          onPress={onDismiss}
+          // Área de toque generosa: o alvo visual é um glifo pequeno, e no
+          // rodapé o polegar erra fácil.
+          hitSlop={12}
+          className="absolute right-2 active:opacity-60"
+          style={{ top: 8, padding: 8 }}
+        >
+          {/* `text-center` com largura fixa, não `items-center` no pai: o
+              Text encolhido ao conteúdo deixa a medição do Android decidir a
+              caixa, e ela erra com a Inter cortando o glifo. */}
+          <Text
+            className="text-center text-body-secondary dark:text-body-secondary-dark"
+            style={{ fontFamily: "Inter_500Medium", fontSize: 16, width: 16 }}
+          >
+            ×
+          </Text>
+        </Pressable>
+      ) : null}
     </Wrap>
   );
 }
