@@ -22,6 +22,7 @@ import { useSession } from "@/infra/session";
 import { AUTH_ENABLED } from "@/infra/supabase";
 import {
   SYNC_CONNECTING,
+  SYNC_NEEDS_AUTH,
   SYNC_OFF,
   SYNC_OFFLINE,
   SYNC_ONLINE,
@@ -419,14 +420,25 @@ const SYNC_UI = {
     text: "desligado",
     hint: null,
   },
+  // Recusado por falta de login (#278). Antes isto caía em `offline`, e as
+  // três coisas ficavam falsas ao mesmo tempo: não era falta de conexão, nada
+  // ia "subir quando voltar", e o "Tentar de novo" nunca funcionaria. Copy
+  // sem cobrança, como o resto — o registro local segue intacto.
+  [SYNC_NEEDS_AUTH]: {
+    dot: "bg-border-strong dark:bg-border-strong-dark",
+    text: "precisa entrar",
+    hint: "Seus registros estão salvos aqui. Entre para guardá-los também na sua conta.",
+  },
 };
 
 function SyncRow() {
   const { status, reconnect } = useSyncStatus();
   const ui = SYNC_UI[status] ?? SYNC_UI[SYNC_OFF];
   // Só oferece "tentar de novo" quando há o que retentar. Em `off` não há
-  // servidor configurado; em `connecting`/`online` já está acontecendo.
+  // servidor configurado; em `connecting`/`online` já está acontecendo; em
+  // `needs-auth` retentar é justamente o que não resolve — a ação é entrar.
   const canRetry = status === SYNC_OFFLINE;
+  const precisaEntrar = status === SYNC_NEEDS_AUTH;
 
   return (
     <View className="gap-1 border-t border-surface-subtle dark:border-surface-subtle-dark px-4 py-3">
@@ -467,6 +479,21 @@ function SyncRow() {
             style={{ fontFamily: "Inter_500Medium" }}
           >
             Tentar de novo
+          </Text>
+        </Pressable>
+      ) : null}
+      {precisaEntrar ? (
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Entrar para sincronizar"
+          onPress={() => router.navigate("/login")}
+          className="mt-1 self-start rounded-xl bg-surface-subtle dark:bg-surface-subtle-dark px-3 py-1.5 active:opacity-70"
+        >
+          <Text
+            className="text-xs text-primary dark:text-primary-dark"
+            style={{ fontFamily: "Inter_500Medium" }}
+          >
+            Entrar
           </Text>
         </Pressable>
       ) : null}

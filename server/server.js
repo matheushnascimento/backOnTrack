@@ -34,6 +34,7 @@ import {
   verify,
 } from "node:crypto";
 import { mkdirSync } from "node:fs";
+import { createServer } from "node:http";
 import { join, resolve } from "node:path";
 
 import { createMergeableStore } from "tinybase";
@@ -169,8 +170,46 @@ async function verifyJwt(token) {
   return payload;
 }
 
+// Servidor HTTP na frente do WS, por um motivo só: anunciar o AUTH_MODE (#278).
+//
+// Quando o server recusa uma conexão sem token, ele responde 401 no handshake
+// — mas o 401 **não atravessa** até o cliente. A API WebSocket de browser e
+// React Native não expõe o status HTTP de um handshake que falhou; o app vê
+// só um `close` genérico, indistinguível de queda de rede. Sem isto, o tester
+// sem login veria "sem conexão" e um "Tentar de novo" que nunca funciona.
+//
+// Alternativas descartadas:
+//   - **Inferir no client** ("falhou e não tenho sessão ⇒ preciso entrar"):
+//     mente em `AUTH_MODE=optional`, onde a mesma falha é rede de verdade.
+//   - **Aceitar o upgrade e fechar com close code 4001** (esse o cliente lê):
+//     aceitar faz o `createWsServer` registrar a conexão e criar o persister,
+//     ou seja um arquivo de sala por conexão rejeitada. É o lixo da #277 de
+//     volta, agora automatizado.
+//
+// Então: a recusa continua no `verifyClient` (nada é alocado pra quem não
+// passa) e o cliente pergunta o modo aqui, só quando falha sem token.
+const httpServer = createServer((req, res) => {
+  const rota = (req.url ?? "").split("?")[0].replace(/\/+$/, "") || "/";
+  if (req.method === "GET" && rota === "/healthz") {
+    const corpo = JSON.stringify({ ok: true, authMode: AUTH_MODE });
+    res.writeHead(200, {
+      "content-type": "application/json",
+      "content-length": Buffer.byteLength(corpo),
+      // O app é servido de outra origem (e no native não há origem). Só
+      // devolve o modo de auth — nada aqui é segredo.
+      "access-control-allow-origin": "*",
+      "cache-control": "no-store",
+    });
+    res.end(corpo);
+    return;
+  }
+  // Qualquer outra coisa segue como antes: este endpoint é de WebSocket.
+  res.writeHead(426, { "content-type": "text/plain" });
+  res.end("Upgrade Required");
+});
+
 const wss = new WebSocketServer({
-  port: PORT,
+  server: httpServer,
   verifyClient: ({ req }, callback) => {
     const url = new URL(req.url, "http://internal");
     const pathId = url.pathname.replace(/^\/+/, "").replace(/\/+$/, "");
@@ -228,6 +267,11 @@ const verifiers = [
   .filter(Boolean)
   .join(" + ");
 
-console.log(
-  `[sync] listening on ws://0.0.0.0:${PORT} — data dir: ${DATA_DIR} — auth: ${AUTH_MODE}${verifiers ? ` (${verifiers})` : ""}`,
-);
+// O log sai DENTRO do callback do listen: os testes usam essa linha como
+// sinal de "já bindou" pra começar a conectar. Emitir antes abriria uma
+// corrida em que o teste conecta num socket que ainda não existe.
+httpServer.listen(PORT, () => {
+  console.log(
+    `[sync] listening on ws://0.0.0.0:${PORT} — data dir: ${DATA_DIR} — auth: ${AUTH_MODE}${verifiers ? ` (${verifiers})` : ""}`,
+  );
+});

@@ -19,3 +19,29 @@ export function buildSyncUrl(baseUrl, roomId, token) {
   const base = `${baseUrl}/${encodeURIComponent(String(roomId))}`;
   return token ? `${base}?token=${encodeURIComponent(token)}` : base;
 }
+
+/**
+ * URL do `/healthz`, derivada da mesma base do sync (#278).
+ *
+ * O server anuncia ali o `authMode`. O client precisa disso porque o 401 do
+ * handshake **não atravessa** o WebSocket: browser e React Native não expõem
+ * o status HTTP de um upgrade recusado, então uma rejeição por falta de login
+ * é indistinguível de queda de rede.
+ *
+ * Consultar isto resolve as duas coisas de uma vez: se o `/healthz` responde,
+ * a rede está de pé e a recusa foi política; se nem ele responde, é rede
+ * mesmo. Não precisa de heurística.
+ *
+ * `wss://` vira `https://` e `ws://` vira `http://` — mesmo host, mesma porta.
+ *
+ * @param {string} baseUrl Mesma base do `buildSyncUrl` (ex.: `wss://host`).
+ * @returns {string | null} `null` se a base estiver vazia (sync desligado).
+ */
+export function buildHealthzUrl(baseUrl) {
+  if (!baseUrl) return null;
+  const semBarra = String(baseUrl).replace(/\/+$/, "");
+  const http = semBarra
+    .replace(/^wss:\/\//i, "https://")
+    .replace(/^ws:\/\//i, "http://");
+  return `${http}/healthz`;
+}

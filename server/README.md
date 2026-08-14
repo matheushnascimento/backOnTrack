@@ -134,6 +134,7 @@ Confere no log do boot qual verificador subiu:
 
 | Requisição                             | `AUTH_MODE=optional` | `AUTH_MODE=required` |
 | -------------------------------------- | -------------------- | -------------------- |
+| `GET /healthz`                         | 200 + `authMode`     | 200 + `authMode`     |
 | Sem `?token=`                          | ✅ aceita anônimo    | ❌ 401               |
 | `?token=` válido + `sub === pathId`    | ✅ aceita            | ✅ aceita            |
 | `?token=` válido + `sub !== pathId`    | ❌ 403               | ❌ 403               |
@@ -142,12 +143,42 @@ Confere no log do boot qual verificador subiu:
 | `?token=` ES256 com `kid` fora do JWKS | ❌ 401               | ❌ 401               |
 | `?token=` alg não suportado (RS256…)   | ❌ 401               | ❌ 401               |
 
+### `GET /healthz` — anúncio do modo (#278)
+
+```
+$ curl https://backontrack-sync.mhdn.com.br/healthz
+{"ok":true,"authMode":"required"}
+```
+
+Existe por um motivo específico: **o 401 do handshake não chega ao app.** A API
+WebSocket de browser e React Native não expõe o status HTTP de um upgrade
+recusado — o cliente vê só um `close` genérico, indistinguível de queda de
+rede. Sem isto, o tester sem login veria "sem conexão" e um "Tentar de novo"
+que nunca funciona.
+
+O client consulta este endpoint **só quando** uma conexão sem token falha.
+A resposta resolve as duas perguntas de uma vez:
+
+| `/healthz` respondeu? | `authMode` | conclusão do client                                      |
+| --------------------- | ---------- | -------------------------------------------------------- |
+| sim                   | `required` | é política — mostra "precisa entrar", **para o backoff** |
+| sim                   | `optional` | é rede — mostra "sem conexão", segue tentando            |
+| não                   | —          | server inalcançável, é rede — mostra "sem conexão"       |
+
+Alternativas descartadas: inferir no client sem perguntar (mente em
+`optional`, onde a mesma falha é rede de verdade) e aceitar o upgrade pra
+fechar com close code 4001 (o `createWsServer` registraria a conexão e criaria
+o arquivo de sala — um por conexão rejeitada, o lixo da #277 automatizado).
+
+Qualquer outra rota HTTP segue respondendo `426 Upgrade Required`.
+
 ### Rollout
 
 1. Deploy com `AUTH_MODE=optional`. Clientes anônimos (compat) continuam sincronizando.
 2. Merge da fatia C (cliente passa a mandar JWT + migração dos dados anônimos → sala do userId). OTA chega nos testers.
 3. Aviso via WhatsApp (Evolution API) pros testers logarem — [[evolution-api-testers-stack]].
-4. Dias depois, PR separado: flip `AUTH_MODE=required` no server. Anônimo passa a ser rejeitado.
+4. **Deploy do server com `/healthz`** (#278) — precisa vir ANTES do flip. Enquanto não estiver no ar, o client sonda, não recebe resposta, e cai no caminho de "sem conexão": mesma coisa que hoje, sem regressão. Mas se o flip acontecer antes deste deploy, o tester sem login volta a ver a mensagem errada.
+5. Dias depois, PR separado: flip `AUTH_MODE=required` no server. Anônimo passa a ser rejeitado.
 
 Cloudflare Tunnel na frente já garante TLS válido; o server em si só fala WS plano em `127.0.0.1:8787` do host (loopback, não LAN — só o cloudflared do systemd alcança).
 

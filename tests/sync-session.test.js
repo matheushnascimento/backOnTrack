@@ -1,5 +1,9 @@
 // @ts-nocheck -- teste; globals do jest não são tipados (ADR-002)
-import { isTokenExpired, resolveRoomId } from "@/infra/sync-session";
+import {
+  isTokenExpired,
+  needsLogin,
+  resolveRoomId,
+} from "@/infra/sync-session";
 
 // Cobre os dois defeitos da #275. Os dois eram "tratar 'ainda não sei' como se
 // fosse resposta" — os testes abaixo travam justamente esse instante.
@@ -102,5 +106,34 @@ describe("isTokenExpired", () => {
     const daquiUmaHora = sessao(AGORA + 3_600_000);
     expect(daquiUmaHora.expires_at).toBeLessThan(AGORA); // é segundos mesmo
     expect(isTokenExpired(daquiUmaHora, AGORA)).toBe(false);
+  });
+});
+
+describe("needsLogin", () => {
+  // O caso que a #278 existe pra resolver.
+  it("sem token + server em required = precisa entrar", () => {
+    expect(needsLogin(false, "required")).toBe(true);
+  });
+
+  // Hoje o server roda optional. Dizer "precisa entrar" aqui seria trocar uma
+  // mentira por outra: a falha é rede de verdade.
+  it("sem token + server em optional = não é problema de login", () => {
+    expect(needsLogin(false, "optional")).toBe(false);
+  });
+
+  // Server inalcançável: o /healthz não respondeu, então o modo é null. Isso
+  // É problema de rede — cair em "sem conexão" está certo.
+  it("modo desconhecido nunca vira 'precisa entrar'", () => {
+    expect(needsLogin(false, null)).toBe(false);
+    expect(needsLogin(false, undefined)).toBe(false);
+    expect(needsLogin(false, "")).toBe(false);
+  });
+
+  // Quem TEM token e falhou tem outro problema (token vencido, sub errado,
+  // rede). Mandar essa pessoa "entrar" esconderia a causa real.
+  it("com token nunca é 'precisa entrar', em nenhum modo", () => {
+    expect(needsLogin(true, "required")).toBe(false);
+    expect(needsLogin(true, "optional")).toBe(false);
+    expect(needsLogin(true, null)).toBe(false);
   });
 });
