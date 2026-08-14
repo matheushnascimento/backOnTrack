@@ -12,7 +12,7 @@ import {
   sign as cryptoSign,
 } from "node:crypto";
 import { mkdtempSync, rmSync } from "node:fs";
-import { createServer } from "node:http";
+import { createServer, request as httpRequest } from "node:http";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
@@ -187,6 +187,99 @@ function tryConnect(port, room, token, timeoutMs = 3000) {
     });
   });
 }
+
+// --- /healthz: anúncio do modo (#278) ------------------------------------
+
+// O 401 do handshake não chega ao app (browser/RN não expõem status HTTP de
+// upgrade que falhou), então o client pergunta o modo aqui pra saber se a
+// falha foi política ou rede. Se este endpoint mentir, o app volta a dizer
+// "sem conexão" pra quem na verdade precisa entrar.
+
+// `fetch` global aqui é o do ambiente jest-expo (React Native), não o do
+// Node — `res.status` vem undefined. Usa http.request direto, como o resto
+// deste arquivo já faz com o cliente `ws`.
+function httpGet(port, path) {
+  return new Promise((resolveGet, rejectGet) => {
+    const req = httpRequest(
+      { host: "127.0.0.1", port, path, method: "GET" },
+      (res) => {
+        let corpo = "";
+        res.on("data", (c) => (corpo += c));
+        res.on("end", () => resolveGet({ status: res.statusCode, corpo }));
+      },
+    );
+    req.on("error", rejectGet);
+    req.end();
+  });
+}
+
+async function getHealthz(port) {
+  const { status, corpo } = await httpGet(port, "/healthz");
+  return { status, body: JSON.parse(corpo) };
+}
+
+describe("GET /healthz", () => {
+  test("anuncia authMode=optional quando o server está em optional", async () => {
+    const server = await startServer({
+      AUTH_MODE: "optional",
+      SUPABASE_JWT_SECRET: JWT_SECRET,
+    });
+    try {
+      const { status, body } = await getHealthz(server.port);
+      expect(status).toBe(200);
+      expect(body).toEqual({ ok: true, authMode: "optional" });
+    } finally {
+      await stopServer(server);
+    }
+  }, 15000);
+
+  test("anuncia authMode=required quando o server está em required", async () => {
+    const server = await startServer({
+      AUTH_MODE: "required",
+      SUPABASE_JWT_SECRET: JWT_SECRET,
+    });
+    try {
+      const { status, body } = await getHealthz(server.port);
+      expect(status).toBe(200);
+      expect(body.authMode).toBe("required");
+    } finally {
+      await stopServer(server);
+    }
+  }, 15000);
+
+  // Regressão: o WS precisa continuar funcionando com o http.createServer na
+  // frente. Trocar `port:` por `server:` no WebSocketServer faz ele parar de
+  // bindar sozinho — sem o listen explícito, nada escuta.
+  test("o WebSocket continua de pé com o HTTP na frente", async () => {
+    const server = await startServer({
+      AUTH_MODE: "optional",
+      SUPABASE_JWT_SECRET: JWT_SECRET,
+    });
+    try {
+      const res = await tryConnect(
+        server.port,
+        "sala-com-http-na-frente",
+        null,
+      );
+      expect(res).toEqual({ open: true });
+    } finally {
+      await stopServer(server);
+    }
+  }, 15000);
+
+  test("rota desconhecida segue respondendo 426 Upgrade Required", async () => {
+    const server = await startServer({
+      AUTH_MODE: "optional",
+      SUPABASE_JWT_SECRET: JWT_SECRET,
+    });
+    try {
+      const res = await httpGet(server.port, "/qualquer-coisa");
+      expect(res.status).toBe(426);
+    } finally {
+      await stopServer(server);
+    }
+  }, 15000);
+});
 
 // --- AUTH_MODE=optional --------------------------------------------------
 

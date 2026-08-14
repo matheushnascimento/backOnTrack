@@ -3,7 +3,7 @@
 // infra/sync.js — a lógica de montagem/encoding da URL onde bug moraria
 // (roomId com espaço, JWT com `+`/`=`, mistura de logado/deslogado).
 
-import { buildSyncUrl } from "../infra/sync-url";
+import { buildHealthzUrl, buildSyncUrl } from "../infra/sync-url";
 
 describe("buildSyncUrl", () => {
   const BASE = "wss://backontrack-sync.mhdn.com.br";
@@ -54,5 +54,56 @@ describe("buildSyncUrl", () => {
     // useValue pode retornar tipos diferentes conforme a store — proteja o
     // template string de virar `[object Object]` ou `undefined`.
     expect(buildSyncUrl(BASE, 42, null)).toBe(`${BASE}/42`);
+  });
+});
+
+// --- buildHealthzUrl (#278) ----------------------------------------------
+
+// O client consulta o /healthz pra saber se a recusa do WS foi política
+// (AUTH_MODE=required) ou rede. Errar o esquema aqui faz a sondagem falhar
+// sempre, e falha de sondagem é lida como "offline" — ou seja, o app voltaria
+// silenciosamente a mentir pro tester sem login.
+describe("buildHealthzUrl", () => {
+  it("converte wss:// em https://", () => {
+    expect(buildHealthzUrl("wss://backontrack-sync.mhdn.com.br")).toBe(
+      "https://backontrack-sync.mhdn.com.br/healthz",
+    );
+  });
+
+  it("converte ws:// em http:// (dev local)", () => {
+    expect(buildHealthzUrl("ws://localhost:8787")).toBe(
+      "http://localhost:8787/healthz",
+    );
+  });
+
+  it("preserva a porta", () => {
+    expect(buildHealthzUrl("ws://192.168.1.25:8787")).toBe(
+      "http://192.168.1.25:8787/healthz",
+    );
+  });
+
+  it("tolera barra no fim sem duplicar", () => {
+    expect(buildHealthzUrl("wss://host/")).toBe("https://host/healthz");
+    expect(buildHealthzUrl("wss://host///")).toBe("https://host/healthz");
+  });
+
+  it("aceita esquema em maiúsculas", () => {
+    expect(buildHealthzUrl("WSS://host")).toBe("https://host/healthz");
+  });
+
+  // Sync desligado (EXPO_PUBLIC_SYNC_URL="") não deve produzir URL nenhuma —
+  // o caller usa null pra não sondar.
+  it("devolve null quando a base está vazia", () => {
+    expect(buildHealthzUrl("")).toBeNull();
+    expect(buildHealthzUrl(null)).toBeNull();
+    expect(buildHealthzUrl(undefined)).toBeNull();
+  });
+
+  // Só o PREFIXO vira http. Um host que contenha "ws" no meio não pode ser
+  // reescrito por engano.
+  it("não reescreve 'ws' fora do esquema", () => {
+    expect(buildHealthzUrl("wss://ws-sync.example.com")).toBe(
+      "https://ws-sync.example.com/healthz",
+    );
   });
 });

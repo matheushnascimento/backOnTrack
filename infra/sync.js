@@ -14,9 +14,9 @@ import { useCreateSynchronizer, useValue } from "tinybase/ui-react";
 import { SYNC_URL } from "@/constants/sync";
 import { store } from "./database";
 import { useSession } from "./session";
-import { buildSyncUrl } from "./sync-url";
+import { buildHealthzUrl, buildSyncUrl } from "./sync-url";
 import { retryDelay } from "./sync-retry";
-import { isTokenExpired, resolveRoomId } from "./sync-session";
+import { isTokenExpired, needsLogin, resolveRoomId } from "./sync-session";
 
 // Re-exporta pra manter API estável (callers antigos podem importar de sync.js).
 // A implementação vive em infra/sync-url.js pra ficar testável isolado
@@ -28,6 +28,41 @@ export const SYNC_OFF = "off";
 export const SYNC_CONNECTING = "connecting";
 export const SYNC_ONLINE = "online";
 export const SYNC_OFFLINE = "offline";
+/** Recusado por falta de login, não por rede (#278). Não adianta retentar. */
+export const SYNC_NEEDS_AUTH = "needs-auth";
+
+/**
+ * Pergunta ao server em que `AUTH_MODE` ele está.
+ *
+ * Serve a dois propósitos de uma vez: se responde, a rede está de pé e a
+ * recusa do WS foi política; se não responde, é rede mesmo. Por isso o
+ * `catch` devolve `null` em vez de propagar — "não sei" é uma resposta útil
+ * aqui, e o caller trata como offline.
+ *
+ * @param {string | null} healthzUrl
+ * @param {number} [timeoutMs]
+ * @returns {Promise<string | null>} `"optional"`, `"required"` ou `null`.
+ */
+async function fetchAuthMode(healthzUrl, timeoutMs = 4000) {
+  if (!healthzUrl) return null;
+  // AbortController existe em RN e no web; o timeout evita ficar pendurado
+  // num server que aceita a conexão TCP e não responde.
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const res = await fetch(healthzUrl, {
+      signal: ctrl.signal,
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const corpo = await res.json();
+    return corpo?.authMode ?? null;
+  } catch {
+    return null;
+  } finally {
+    clearTimeout(t);
+  }
+}
 
 /**
  * Conecta o MergeableStore ao server WS de sync, com reconexão automática.
@@ -168,11 +203,33 @@ export function useRegistrosSync() {
       const ws = new WebSocket(url);
       currentWsRef.current = ws;
 
-      const onDown = () => {
+      const onDown = async () => {
         // Conexão obsoleta (já trocamos de socket) ou hook desmontado:
         // não mexer em estado nem agendar nada.
         if (currentWsRef.current !== ws || !mountedRef.current) return;
         if (retryTimerRef.current) return; // retry já agendado
+
+        // Caiu sem token: pode não ser rede. Sob `AUTH_MODE=required` o
+        // server recusa anônimo por política, e o 401 do handshake não chega
+        // até aqui — a API WebSocket não expõe status de upgrade recusado.
+        // Perguntar o modo é o que separa "preciso entrar" de "estou sem
+        // sinal"; sem isso o app diz "sem conexão" e oferece um "Tentar de
+        // novo" que nunca vai funcionar (#278).
+        if (!token) {
+          const modo = await fetchAuthMode(buildHealthzUrl(SYNC_URL));
+          // Reconferir depois do await: o socket pode ter sido trocado ou o
+          // hook desmontado enquanto a sondagem estava no ar.
+          if (currentWsRef.current !== ws || !mountedRef.current) return;
+          if (retryTimerRef.current) return;
+          if (needsLogin(false, modo)) {
+            // Sem retry de propósito: anônimo não entra por mais que insista.
+            // Ficar no backoff só gastaria bateria e encheria o log do server
+            // de rejeição que nós mesmos causamos.
+            setStatus(SYNC_NEEDS_AUTH);
+            return;
+          }
+        }
+
         setStatus(SYNC_OFFLINE);
         const delay = retryDelay(retryExpRef.current);
         retryExpRef.current += 1;

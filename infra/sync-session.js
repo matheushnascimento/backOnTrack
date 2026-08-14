@@ -68,3 +68,25 @@ export function isTokenExpired(session, now = Date.now(), skewMs = 5_000) {
   if (!Number.isFinite(exp) || exp <= 0) return false;
   return exp * 1000 - skewMs <= now;
 }
+
+/**
+ * A conexão caiu porque falta login — e não porque a rede caiu? (#278)
+ *
+ * Só é verdade quando as duas coisas valem: o client não tem token **e** o
+ * server declarou `authMode: "required"` no `/healthz`. Nesse par a recusa é
+ * determinística: anônimo nunca vai entrar, por mais que tente.
+ *
+ * Fora disso, `false` — inclusive quando o modo é desconhecido (o `/healthz`
+ * não respondeu). Server inalcançável **é** problema de rede, então cair no
+ * caminho de "sem conexão" está certo ali.
+ *
+ * Importa não errar pra cá: dizer "precisa entrar" pra quem só está sem sinal
+ * manda a pessoa fazer login à toa e esconde a causa real.
+ *
+ * @param {boolean} hasToken O client mandou `?token=`?
+ * @param {string | null | undefined} authMode O que o `/healthz` devolveu.
+ * @returns {boolean}
+ */
+export function needsLogin(hasToken, authMode) {
+  return !hasToken && authMode === "required";
+}
