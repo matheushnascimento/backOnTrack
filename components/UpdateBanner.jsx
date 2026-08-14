@@ -227,25 +227,42 @@ function BannerBase({
   accessibilityLabel,
   children,
 }) {
-  const Wrap = onPress ? Pressable : View;
+  // Área principal e botão de fechar são IRMÃOS, nunca aninhados.
+  //
+  // Aninhar quebra no web: o `accessibilityRole="button"` faz o
+  // react-native-web renderizar um `<button>` de verdade, e `<button>` dentro
+  // de `<button>` é aninhamento inválido — o React DOM recusa e derruba a
+  // árvore. Só apareceu quando o banner de login passou `onPress` e
+  // `onDismiss` juntos; os três de atualização nunca tiveram botão de fechar.
+  //
+  // O padding fica no filho, não neste wrapper, pra toque na borda ainda
+  // contar como toque no banner.
+  const miolo = (
+    // Reserva à direita pro botão de fechar não cobrir o fim do texto.
+    // Sem isso a última palavra passa por baixo do × em telas estreitas.
+    <View style={onDismiss ? { paddingRight: 32 } : undefined}>{children}</View>
+  );
   return (
-    <Wrap
-      {...(onPress
-        ? {
-            onPress,
-            android_ripple: { color: "#00000022" },
-            accessibilityRole: "button",
-            accessibilityLabel,
-          }
-        : {})}
-      className="absolute right-0 bottom-0 left-0 px-4 pt-3"
-      style={{ backgroundColor: color, paddingBottom: bottomPad }}
+    <View
+      className="absolute right-0 bottom-0 left-0"
+      style={{ backgroundColor: color }}
     >
-      {/* Reserva à direita pro botão de fechar não cobrir o fim do texto.
-          Sem isso a última palavra passa por baixo do × em telas estreitas. */}
-      <View style={onDismiss ? { paddingRight: 32 } : undefined}>
-        {children}
-      </View>
+      {onPress ? (
+        <Pressable
+          onPress={onPress}
+          android_ripple={{ color: "#00000022" }}
+          accessibilityRole="button"
+          accessibilityLabel={accessibilityLabel}
+          className="px-4 pt-3"
+          style={{ paddingBottom: bottomPad }}
+        >
+          {miolo}
+        </Pressable>
+      ) : (
+        <View className="px-4 pt-3" style={{ paddingBottom: bottomPad }}>
+          {miolo}
+        </View>
+      )}
       {onDismiss ? (
         <Pressable
           accessibilityRole="button"
@@ -268,6 +285,6 @@ function BannerBase({
           </Text>
         </Pressable>
       ) : null}
-    </Wrap>
+    </View>
   );
 }
