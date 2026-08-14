@@ -1,7 +1,7 @@
 import { openDatabaseSync } from "expo-sqlite";
 import { createExpoSqlitePersister } from "tinybase/persisters/persister-expo-sqlite";
 import { useCreatePersister } from "tinybase/ui-react";
-import { ensureSyncRoomId, store } from "./database";
+import { ensureGoals, ensureSyncRoomId, store } from "./database";
 
 const db = openDatabaseSync("back_on_track.db");
 
@@ -31,6 +31,8 @@ export function useRegistrosPersistencia() {
       // Room ID de sync (M6 fatia 3): só gerar/persistir DEPOIS do autoLoad,
       // senão um roomId gerado vira roomId antigo carregado do SQLite.
       ensureSyncRoomId();
+      // Depois do load, mesmo motivo do ensureSyncRoomId acima (#285).
+      ensureGoals();
     },
   );
 }

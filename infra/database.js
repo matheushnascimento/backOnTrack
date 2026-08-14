@@ -1,8 +1,11 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 import { createMergeableStore } from "tinybase";
 
+import { DEFAULT_GOALS } from "@/constants/goals";
+
 const TABLE = "records";
 const TESTERS = "testers";
+const GOALS = "goals";
 
 // MergeableStore em vez de Store puro: pré-requisito de qualquer sync (M6,
 // ADR-009). Carrega metadata de CRDT pra merge determinístico entre devices.
@@ -25,6 +28,14 @@ export const store = createMergeableStore()
       name: { type: "string" },
       phone: { type: "string" },
       createdAt: { type: "number" },
+    },
+    // Metas por métrica (#285, fatia 0 do modelo de níveis). rowId = a
+    // métrica ("water", "sleep", …). Antes disto as metas eram texto fixo em
+    // Ajustes — não existiam como dado, e o portão de nível não fecha sem
+    // elas. Ver docs/11-modelo-de-niveis.md §10.
+    [GOALS]: {
+      target: { type: "number" },
+      updatedAt: { type: "number" },
     },
   })
   .setValuesSchema({
@@ -183,6 +194,35 @@ export function ensureSyncRoomId() {
     store.setValue("syncRoomId", roomId);
   }
   return roomId;
+}
+
+// --- Metas por métrica (#285) ---
+
+/**
+ * Semeia as metas que ainda não existem, com os defaults.
+ *
+ * Chamada no `then` do persister pelo mesmo motivo do `ensureSyncRoomId`: se
+ * semear ANTES do `startAutoLoad` terminar, o load sobrescreve o que acabou
+ * de ser escrito. Manter como último passo se alguém mexer na ordem.
+ *
+ * Não sobrescreve meta existente — o usuário poderá editar em fatia futura, e
+ * seed não pode desfazer escolha de ninguém.
+ */
+export function ensureGoals() {
+  for (const [metric, target] of Object.entries(DEFAULT_GOALS)) {
+    if (store.getCell(GOALS, metric, "target") == null) {
+      store.setRow(GOALS, metric, { target, updatedAt: Date.now() });
+    }
+  }
+}
+
+/** Metas como objeto simples `{ metric: target }`, pro `goalFor`. */
+export function getGoals() {
+  const out = {};
+  for (const [metric, row] of Object.entries(store.getTable(GOALS) ?? {})) {
+    if (Number.isFinite(row?.target)) out[metric] = row.target;
+  }
+  return out;
 }
 
 // --- Testers (tela de admin, Track A do M3-5) ---
