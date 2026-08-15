@@ -2,7 +2,7 @@
 
 Documento de desenho, escrito **antes** de qualquer código. Fixa o modelo, o que é decisão fechada, o que ainda está aberto, e em que evidência cada peça se apoia.
 
-**Status:** em revisão. Design do Turno 4 (Claude Design, projeto `4565395c-…`) respondeu o briefing [12-briefing-home-niveis.md](./12-briefing-home-niveis.md) com 6 telas e fechou duas decisões — ver §11. Fechado: cumulativo, regressão em vez de ofensiva, portão por sinal e por comportamento, três regras de quebra (diária binária, diária quantitativa, semanal), graduação, ordem sugerida com skip qualificado. Aberto: ver §11.
+**Status:** em revisão. Tom decidido em §1.5 (reforço sóbrio). Design do Turno 4 (Claude Design, projeto `4565395c-…`) respondeu o briefing [12-briefing-home-niveis.md](./12-briefing-home-niveis.md) com 6 telas e fechou duas decisões — ver §11. Fechado: cumulativo, regressão em vez de ofensiva, portão por sinal e por comportamento, três regras de quebra (diária binária, diária quantitativa, semanal), graduação, ordem sugerida com skip qualificado. Aberto: ver §11.
 
 Referência declarada: **Fabulous** (habit tracker científico, modelo de jornada). O que se rejeita nele: não engaja, e a premissa lúdica polui. Queremos a jornada, sem a fantasia.
 
@@ -22,6 +22,22 @@ lvl 3   sono + água + <próximo>
 ```
 
 **Cumulativo** (decidido): no lvl 2 o sono continua valendo. Não é uma esteira em que o anterior sai de cena.
+
+---
+
+## 1.5. O tom: reforço sóbrio
+
+**Decidido em 14/08/2026.** Antes disto o tom era _herdado_, não decidido: o `09-design-v2.md` (M5-B, #233) diz "retomada, não conquista — sem streaks, sem badges, sem exclamação", e o briefing de design transformou isso numa proibição dura de qualquer recompensa visível. Ninguém tinha ratificado essa extensão.
+
+⚠️ **E ela escondia uma contradição: nós ESTAMOS gamificando.** Nível, progressão, portão e regressão são mecânica de jogo, e das fortes. O que se rejeita é o **registro visual** do jogo, não a mecânica. Dizer "sem gamificação" era impreciso.
+
+**A posição é reforço sóbrio:** subir de nível e graduar **são momentos** — reconhecidos, visíveis, com peso. Mas sem vocabulário nem estética de jogo: nada de medalha, XP, confete, mascote, "você desbloqueou!". Reconhecimento, não premiação.
+
+O que isso preserva: loss aversion e reconhecimento visível são parte do que faz ofensiva funcionar — o Duolingo não cresceu com números discretos em cinza. Remover **todo** reforço visível arriscava jogar fora o motor junto com o barulho. A queixa contra o Fabulous é excesso de fantasia, não a existência de recompensa.
+
+**Onde isso NÃO se aplica:** superfícies de diagnóstico, como o bloco de sinais em Ajustes → Avançado (#285). Ali o tom frio é correto — é instrumento de calibração, não superfície de reforço. Se parecesse placar, viraria o barulho que se quer evitar.
+
+**Ideia futura, fora de escopo:** dar ao usuário a escolha do registro — sóbrio, reforço sóbrio, ou lúdico assumido. Engajamento é pessoal: assim como o dono do projeto não engaja com o lúdico do Fabulous, muita gente não engaja com o sóbrio. Mudança grande, depende de investimento, registrada como direção — não como plano.
 
 ---
 

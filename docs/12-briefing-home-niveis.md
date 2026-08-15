@@ -48,6 +48,8 @@ Concretamente, o que **não** queremos:
 
 O nível é **contexto**, não prêmio. Ele diz "é isto que estamos construindo agora", não "olha o que você ganhou".
 
+> **Atualização de 14/08:** o tom foi decidido como **reforço sóbrio** (ver `11-modelo-de-niveis.md` §1.5). Subir de nível e graduar **são momentos** — reconhecidos e visíveis, com peso. A proibição acima continua valendo pra estética e vocabulário de jogo; ela não proíbe reconhecimento. A versão original deste briefing era mais restritiva do que o decidido, e o design do Turno 4 já acertou o alvo.
+
 ## O problema de design central
 
 **A Home precisa servir duas coisas ao mesmo tempo, e elas puxam em direções opostas.**
