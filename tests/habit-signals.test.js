@@ -14,9 +14,19 @@ import { DEFAULT_GOALS, goalFor } from "@/constants/goals";
 
 const DIA = 86_400_000;
 
-/** Timestamp de N dias atrás, no horário HH:MM local. */
-function em(diasAtras, hh, mm = 0, base = Date.now()) {
-  const d = new Date(base - diasAtras * DIA);
+// Base de tempo FIXA, passada explicitamente como `now` em toda chamada.
+//
+// Sem isso os testes ficam dependentes da hora em que a suíte roda: `em(0, 20)`
+// é "hoje às 20:00", que às 15h ainda está no FUTURO — e as funções descartam
+// timestamp futuro, então a amostra encolhe e a asserção quebra. Aconteceu de
+// verdade: o mesmo teste passou de manhã e falhou à tarde.
+//
+// 23:30 como hora-base deixa qualquer horário do dia 0 no passado.
+const AGORA = new Date(2026, 7, 14, 23, 30, 0, 0).getTime();
+
+/** Timestamp de N dias atrás, no horário HH:MM local, relativo a `AGORA`. */
+function em(diasAtras, hh, mm = 0) {
+  const d = new Date(AGORA - diasAtras * DIA);
   d.setHours(hh, mm, 0, 0);
   return d.getTime();
 }
@@ -52,32 +62,38 @@ describe("dailyVerdicts", () => {
       reg("water", em(0, 14), 700),
       reg("water", em(0, 20), 900),
     ];
-    const v = dailyVerdicts(recs, "water", 2000, 1);
+    const v = dailyVerdicts(recs, "water", 2000, 1, AGORA);
     expect(v).toHaveLength(1);
     expect(v[0].total).toBe(2100);
     expect(v[0].hit).toBe(true);
   });
 
   it("dia abaixo do alvo não conta como hit", () => {
-    const v = dailyVerdicts([reg("water", em(0, 9), 500)], "water", 2000, 1);
+    const v = dailyVerdicts(
+      [reg("water", em(0, 9), 500)],
+      "water",
+      2000,
+      1,
+      AGORA,
+    );
     expect(v[0].hit).toBe(false);
   });
 
   it("dia sem registro entra na janela como falha", () => {
-    const v = dailyVerdicts([], "water", 2000, 3);
+    const v = dailyVerdicts([], "water", 2000, 3, AGORA);
     expect(v).toHaveLength(3);
     expect(v.every((d) => d.hit === false && d.total === 0)).toBe(true);
   });
 
   it("ignora registros de outras métricas", () => {
     const recs = [reg("sleep", em(0, 23), 480), reg("water", em(0, 9), 2500)];
-    expect(dailyVerdicts(recs, "water", 2000, 1)[0].total).toBe(2500);
+    expect(dailyVerdicts(recs, "water", 2000, 1, AGORA)[0].total).toBe(2500);
   });
 
   // A ordem cronológica não é cosmética: `resilience` depende dela pra saber
   // o que é "dia seguinte". Invertida, ela mede recuperação ao contrário.
   it("devolve do mais antigo pro mais recente", () => {
-    const v = dailyVerdicts([], "water", 2000, 3);
+    const v = dailyVerdicts([], "water", 2000, 3, AGORA);
     expect(v[0].dia < v[1].dia).toBe(true);
     expect(v[1].dia < v[2].dia).toBe(true);
   });
@@ -85,12 +101,18 @@ describe("dailyVerdicts", () => {
   // Sono é `presence`: o portão é comportamento, não desfecho (§4). Dormir
   // pouco não pode contar como falha de hábito — registrar é o hábito.
   it("sono conta presença, não quantidade", () => {
-    const v = dailyVerdicts([reg("sleep", em(0, 23), 60)], "sleep", 480, 1);
+    const v = dailyVerdicts(
+      [reg("sleep", em(0, 23), 60)],
+      "sleep",
+      480,
+      1,
+      AGORA,
+    );
     expect(v[0].hit).toBe(true);
   });
 
   it("sono sem registro nenhum é falha", () => {
-    expect(dailyVerdicts([], "sleep", 480, 1)[0].hit).toBe(false);
+    expect(dailyVerdicts([], "sleep", 480, 1, AGORA)[0].hit).toBe(false);
   });
 });
 
@@ -129,7 +151,7 @@ describe("regularity", () => {
       reg("sleep", em(1, 23, 55)),
       reg("sleep", em(0, 0, 5)),
     ];
-    const r = regularity(recs, "sleep", 7);
+    const r = regularity(recs, "sleep", 7, AGORA);
     expect(r.n).toBe(4);
     expect(r.resultant).toBeGreaterThan(0.99);
     expect(r.sdMinutes).toBeLessThan(20);
@@ -137,7 +159,7 @@ describe("regularity", () => {
 
   it("horário sempre igual = concentração máxima", () => {
     const recs = [0, 1, 2, 3].map((d) => reg("water", em(d, 9, 0)));
-    const r = regularity(recs, "water", 7);
+    const r = regularity(recs, "water", 7, AGORA);
     expect(r.resultant).toBeCloseTo(1, 5);
     expect(r.sdMinutes).toBeLessThan(1);
   });
@@ -150,7 +172,7 @@ describe("regularity", () => {
       reg("water", em(1, 14)),
       reg("water", em(0, 20)),
     ];
-    const r = regularity(recs, "water", 7);
+    const r = regularity(recs, "water", 7, AGORA);
     expect(r.resultant).toBeLessThan(0.1);
     expect(r.sdMinutes).toBeGreaterThan(200);
   });
@@ -158,23 +180,23 @@ describe("regularity", () => {
   it("dispersão maior produz sdMinutes maior", () => {
     const apertado = [reg("water", em(1, 9, 0)), reg("water", em(0, 9, 10))];
     const largo = [reg("water", em(1, 7, 0)), reg("water", em(0, 13, 0))];
-    expect(regularity(apertado, "water", 7).sdMinutes).toBeLessThan(
-      regularity(largo, "water", 7).sdMinutes,
+    expect(regularity(apertado, "water", 7, AGORA).sdMinutes).toBeLessThan(
+      regularity(largo, "water", 7, AGORA).sdMinutes,
     );
   });
 
   // Sem amostra não se afirma nada — null é resposta, 0 seria mentira
   // ("perfeitamente regular").
   it("menos de 2 registros não produz desvio", () => {
-    expect(regularity([], "water", 7).sdMinutes).toBeNull();
+    expect(regularity([], "water", 7, AGORA).sdMinutes).toBeNull();
     expect(
-      regularity([reg("water", em(0, 9))], "water", 7).sdMinutes,
+      regularity([reg("water", em(0, 9))], "water", 7, AGORA).sdMinutes,
     ).toBeNull();
   });
 
   it("ignora registros fora da janela", () => {
     const recs = [reg("water", em(30, 9)), reg("water", em(0, 9))];
-    expect(regularity(recs, "water", 7).n).toBe(1);
+    expect(regularity(recs, "water", 7, AGORA).n).toBe(1);
   });
 });
 
@@ -242,7 +264,7 @@ describe("resilience", () => {
 describe("habitSignals", () => {
   it("junta os três sinais numa chamada", () => {
     const recs = [reg("water", em(1, 9), 2500), reg("water", em(0, 9), 2500)];
-    const s = habitSignals(recs, "water", 2000, 7);
+    const s = habitSignals(recs, "water", 2000, 7, AGORA);
     expect(s.metric).toBe("water");
     expect(s.days).toBe(7);
     expect(s.consistency.hits).toBe(2);

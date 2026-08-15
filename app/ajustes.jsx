@@ -1,5 +1,5 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -12,12 +12,12 @@ import {
 import { router } from "expo-router";
 import { useColorScheme } from "nativewind";
 import Svg, { Path } from "react-native-svg";
-import { useValue } from "tinybase/ui-react";
+import { useTable, useValue } from "tinybase/ui-react";
 
 import { goBack } from "@/constants/navigation";
 import MyView from "@/components/MyView";
 
-import { clearAll, setDisplayName, store } from "@/infra/database";
+import { clearAll, getGoals, setDisplayName, store } from "@/infra/database";
 import { useSession } from "@/infra/session";
 import { AUTH_ENABLED } from "@/infra/supabase";
 import {
@@ -32,6 +32,8 @@ import { saveThemePreference } from "@/infra/theme";
 import { confirmAction } from "@/constants/dialogs";
 import { getEnvironmentInfo } from "@/constants/environment";
 import { useThemeTokens } from "@/constants/themeTokens";
+import { JOURNEY_ORDER, formatGoal, goalFor } from "@/constants/goals";
+import { habitSignals } from "@/constants/habitSignals";
 
 const ENV = getEnvironmentInfo();
 
@@ -51,15 +53,20 @@ const ENV = getEnvironmentInfo();
 //
 // Lembretes da mockup ficaram fora (dependem de expo-notifications, escopo M7).
 
-// Metas hardcoded (mesmos defaults do registry). Cada valor vai ganhar edição
-// quando "metas por-usuário" virar tarefa própria.
-const METAS = [
-  { key: "water", label: "Água", value: "2,0 L" },
-  { key: "sleep", label: "Sono", value: "8h" },
-  { key: "exercise", label: "Exercício", value: "30 min" },
-  { key: "feeding", label: "Alimentação", value: "3 refeições" },
-  { key: "study", label: "Estudo", value: "30 min" },
-];
+// Rótulos das metas. Os VALORES vêm do store desde a #285 — antes eram texto
+// fixo aqui, e o modelo de níveis não fecha sem meta como dado. Edição pelo
+// usuário é fatia própria; por ora o store guarda os mesmos defaults.
+const METAS_LABEL = {
+  water: "Água",
+  sleep: "Sono",
+  exercise: "Exercício",
+  feeding: "Alimentação",
+  study: "Estudo",
+};
+
+// Janela dos sinais de automaticidade. 28 dias é a janela do portão de nível
+// (docs/11-modelo-de-niveis.md §5).
+const JANELA_SINAIS = 28;
 
 export default function Ajustes() {
   const { colorScheme, setColorScheme } = useColorScheme();
@@ -69,6 +76,11 @@ export default function Ajustes() {
 
   const displayName = useValue("displayName", store);
   const [nameModalOpen, setNameModalOpen] = useState(false);
+  // `useTable` assina a tabela: metas semeadas depois do load do persister
+  // chegam sozinhas, sem precisar reabrir a tela.
+  const goalsTable = useTable("goals", store);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const goals = useMemo(() => getGoals(), [goalsTable]);
 
   function handleClear() {
     confirmAction({
@@ -129,11 +141,11 @@ export default function Ajustes() {
 
         {/* Metas do dia (display-only por ora) */}
         <Section title="Metas do dia">
-          {METAS.map((m) => (
+          {JOURNEY_ORDER.map((metric) => (
             <Row
-              key={m.key}
-              label={m.label}
-              value={m.value}
+              key={metric}
+              label={METAS_LABEL[metric]}
+              value={formatGoal(metric, goalFor(goals, metric))}
               valueMono
               disabled
             />
@@ -227,6 +239,7 @@ export default function Ajustes() {
 
         {/* Avançado */}
         <Section title="Avançado">
+          <SignalsBlock goals={goals} />
           <Row
             label="Limpar todos os dados"
             onPress={handleClear}
@@ -497,6 +510,98 @@ function SyncRow() {
           </Text>
         </Pressable>
       ) : null}
+    </View>
+  );
+}
+
+/**
+ * Sinais de automaticidade por métrica (#285, fatia 0).
+ *
+ * Medição silenciosa: nada aqui decide nada. Nenhum limiar, nenhum nível,
+ * nenhum "bom/ruim" — só os números crus, pra calibrar os limiares do modelo
+ * com dado real antes de pendurar consequência neles
+ * (docs/11-modelo-de-niveis.md §12).
+ *
+ * Por isso o tom é deliberadamente frio: sem cor de sucesso, sem barra de
+ * progresso, sem emoji. Se isto parecer placar, vira a gamificação que o
+ * projeto rejeitou.
+ */
+function SignalsBlock({ goals }) {
+  const records = useTable("records", store);
+  const linhas = useMemo(() => {
+    const lista = Object.values(records ?? {});
+    return JOURNEY_ORDER.map((metric) => {
+      const s = habitSignals(
+        lista,
+        metric,
+        goalFor(goals, metric),
+        JANELA_SINAIS,
+      );
+      const consist = `${Math.round(s.consistency.rate * 100)}%`;
+      const sd = s.regularity.sdMinutes;
+      // n<2 não produz desvio: dizer "0 min" seria afirmar regularidade
+      // perfeita sem amostra. "—" é a resposta honesta.
+      const regul = sd == null ? "—" : `±${Math.round(sd)}min`;
+      const res =
+        s.resilience.rate == null
+          ? "—"
+          : `${Math.round(s.resilience.rate * 100)}%`;
+      return { metric, consist, regul, res };
+    });
+  }, [records, goals]);
+
+  return (
+    <View className="border-t border-surface-subtle dark:border-surface-subtle-dark px-4 py-3">
+      <Text
+        className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
+        style={{ fontFamily: "JetBrainsMono_500Medium" }}
+      >
+        Sinais · {JANELA_SINAIS} dias
+      </Text>
+      <Text
+        className="text-xs text-body-secondary dark:text-body-secondary-dark"
+        style={{ fontFamily: "Inter_400Regular", marginTop: 4 }}
+      >
+        Medição em andamento. Ainda não decide nada.
+      </Text>
+
+      <View className="mt-3 flex-row">
+        <Text
+          className="flex-1 text-xs text-label dark:text-label-dark"
+          style={{ fontFamily: "JetBrainsMono_400Regular" }}
+        >
+          {" "}
+        </Text>
+        {["consist.", "horário", "volta"].map((h) => (
+          <Text
+            key={h}
+            className="w-16 text-right text-xs text-label dark:text-label-dark"
+            style={{ fontFamily: "JetBrainsMono_400Regular" }}
+          >
+            {h}
+          </Text>
+        ))}
+      </View>
+
+      {linhas.map((l) => (
+        <View key={l.metric} className="mt-1.5 flex-row">
+          <Text
+            className="flex-1 text-sm text-ink dark:text-ink-dark"
+            style={{ fontFamily: "Inter_400Regular" }}
+          >
+            {METAS_LABEL[l.metric]}
+          </Text>
+          {[l.consist, l.regul, l.res].map((v, i) => (
+            <Text
+              key={i}
+              className="w-16 text-right text-sm text-body-secondary dark:text-body-secondary-dark"
+              style={{ fontFamily: "JetBrainsMono_400Regular" }}
+            >
+              {v}
+            </Text>
+          ))}
+        </View>
+      ))}
     </View>
   );
 }

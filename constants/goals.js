@@ -72,3 +72,38 @@ export function goalFor(goals, metric) {
   if (Number.isFinite(custom) && custom > 0) return custom;
   return DEFAULT_GOALS[metric] ?? null;
 }
+
+/**
+ * Meta formatada pra exibição, na unidade que a pessoa lê.
+ *
+ * O alvo é guardado na unidade canônica da métrica (ml, minutos, refeições),
+ * mas ninguém lê "2000 ml" nem "480 min" — lê "2,0 L" e "8h". Este é o
+ * mesmo texto que estava chumbado em `app/ajustes.jsx` antes da #285.
+ *
+ * @param {string} metric
+ * @param {number | null | undefined} target
+ * @returns {string} `"—"` quando não há alvo conhecido.
+ */
+export function formatGoal(metric, target) {
+  if (!Number.isFinite(target) || target <= 0) return "—";
+
+  if (metric === "water") {
+    const litros = target / 1000;
+    return `${litros.toLocaleString("pt-BR", {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    })} L`;
+  }
+
+  if (metric === "sleep") {
+    const h = Math.floor(target / 60);
+    const m = target % 60;
+    return m === 0 ? `${h}h` : `${h}h${String(m).padStart(2, "0")}`;
+  }
+
+  if (metric === "feeding") {
+    return `${target} ${target === 1 ? "refeição" : "refeições"}`;
+  }
+
+  return `${target} min`;
+}
