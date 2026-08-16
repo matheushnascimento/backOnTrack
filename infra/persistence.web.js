@@ -1,6 +1,6 @@
 import { createLocalPersister } from "tinybase/persisters/persister-browser";
 import { useCreatePersister } from "tinybase/ui-react";
-import { ensureSyncRoomId, store } from "./database";
+import { ensureGoals, ensureSyncRoomId, store } from "./database";
 
 /**
  * Versão web de useRegistrosPersistencia.
@@ -24,6 +24,8 @@ export function useRegistrosPersistencia() {
       await persister.startAutoSave();
       // Mesmo motivo da versão native: só gerar syncRoomId depois do autoLoad.
       ensureSyncRoomId();
+      // Depois do load, mesmo motivo do ensureSyncRoomId acima (#285).
+      ensureGoals();
     },
   );
 }
