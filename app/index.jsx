@@ -21,6 +21,7 @@ import {
   getToday,
   raiseJourneyPeak,
   store,
+  syncGraduatedAt,
 } from "@/infra/database";
 import { useSession } from "@/infra/session";
 import { useThemeTokens } from "@/constants/themeTokens";
@@ -43,7 +44,7 @@ import {
   regressionCopy,
 } from "@/constants/journeyMoments";
 import { JOURNEY_ORDER } from "@/constants/goals";
-import { PAUSED } from "@/constants/journey";
+import { GRADUATED, PAUSED } from "@/constants/journey";
 //#endregion
 
 const METRICS = Object.keys(CATEGORY_MAP);
@@ -152,6 +153,17 @@ export default function Home() {
   useEffect(() => {
     if (!emDemo) raiseJourneyPeak(journey.level);
   }, [journey.level, emDemo]);
+
+  // Data de estabilidade (#297). A graduação é derivada, então sem registrar
+  // a data o app não saberia dizer "estável há N dias". Some quando o hábito
+  // deixa de estar estável — reconquistar recomeça a contagem.
+  const estaveis = JOURNEY_ORDER.filter(
+    (m) => journey.habits[m]?.status === GRADUATED,
+  );
+  const chaveEstaveis = estaveis.join(",");
+  useEffect(() => {
+    if (!emDemo) syncGraduatedAt(chaveEstaveis ? chaveEstaveis.split(",") : []);
+  }, [chaveEstaveis, emDemo]);
 
   const { focus, rest } = splitZones(journey);
   const copy = headerCopy(journey);
@@ -368,7 +380,17 @@ export default function Home() {
               name={porMetrica[metric].name}
               value={porMetrica[metric].value}
               badge={restBadge(journey.habits[metric]?.status)}
-              onPress={() => router.navigate(`/(metrics)/${metric}`)}
+              // Hábito estável abre o DETALHE, não o registro (#297). É um
+              // toque a mais pra registrar algo que já é automático — e é o
+              // ponto: a tela existe pra dar lugar ao que saiu do foco sem
+              // sumir. Registrar continua a um toque de lá.
+              onPress={() =>
+                router.navigate(
+                  journey.habits[metric]?.status === GRADUATED
+                    ? `/habito/${metric}`
+                    : `/(metrics)/${metric}`,
+                )
+              }
             />
           ))}
           <Text
