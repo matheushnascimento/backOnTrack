@@ -66,19 +66,25 @@ describe("stableChip", () => {
 describe("stableExplanation", () => {
   const e = stableExplanation("sleep");
 
-  // A frase mais honesta do design: admite que o app ESTAVA medindo, e diz
-  // que parou. Trocar por "você dominou!" viraria elogio — o registro que o
-  // projeto rejeita.
-  it("diz que o app parou de medir a pessoa", () => {
-    expect(e.body).toMatch(/não usa mais isso pra medir você/);
+  // O benefício real vem PRIMEIRO. A versão anterior abria pelo negativo
+  // ("não pode mais te fazer voltar") e soava fria: a primeira informação era
+  // sobre uma punição que sumiu, não sobre o que a pessoa ganhou.
+  it("abre pelo que mudou pra pessoa", () => {
+    expect(e.body).toMatch(/não precisa mais do seu esforço ativo/);
   });
 
-  it("diz que o hábito não derruba mais", () => {
-    expect(e.body).toMatch(/não pode mais te fazer voltar de nível/);
+  // Sem um motivo, registrar vira permissão sem propósito — e a pessoa para.
+  it("dá um motivo pra continuar registrando", () => {
+    expect(e.body).toMatch(/manter os dados apurados/);
   });
 
-  it("deixa claro que registrar continua", () => {
-    expect(e.body).toMatch(/continua registrando/);
+  it("diz que o hábito não derruba mais o nível", () => {
+    expect(e.body).toMatch(/não derruba mais o seu nível/);
+  });
+
+  // "medir você" transformava a pessoa em objeto do app. Preciso, e frio.
+  it("não trata a pessoa como algo a ser medido", () => {
+    expect(e.body).not.toMatch(/medir você/);
   });
 
   it("não vira elogio", () => {

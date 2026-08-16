@@ -44,17 +44,26 @@ export function stableChip(dias) {
 /**
  * O bloco que explica o que "estável" significa.
  *
- * A frase central admite que o app **estava** medindo a pessoa e diz que
- * parou. Não embeleza — e é por isso que funciona. Trocar por "você dominou
- * este hábito!" transformaria uma mudança de relação em elogio, que é
- * exatamente o registro que o projeto rejeita.
+ * Três movimentos, nesta ordem, e a ordem importa:
+ *
+ * 1. **o que mudou pra pessoa** — "não precisa mais do seu esforço ativo".
+ *    Acerta o mecanismo do modelo: hábito automático deixa de disputar o
+ *    recurso de autorregulação (§7). É o benefício real, e vem primeiro.
+ * 2. **por que ainda vale registrar** — "manter os dados apurados". Sem isso
+ *    o registro vira permissão sem propósito, e a pessoa para.
+ * 3. **o que deixou de acontecer** — "não pode mais derrubar seu nível".
+ *
+ * A versão anterior abria pelo negativo e dizia que o app parou de "medir
+ * você". Era honesta e ficou fria: transformava a pessoa em objeto do app, e
+ * a primeira informação era sobre uma punição que sumiu, não sobre o que ela
+ * ganhou. Continua sem elogio — reforço sóbrio, não celebração.
  */
 export function stableExplanation(metric) {
   const nome = CATEGORY_MAP[metric]?.displayName ?? metric;
   const capitalizado = `${nome.charAt(0).toUpperCase()}${nome.slice(1)}`;
   return {
     label: 'o que "estável" quer dizer',
-    body: `${capitalizado} não pode mais te fazer voltar de nível. Você continua registrando — o app só não usa mais isso pra medir você.`,
+    body: `${capitalizado} não precisa mais do seu esforço ativo. Pode continuar registrando pra manter os dados apurados — mas não derruba mais o seu nível.`,
   };
 }
 
