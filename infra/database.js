@@ -271,6 +271,33 @@ export function raiseJourneyPeak(level) {
 }
 
 /**
+ * Concede/revoga estabilidade a um hábito pra PREVISUALIZAR a tela dele.
+ *
+ * Reusa `journeyGranted`, que é o mesmo caminho da conferência de histórico
+ * (#295) — a tela de detalhe não sabe (nem precisa saber) se a estabilidade
+ * veio de mérito ou de previsualização. Revogar limpa a data junto, senão
+ * sobraria um "estável há N dias" de um hábito que não é mais estável.
+ */
+export function toggleDemoStable(metric) {
+  const atuais = getGrantedHabits();
+  const tem = atuais.includes(metric);
+  const proximos = tem
+    ? atuais.filter((m) => m !== metric)
+    : [...atuais, metric];
+  store.setValue("journeyGranted", proximos.join(","));
+  if (tem) {
+    const datas = getGraduatedAt();
+    delete datas[metric];
+    store.setValue(
+      "journeyGraduatedAt",
+      Object.entries(datas)
+        .map(([m, ms]) => `${m}:${ms}`)
+        .join(","),
+    );
+  }
+}
+
+/**
  * Liga/desliga a previsualização de nível. `-1` desliga.
  *
  * Ao sair do demo, devolve peak e ack ao nível real pra não deixar resíduo —
