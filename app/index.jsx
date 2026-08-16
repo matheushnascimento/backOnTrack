@@ -17,17 +17,16 @@ import CompactRow from "@/components/journey/CompactRow";
 import {
   acknowledgeJourneyLevel,
   add,
-  getGoals,
   getToday,
   raiseJourneyPeak,
   store,
+  syncGraduatedAt,
 } from "@/infra/database";
 import { useSession } from "@/infra/session";
 import { useThemeTokens } from "@/constants/themeTokens";
 import { CATEGORY_MAP } from "@/components/categoryUtils";
 import { minutesToHHMM } from "@/constants/duration";
 import { getGreeting } from "@/constants/greeting";
-import { deriveJourney } from "@/constants/journey";
 import {
   headerCopy,
   levelChip,
@@ -43,7 +42,8 @@ import {
   regressionCopy,
 } from "@/constants/journeyMoments";
 import { JOURNEY_ORDER } from "@/constants/goals";
-import { PAUSED } from "@/constants/journey";
+import { GRADUATED, PAUSED } from "@/constants/journey";
+import { useJourney } from "@/infra/useJourney";
 //#endregion
 
 const METRICS = Object.keys(CATEGORY_MAP);
@@ -121,20 +121,11 @@ export default function Home() {
 
   const totalRecords = METRICS.reduce((s, m) => s + (today[m]?.length ?? 0), 0);
 
-  // Estado da jornada (#289). O peak vem do store e é o que torna regressão
-  // detectável — sem ele não dá pra distinguir "caiu" de "ainda não chegou".
-  const peak = useValue("journeyPeakLevel", store);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const goals = useMemo(() => getGoals(), [records]);
-  const journeyReal = useMemo(
-    () =>
-      deriveJourney({
-        records: Object.values(records ?? {}),
-        goals,
-        previousLevel: Number(peak) || null,
-      }),
-    [records, goals, peak],
-  );
+  // Origem única da derivação (#297). Antes cada tela montava os argumentos
+  // por conta própria, e a Home esquecia `granted` — a conferência da #295 e
+  // a previsualização não tinham efeito aqui, com os testes todos verdes.
+  const journeyReal = useJourney();
+
   // Previsualização de nível (#293). Substitui só o nível e o foco — o resto
   // do estado segue real. Testa a TELA, não o modelo.
   const demoLevel = useValue("journeyDemoLevel", store);
@@ -152,6 +143,17 @@ export default function Home() {
   useEffect(() => {
     if (!emDemo) raiseJourneyPeak(journey.level);
   }, [journey.level, emDemo]);
+
+  // Data de estabilidade (#297). A graduação é derivada, então sem registrar
+  // a data o app não saberia dizer "estável há N dias". Some quando o hábito
+  // deixa de estar estável — reconquistar recomeça a contagem.
+  const estaveis = JOURNEY_ORDER.filter(
+    (m) => journey.habits[m]?.status === GRADUATED,
+  );
+  const chaveEstaveis = estaveis.join(",");
+  useEffect(() => {
+    if (!emDemo) syncGraduatedAt(chaveEstaveis ? chaveEstaveis.split(",") : []);
+  }, [chaveEstaveis, emDemo]);
 
   const { focus, rest } = splitZones(journey);
   const copy = headerCopy(journey);
@@ -368,7 +370,17 @@ export default function Home() {
               name={porMetrica[metric].name}
               value={porMetrica[metric].value}
               badge={restBadge(journey.habits[metric]?.status)}
-              onPress={() => router.navigate(`/(metrics)/${metric}`)}
+              // Hábito estável abre o DETALHE, não o registro (#297). É um
+              // toque a mais pra registrar algo que já é automático — e é o
+              // ponto: a tela existe pra dar lugar ao que saiu do foco sem
+              // sumir. Registrar continua a um toque de lá.
+              onPress={() =>
+                router.navigate(
+                  journey.habits[metric]?.status === GRADUATED
+                    ? `/habito/${metric}`
+                    : `/(metrics)/${metric}`,
+                )
+              }
             />
           ))}
           <Text

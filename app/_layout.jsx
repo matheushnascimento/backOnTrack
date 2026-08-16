@@ -111,6 +111,8 @@ function AppTree() {
           name="auth/callback"
           options={{ title: "Autenticando", headerShown: false }}
         />
+        {/* Detalhe do hábito estável (#297). */}
+        <Stack.Screen name="habito/[metric]" options={{ title: "Hábito" }} />
         <Stack.Screen name="(metrics)" />
       </Stack>
       <UpdateBanner />

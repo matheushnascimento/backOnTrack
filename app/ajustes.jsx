@@ -26,6 +26,7 @@ import {
   grantHabit,
   raiseJourneyPeak,
   setJourneyDemoLevel,
+  toggleDemoStable,
   setDisplayName,
   store,
 } from "@/infra/database";
@@ -763,6 +764,42 @@ function SignalsBlock({ goals }) {
                 sair
               </Text>
             </Pressable>
+          </View>
+
+          {/* Forçar estabilidade (#297): a tela do hábito estável é inalcançável
+          sem um hábito estável, e nenhum passa o portão com histórico curto.
+          Reusa o mesmo caminho da conferência (#295) — a tela de detalhe não
+          sabe se a estabilidade veio de mérito ou daqui. */}
+          <View className="mt-2 flex-row flex-wrap items-center gap-1.5">
+            <Text
+              className="w-full text-xs text-label dark:text-label-dark"
+              style={{ fontFamily: "JetBrainsMono_400Regular" }}
+            >
+              forçar estável (toca pra alternar)
+            </Text>
+            {JOURNEY_ORDER.map((metric) => {
+              const forcado = getGrantedHabits().includes(metric);
+              return (
+                <Pressable
+                  key={metric}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Alternar estabilidade de ${METAS_LABEL[metric]}`}
+                  onPress={() => toggleDemoStable(metric)}
+                  className={`rounded-lg border px-2.5 py-1.5 active:opacity-70 ${
+                    forcado
+                      ? "border-primary dark:border-primary-dark bg-tint-blue dark:bg-tint-blue-dark"
+                      : "border-border-subtle dark:border-border-subtle-dark"
+                  }`}
+                >
+                  <Text
+                    className={`text-xs ${forcado ? "text-primary dark:text-primary-dark" : "text-body-secondary dark:text-body-secondary-dark"}`}
+                    style={{ fontFamily: "JetBrainsMono_400Regular" }}
+                  >
+                    {METAS_LABEL[metric]}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
 
           {/* Controles de simulação (#293).

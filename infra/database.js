@@ -74,6 +74,12 @@ export const store = createMergeableStore()
     // pular concede com a evidência do portão — mesma exigência, sem espera.
     // Persistido porque a derivação olha só a janela atual e esqueceria.
     journeyGranted: { type: "string", default: "" },
+    // Quando cada hábito ficou estável (#297), como `metric:epoch` separado
+    // por vírgula. A graduação é DERIVADA dos sinais — o app sabe que o hábito
+    // é estável, não desde quando. Sem esta data não dá pra dizer "estável há
+    // 24 dias". Some quando o hábito deixa de ser estável, pra recomeçar a
+    // contagem se ele for reconquistado.
+    journeyGraduatedAt: { type: "string", default: "" },
   });
 
 // Espalha `details` (JSON) de volta pro topo. É espalhado por último de
@@ -265,6 +271,33 @@ export function raiseJourneyPeak(level) {
 }
 
 /**
+ * Concede/revoga estabilidade a um hábito pra PREVISUALIZAR a tela dele.
+ *
+ * Reusa `journeyGranted`, que é o mesmo caminho da conferência de histórico
+ * (#295) — a tela de detalhe não sabe (nem precisa saber) se a estabilidade
+ * veio de mérito ou de previsualização. Revogar limpa a data junto, senão
+ * sobraria um "estável há N dias" de um hábito que não é mais estável.
+ */
+export function toggleDemoStable(metric) {
+  const atuais = getGrantedHabits();
+  const tem = atuais.includes(metric);
+  const proximos = tem
+    ? atuais.filter((m) => m !== metric)
+    : [...atuais, metric];
+  store.setValue("journeyGranted", proximos.join(","));
+  if (tem) {
+    const datas = getGraduatedAt();
+    delete datas[metric];
+    store.setValue(
+      "journeyGraduatedAt",
+      Object.entries(datas)
+        .map(([m, ms]) => `${m}:${ms}`)
+        .join(","),
+    );
+  }
+}
+
+/**
  * Liga/desliga a previsualização de nível. `-1` desliga.
  *
  * Ao sair do demo, devolve peak e ack ao nível real pra não deixar resíduo —
@@ -293,6 +326,42 @@ export function grantHabit(metric) {
   const atuais = getGrantedHabits();
   if (atuais.includes(metric)) return;
   store.setValue("journeyGranted", [...atuais, metric].join(","));
+}
+
+/** Datas de graduação como `{ metric: epochMs }`. */
+export function getGraduatedAt() {
+  const out = {};
+  for (const par of String(store.getValue("journeyGraduatedAt") ?? "").split(
+    ",",
+  )) {
+    const [metric, ms] = par.split(":");
+    const n = Number(ms);
+    if (metric && Number.isFinite(n) && n > 0) out[metric.trim()] = n;
+  }
+  return out;
+}
+
+/**
+ * Sincroniza as datas com quem está estável agora.
+ *
+ * Marca a data na PRIMEIRA vez que o hábito aparece estável, e apaga quando
+ * ele deixa de estar — assim reconquistar recomeça a contagem, em vez de
+ * herdar um "estável há 90 dias" que não é verdade.
+ *
+ * Chamar de efeito, nunca em render.
+ */
+export function syncGraduatedAt(estaveis, agora = Date.now()) {
+  const atuais = getGraduatedAt();
+  const proximos = {};
+  for (const metric of estaveis ?? []) {
+    proximos[metric] = atuais[metric] ?? agora;
+  }
+  const serializado = Object.entries(proximos)
+    .map(([m, ms]) => `${m}:${ms}`)
+    .join(",");
+  if (serializado !== String(store.getValue("journeyGraduatedAt") ?? "")) {
+    store.setValue("journeyGraduatedAt", serializado);
+  }
 }
 
 /** Marca o nível como visto. Chamar ao dispensar um momento. */
