@@ -17,7 +17,6 @@ describe("isDevSurface", () => {
     jest.resetModules();
     jest.doMock("expo-updates", () => ({ channel, updateId: null }));
     global.__DEV__ = dev;
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
     return require("@/constants/environment").isDevSurface();
   }
 
