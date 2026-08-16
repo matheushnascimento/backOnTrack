@@ -22,6 +22,7 @@ import {
   getGoals,
   acknowledgeJourneyLevel,
   raiseJourneyPeak,
+  setJourneyDemoLevel,
   setDisplayName,
   store,
 } from "@/infra/database";
@@ -552,6 +553,8 @@ function SyncRow() {
 function SignalsBlock({ goals }) {
   const records = useTable("records", store);
   const peak = useValue("journeyPeakLevel", store);
+  const demo = Number(useValue("journeyDemoLevel", store) ?? -1);
+  const emDemo = demo >= 0;
 
   const jornada = useMemo(
     () =>
@@ -635,6 +638,53 @@ function SignalsBlock({ goals }) {
             {h}
           </Text>
         ))}
+      </View>
+
+      {/* Previsualização de nível: força o nível pra ver as telas que o
+          histórico curto não alcança. Afrouxar limiar não resolveria — com
+          21% de consistência o portão teria que cair tão fundo que deixaria
+          de ser o mesmo portão. Isto testa a TELA; o modelo continua coberto
+          por tests/journey.test.js com dado sintético. */}
+      <View className="mt-3 flex-row items-center gap-2">
+        <Text
+          className="flex-1 text-xs text-label dark:text-label-dark"
+          style={{ fontFamily: "JetBrainsMono_400Regular" }}
+        >
+          {emDemo ? `demo: lvl ${demo}` : "previsualizar nível"}
+        </Text>
+        {[2, 3].map((n) => (
+          <Pressable
+            key={n}
+            accessibilityRole="button"
+            accessibilityLabel={`Previsualizar nível ${n}`}
+            onPress={() => {
+              setJourneyDemoLevel(n, jornada.level);
+              // ack um abaixo → a Home dispara o sheet de subida.
+              acknowledgeJourneyLevel(n - 1);
+            }}
+            className="rounded-lg border border-border-subtle dark:border-border-subtle-dark px-3 py-1.5 active:opacity-70"
+          >
+            <Text
+              className="text-xs text-body-secondary dark:text-body-secondary-dark"
+              style={{ fontFamily: "JetBrainsMono_400Regular" }}
+            >
+              lvl {n}
+            </Text>
+          </Pressable>
+        ))}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Sair da previsualização"
+          onPress={() => setJourneyDemoLevel(-1, jornada.level)}
+          className="rounded-lg border border-border-subtle dark:border-border-subtle-dark px-3 py-1.5 active:opacity-70"
+        >
+          <Text
+            className="text-xs text-body-secondary dark:text-body-secondary-dark"
+            style={{ fontFamily: "JetBrainsMono_400Regular" }}
+          >
+            sair
+          </Text>
+        </Pressable>
       </View>
 
       {/* Controles de simulação (#293).

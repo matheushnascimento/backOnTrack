@@ -58,6 +58,17 @@ export const store = createMergeableStore()
     // a pessoa tocasse "Entendi" — e o design mostra "em pausa" DEPOIS disso.
     // -1 = nunca reconheceu nada, pra distinguir de "reconheceu o lvl 0".
     journeyAckLevel: { type: "number", default: -1 },
+    // Nível forçado pra PREVISUALIZAR telas (#293). -1 = desligado.
+    //
+    // Existe porque os momentos são inobserváveis com histórico curto, e
+    // afrouxar os limiares não resolveria: com 21% de consistência e ±207min
+    // de dispersão, o portão teria que cair tão fundo que deixaria de ser o
+    // mesmo portão. Forçar o nível testa a TELA; o modelo continua sendo
+    // testado por `tests/journey.test.js`, com dado sintético.
+    //
+    // Enquanto ligado, o peak NÃO sobe — senão sair do demo deixaria o app
+    // permanentemente "regredido".
+    journeyDemoLevel: { type: "number", default: -1 },
   });
 
 // Espalha `details` (JSON) de volta pro topo. É espalhado por último de
@@ -246,6 +257,21 @@ export function raiseJourneyPeak(level) {
   if (!Number.isFinite(level)) return;
   const atual = Number(store.getValue("journeyPeakLevel")) || 0;
   if (level > atual) store.setValue("journeyPeakLevel", level);
+}
+
+/**
+ * Liga/desliga a previsualização de nível. `-1` desliga.
+ *
+ * Ao sair do demo, devolve peak e ack ao nível real pra não deixar resíduo —
+ * sem isso o app mostraria um aviso de regressão que nunca aconteceu.
+ */
+export function setJourneyDemoLevel(level, realLevel) {
+  const alvo = Number.isFinite(level) ? level : -1;
+  store.setValue("journeyDemoLevel", alvo);
+  if (alvo < 0 && Number.isFinite(realLevel)) {
+    store.setValue("journeyPeakLevel", realLevel);
+    store.setValue("journeyAckLevel", realLevel);
+  }
 }
 
 /** Marca o nível como visto. Chamar ao dispensar um momento. */

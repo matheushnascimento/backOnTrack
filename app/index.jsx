@@ -126,7 +126,7 @@ export default function Home() {
   const peak = useValue("journeyPeakLevel", store);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const goals = useMemo(() => getGoals(), [records]);
-  const journey = useMemo(
+  const journeyReal = useMemo(
     () =>
       deriveJourney({
         records: Object.values(records ?? {}),
@@ -135,10 +135,23 @@ export default function Home() {
       }),
     [records, goals, peak],
   );
-  // Escrita no store fica em efeito, nunca em render.
+  // Previsualização de nível (#293). Substitui só o nível e o foco — o resto
+  // do estado segue real. Testa a TELA, não o modelo.
+  const demoLevel = useValue("journeyDemoLevel", store);
+  const emDemo = Number(demoLevel ?? -1) >= 0;
+  const journey = emDemo
+    ? {
+        ...journeyReal,
+        level: Number(demoLevel),
+        focus: JOURNEY_ORDER[Number(demoLevel) - 1] ?? null,
+      }
+    : journeyReal;
+
+  // Escrita no store fica em efeito, nunca em render. Em demo o peak NÃO sobe:
+  // senão sair do demo deixaria o app permanentemente "regredido".
   useEffect(() => {
-    raiseJourneyPeak(journey.level);
-  }, [journey.level]);
+    if (!emDemo) raiseJourneyPeak(journey.level);
+  }, [journey.level, emDemo]);
 
   const { focus, rest } = splitZones(journey);
   const copy = headerCopy(journey);
