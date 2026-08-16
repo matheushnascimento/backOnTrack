@@ -1,22 +1,36 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //#region imports
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { router } from "expo-router";
 import { useTable, useValue } from "tinybase/ui-react";
 
 import MyView from "@/components/MyView";
 import InstallApp from "@/components/InstallApp";
-import MetricCard from "@/components/MetricCard";
 import Icon1c from "@/components/Icon1c";
 import RetomadaState from "@/components/RetomadaState";
+import FocusCard from "@/components/journey/FocusCard";
+import CompactRow from "@/components/journey/CompactRow";
 
-import { getToday, store } from "@/infra/database";
+import {
+  add,
+  getGoals,
+  getToday,
+  raiseJourneyPeak,
+  store,
+} from "@/infra/database";
 import { useSession } from "@/infra/session";
 import { useThemeTokens } from "@/constants/themeTokens";
 import { CATEGORY_MAP } from "@/components/categoryUtils";
 import { minutesToHHMM } from "@/constants/duration";
 import { getGreeting } from "@/constants/greeting";
+import { deriveJourney } from "@/constants/journey";
+import {
+  headerCopy,
+  levelChip,
+  restBadge,
+  splitZones,
+} from "@/constants/journeyHome";
 //#endregion
 
 const METRICS = Object.keys(CATEGORY_MAP);
@@ -94,6 +108,28 @@ export default function Home() {
 
   const totalRecords = METRICS.reduce((s, m) => s + (today[m]?.length ?? 0), 0);
 
+  // Estado da jornada (#289). O peak vem do store e é o que torna regressão
+  // detectável — sem ele não dá pra distinguir "caiu" de "ainda não chegou".
+  const peak = useValue("journeyPeakLevel", store);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const goals = useMemo(() => getGoals(), [records]);
+  const journey = useMemo(
+    () =>
+      deriveJourney({
+        records: Object.values(records ?? {}),
+        goals,
+        previousLevel: Number(peak) || null,
+      }),
+    [records, goals, peak],
+  );
+  // Escrita no store fica em efeito, nunca em render.
+  useEffect(() => {
+    raiseJourneyPeak(journey.level);
+  }, [journey.level]);
+
+  const { focus, rest } = splitZones(journey);
+  const copy = headerCopy(journey);
+
   // Retomada aparece quando: (a) nunca registrou, ou (b) 3+ dias corridos sem
   // registro em nenhuma métrica. Dismissal in-memory desliga só nesta sessão.
   // Registrar hoje (totalRecords>0) desliga automaticamente pelo critério (a).
@@ -102,21 +138,31 @@ export default function Home() {
     totalRecords === 0 &&
     (daysSinceLast === null || daysSinceLast >= 3);
 
-  const cards = METRICS.map((type) => {
-    const { displayName, unit } = CATEGORY_MAP[type];
-    const registros = today[type] ?? [];
-    const total = registros.reduce((s, r) => s + (Number(r.quantity) || 0), 0);
-    const active = registros.length > 0;
-    return {
-      key: type,
-      metric: type,
-      name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
-      active,
-      value: active ? formatValue(unit, total) : null,
-      detail:
-        active && registros.length > 1 ? `${registros.length} registros` : null,
-    };
-  });
+  const porMetrica = Object.fromEntries(
+    METRICS.map((type) => {
+      const { displayName, unit } = CATEGORY_MAP[type];
+      const registros = today[type] ?? [];
+      const total = registros.reduce(
+        (s, r) => s + (Number(r.quantity) || 0),
+        0,
+      );
+      return [
+        type,
+        {
+          name: displayName.charAt(0).toUpperCase() + displayName.slice(1),
+          unit,
+          count: registros.length,
+          total,
+          value: registros.length > 0 ? formatValue(unit, total) : null,
+        },
+      ];
+    }),
+  );
+
+  // Incremento direto da Home. `date` e `createdAt` saem do buildRow.
+  function quickAdd(metric, valor) {
+    add(metric, { quantity: valor, unit: CATEGORY_MAP[metric]?.unit ?? "" });
+  }
 
   if (showRetomada) {
     return (
@@ -175,12 +221,25 @@ export default function Home() {
         {/* Header: data · greeting · mini-ícone 1c · subtitle. Padrão da mockup
             2a·1 do design v2. */}
         <View className="gap-1 px-1">
-          <Text
-            className="text-xs tracking-wider text-label dark:text-label-dark"
-            style={{ fontFamily: "JetBrainsMono_500Medium" }}
-          >
-            {formatDateLabel()}
-          </Text>
+          {/* Data + chip de nível. O nível é CONTEXTO, não pontuação — por
+              isso vive num chip discreto ao lado da data, e nunca como número
+              grande (docs/11-modelo-de-niveis.md §1.5). */}
+          <View className="flex-row items-center justify-between gap-2">
+            <Text
+              className="text-xs tracking-wider text-label dark:text-label-dark"
+              style={{ fontFamily: "JetBrainsMono_500Medium" }}
+            >
+              {formatDateLabel()}
+            </Text>
+            <View className="rounded-full bg-tint-blue dark:bg-tint-blue-dark px-2 py-0.5">
+              <Text
+                className="text-xs tracking-wider text-primary dark:text-primary-dark"
+                style={{ fontFamily: "JetBrainsMono_500Medium" }}
+              >
+                {levelChip(journey.level, focus)}
+              </Text>
+            </View>
+          </View>
           <View className="flex-row items-center justify-between gap-3">
             {/* `flex-1` dá largura limitada pro Text — sem isso ele não tem
                 onde quebrar e o nome longo vaza. Com a largura definida, a
@@ -211,25 +270,60 @@ export default function Home() {
             className="text-sm text-body-secondary dark:text-body-secondary-dark"
             style={{ fontFamily: "Inter_400Regular", marginTop: 2 }}
           >
-            {totalRecords === 0
-              ? "Nenhum registro hoje ainda. Sem pressa."
-              : `${totalRecords} ${totalRecords === 1 ? "registro" : "registros"} hoje. Sem pressa.`}
+            {copy.title}
+          </Text>
+          <Text
+            className="text-sm text-body-secondary dark:text-body-secondary-dark"
+            style={{ fontFamily: "Inter_400Regular" }}
+          >
+            {copy.subtitle}
           </Text>
         </View>
 
-        {/* 5 metric cards — toque navega pro registro rápido. */}
-        <View className="gap-2.5">
-          {cards.map((c) => (
-            <MetricCard
-              key={c.key}
-              metric={c.metric}
-              name={c.name}
-              active={c.active}
-              value={c.value}
-              detail={c.detail}
-              onPress={() => router.navigate(`/(metrics)/${c.metric}`)}
+        {/* Zona de foco: o hábito do nível, com número grande e ação rápida.
+            É o único com essa altura — a hierarquia mora aqui. */}
+        {focus ? (
+          <FocusCard
+            metric={focus}
+            name={porMetrica[focus].name}
+            value={porMetrica[focus].value ?? "0"}
+            unit={
+              porMetrica[focus].count > 0 ? undefined : porMetrica[focus].unit
+            }
+            count={porMetrica[focus].count}
+            onQuickAdd={(v) => quickAdd(focus, v)}
+            onOpen={() => router.navigate(`/(metrics)/${focus}`)}
+          />
+        ) : null}
+
+        {/* Zona "resto do dia": tudo o mais, compacto mas tapável. NADA some —
+            é a decisão central do design (hierarquia, não exclusão). */}
+        <View className="gap-2">
+          <View className="flex-row items-center gap-2">
+            <Text
+              className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
+              style={{ fontFamily: "JetBrainsMono_500Medium" }}
+            >
+              resto do dia
+            </Text>
+            <View className="h-px flex-1 bg-border-subtle dark:bg-border-subtle-dark" />
+          </View>
+          {rest.map((metric) => (
+            <CompactRow
+              key={metric}
+              metric={metric}
+              name={porMetrica[metric].name}
+              value={porMetrica[metric].value}
+              badge={restBadge(journey.habits[metric]?.status)}
+              onPress={() => router.navigate(`/(metrics)/${metric}`)}
             />
           ))}
+          <Text
+            className="px-1 text-xs text-label dark:text-label-dark"
+            style={{ fontFamily: "Inter_400Regular", marginTop: 2 }}
+          >
+            Tudo continua registrável. A ordem é sugerida.
+          </Text>
         </View>
 
         {/* Obter o app (só web: QR no desktop, download no celular) */}
