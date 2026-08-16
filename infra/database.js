@@ -69,6 +69,11 @@ export const store = createMergeableStore()
     // Enquanto ligado, o peak NÃO sobe — senão sair do demo deixaria o app
     // permanentemente "regredido".
     journeyDemoLevel: { type: "number", default: -1 },
+    // Hábitos graduados por CONFERÊNCIA do histórico (#295), separados por
+    // vírgula. Graduar normalmente exige a barra alta e semanas de observação;
+    // pular concede com a evidência do portão — mesma exigência, sem espera.
+    // Persistido porque a derivação olha só a janela atual e esqueceria.
+    journeyGranted: { type: "string", default: "" },
   });
 
 // Espalha `details` (JSON) de volta pro topo. É espalhado por último de
@@ -272,6 +277,22 @@ export function setJourneyDemoLevel(level, realLevel) {
     store.setValue("journeyPeakLevel", realLevel);
     store.setValue("journeyAckLevel", realLevel);
   }
+}
+
+/** Hábitos graduados por conferência, como lista. */
+export function getGrantedHabits() {
+  return String(store.getValue("journeyGranted") ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+/** Concede graduação a um hábito. Idempotente. */
+export function grantHabit(metric) {
+  if (!metric) return;
+  const atuais = getGrantedHabits();
+  if (atuais.includes(metric)) return;
+  store.setValue("journeyGranted", [...atuais, metric].join(","));
 }
 
 /** Marca o nível como visto. Chamar ao dispensar um momento. */
