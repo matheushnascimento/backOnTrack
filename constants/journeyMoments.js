@@ -33,6 +33,23 @@ export function pendingMoment(level, ackLevel) {
   return null;
 }
 
+/**
+ * Qual hábito foi conquistado ao chegar neste nível.
+ *
+ * ⚠️ **`null` abaixo do lvl 2, e isso não é detalhe.** No lvl 1 o primeiro
+ * hábito está sendo CONSTRUÍDO, não conquistado — nada virou seu ainda.
+ * Sem esta guarda o sheet diria "Sono virou seu" tendo "Sono" também como
+ * próximo foco: o mesmo hábito nos dois papéis, na primeira subida que a
+ * pessoa veria.
+ *
+ * @param {number} level
+ * @param {string[]} order Ordem da jornada.
+ */
+export function achievedHabit(level, order) {
+  if (!Number.isFinite(level) || level < 2) return null;
+  return (order ?? [])[level - 2] ?? null;
+}
+
 const nomeDe = (metric) => CATEGORY_MAP[metric]?.displayName ?? metric;
 const capitalizar = (s) => `${s.charAt(0).toUpperCase()}${s.slice(1)}`;
 

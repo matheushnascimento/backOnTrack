@@ -4,6 +4,7 @@ import {
   MOMENT_REGRESSION,
   levelUpCopy,
   pendingMoment,
+  achievedHabit,
   regressionCopy,
 } from "@/constants/journeyMoments";
 
@@ -44,6 +45,29 @@ describe("pendingMoment", () => {
   // default é -1 e não 0.
   it("reconhecer o lvl 0 e subir dispara momento", () => {
     expect(pendingMoment(1, 0)).toBe(MOMENT_LEVEL_UP);
+  });
+});
+
+describe("achievedHabit", () => {
+  const ordem = ["sleep", "water", "feeding"];
+
+  // No lvl 1 o primeiro hábito está sendo CONSTRUÍDO, não conquistado. Sem
+  // esta guarda o sheet diria "Sono virou seu" tendo Sono como próximo foco.
+  it("abaixo do lvl 2 nada foi conquistado", () => {
+    expect(achievedHabit(0, ordem)).toBeNull();
+    expect(achievedHabit(1, ordem)).toBeNull();
+  });
+
+  it("no lvl 2 o primeiro hábito virou seu", () => {
+    expect(achievedHabit(2, ordem)).toBe("sleep");
+  });
+
+  it("no lvl 3 é o segundo", () => {
+    expect(achievedHabit(3, ordem)).toBe("water");
+  });
+
+  it("além da ordem não inventa hábito", () => {
+    expect(achievedHabit(99, ordem)).toBeNull();
   });
 });
 

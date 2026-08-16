@@ -37,6 +37,7 @@ import {
 import {
   MOMENT_LEVEL_UP,
   MOMENT_REGRESSION,
+  achievedHabit,
   levelUpCopy,
   pendingMoment,
   regressionCopy,
@@ -149,6 +150,11 @@ export default function Home() {
   const pausados = JOURNEY_ORDER.filter(
     (m) => journey.habits[m]?.status === PAUSED,
   );
+
+  // `null` no lvl 1: nada foi conquistado ainda, o primeiro hábito está sendo
+  // construído. Sem isso o sheet diria "Sono virou seu" com Sono também como
+  // próximo foco.
+  const conquistado = achievedHabit(journey.level, JOURNEY_ORDER);
 
   function dispensarMomento() {
     acknowledgeJourneyLevel(journey.level);
@@ -372,16 +378,16 @@ export default function Home() {
 
       {/* Subir de nível: bottom sheet, fora do ScrollView. Fullscreen trataria
           a subida como interrupção solene; sheet trata como recado. */}
-      {moment === MOMENT_LEVEL_UP && focus ? (
+      {moment === MOMENT_LEVEL_UP && conquistado ? (
         <LevelUpSheet
           visible
           copy={levelUpCopy({
             from: Number(ackLevel ?? 0),
             to: journey.level,
-            achieved: JOURNEY_ORDER[Math.max(0, journey.level - 2)],
+            achieved: conquistado,
             next: focus,
           })}
-          achieved={JOURNEY_ORDER[Math.max(0, journey.level - 2)]}
+          achieved={conquistado}
           next={focus}
           onDismiss={dispensarMomento}
           onConfirm={() => {

@@ -20,6 +20,7 @@ import MyView from "@/components/MyView";
 import {
   clearAll,
   getGoals,
+  acknowledgeJourneyLevel,
   raiseJourneyPeak,
   setDisplayName,
   store,
@@ -634,6 +635,42 @@ function SignalsBlock({ goals }) {
             {h}
           </Text>
         ))}
+      </View>
+
+      {/* Controles de simulação (#293).
+          Os dois momentos são inobserváveis com histórico curto: nada sobe,
+          nada cai. Estes botões só mexem no `journeyAckLevel` — o nível que a
+          pessoa "já viu" — pra forçar a comparação a dar subida ou queda.
+          Nenhum registro é tocado, e dispensar o momento devolve o ack ao
+          nível real. É o equivalente ao server em `required` que usamos pra
+          ver o estado de "precisa entrar". */}
+      <View className="mt-3 flex-row gap-2">
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Simular subida de nível"
+          onPress={() => acknowledgeJourneyLevel(jornada.level - 1)}
+          className="flex-1 rounded-xl border border-border-subtle dark:border-border-subtle-dark py-2 active:opacity-70"
+        >
+          <Text
+            className="text-center text-xs text-body-secondary dark:text-body-secondary-dark"
+            style={{ fontFamily: "JetBrainsMono_400Regular" }}
+          >
+            simular subida
+          </Text>
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Simular regressão"
+          onPress={() => acknowledgeJourneyLevel(jornada.level + 2)}
+          className="flex-1 rounded-xl border border-border-subtle dark:border-border-subtle-dark py-2 active:opacity-70"
+        >
+          <Text
+            className="text-center text-xs text-body-secondary dark:text-body-secondary-dark"
+            style={{ fontFamily: "JetBrainsMono_400Regular" }}
+          >
+            simular regressão
+          </Text>
+        </Pressable>
       </View>
 
       {linhas.map((l) => (
