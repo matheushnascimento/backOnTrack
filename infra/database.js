@@ -46,6 +46,11 @@ export const store = createMergeableStore()
     // relação à derivação do email — que quando presente cai no primeiro nome
     // (antes do primeiro ponto). Editável em Ajustes.
     displayName: { type: "string", default: "" },
+    // Maior nível já alcançado na jornada (#289). É a MEMÓRIA que torna
+    // regressão detectável: o nível atual é derivado dos sinais, e olhando só
+    // o presente não dá pra distinguir "caiu do lvl 3" de "nunca passou do 2".
+    // Só sobe — cair é justamente o que se quer poder detectar.
+    journeyPeakLevel: { type: "number", default: 0 },
   });
 
 // Espalha `details` (JSON) de volta pro topo. É espalhado por último de
@@ -223,6 +228,17 @@ export function getGoals() {
     if (Number.isFinite(row?.target)) out[metric] = row.target;
   }
   return out;
+}
+
+/**
+ * Eleva o pico de nível, se o atual for maior. Nunca abaixa.
+ *
+ * Chamar de efeito, nunca durante render — é escrita no store.
+ */
+export function raiseJourneyPeak(level) {
+  if (!Number.isFinite(level)) return;
+  const atual = Number(store.getValue("journeyPeakLevel")) || 0;
+  if (level > atual) store.setValue("journeyPeakLevel", level);
 }
 
 // --- Testers (tela de admin, Track A do M3-5) ---

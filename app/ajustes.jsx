@@ -1,5 +1,5 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Modal,
   Pressable,
@@ -17,7 +17,13 @@ import { useTable, useValue } from "tinybase/ui-react";
 import { goBack } from "@/constants/navigation";
 import MyView from "@/components/MyView";
 
-import { clearAll, getGoals, setDisplayName, store } from "@/infra/database";
+import {
+  clearAll,
+  getGoals,
+  raiseJourneyPeak,
+  setDisplayName,
+  store,
+} from "@/infra/database";
 import { useSession } from "@/infra/session";
 import { AUTH_ENABLED } from "@/infra/supabase";
 import {
@@ -34,6 +40,13 @@ import { getEnvironmentInfo } from "@/constants/environment";
 import { useThemeTokens } from "@/constants/themeTokens";
 import { JOURNEY_ORDER, formatGoal, goalFor } from "@/constants/goals";
 import { habitSignals } from "@/constants/habitSignals";
+import {
+  BUILDING,
+  GRADUATED,
+  LOCKED,
+  PAUSED,
+  deriveJourney,
+} from "@/constants/journey";
 
 const ENV = getEnvironmentInfo();
 
@@ -62,6 +75,15 @@ const METAS_LABEL = {
   exercise: "Exercício",
   feeding: "Alimentação",
   study: "Estudo",
+};
+
+// Rótulo humano dos status da jornada. Descritivo, nunca elogioso — é
+// diagnóstico, não reforço (docs/11-modelo-de-niveis.md §1.5).
+const STATUS_LABEL = {
+  [BUILDING]: "construindo",
+  [GRADUATED]: "estável",
+  [PAUSED]: "em pausa",
+  [LOCKED]: "—",
 };
 
 // Janela dos sinais de automaticidade. 28 dias é a janela do portão de nível
@@ -528,6 +550,23 @@ function SyncRow() {
  */
 function SignalsBlock({ goals }) {
   const records = useTable("records", store);
+  const peak = useValue("journeyPeakLevel", store);
+
+  const jornada = useMemo(
+    () =>
+      deriveJourney({
+        records: Object.values(records ?? {}),
+        goals,
+        previousLevel: Number(peak) || null,
+      }),
+    [records, goals, peak],
+  );
+
+  // Escrita no store vive em efeito, nunca em render.
+  useEffect(() => {
+    raiseJourneyPeak(jornada.level);
+  }, [jornada.level]);
+
   const linhas = useMemo(() => {
     const lista = Object.values(records ?? {});
     return JOURNEY_ORDER.map((metric) => {
@@ -546,9 +585,15 @@ function SignalsBlock({ goals }) {
         s.resilience.rate == null
           ? "—"
           : `${Math.round(s.resilience.rate * 100)}%`;
-      return { metric, consist, regul, res };
+      return {
+        metric,
+        consist,
+        regul,
+        res,
+        status: STATUS_LABEL[jornada.habits[metric]?.status] ?? "—",
+      };
     });
-  }, [records, goals]);
+  }, [records, goals, jornada]);
 
   return (
     <View className="border-t border-surface-subtle dark:border-surface-subtle-dark px-4 py-3">
@@ -564,6 +609,14 @@ function SignalsBlock({ goals }) {
       >
         Medição em andamento. Ainda não decide nada.
       </Text>
+      <Text
+        className="text-xs text-body-secondary dark:text-body-secondary-dark"
+        style={{ fontFamily: "JetBrainsMono_400Regular", marginTop: 6 }}
+      >
+        nível derivado: {jornada.level}
+        {jornada.focus ? ` · foco: ${METAS_LABEL[jornada.focus]}` : ""}
+        {jornada.regressed ? ` · abaixo do pico (${peak})` : ""}
+      </Text>
 
       <View className="mt-3 flex-row">
         <Text
@@ -572,10 +625,10 @@ function SignalsBlock({ goals }) {
         >
           {" "}
         </Text>
-        {["consist.", "horário", "volta"].map((h) => (
+        {["consist.", "horário", "volta", "estado"].map((h) => (
           <Text
             key={h}
-            className="w-16 text-right text-xs text-label dark:text-label-dark"
+            className="w-14 text-right text-xs text-label dark:text-label-dark"
             style={{ fontFamily: "JetBrainsMono_400Regular" }}
           >
             {h}
@@ -591,10 +644,10 @@ function SignalsBlock({ goals }) {
           >
             {METAS_LABEL[l.metric]}
           </Text>
-          {[l.consist, l.regul, l.res].map((v, i) => (
+          {[l.consist, l.regul, l.res, l.status].map((v, i) => (
             <Text
               key={i}
-              className="w-16 text-right text-sm text-body-secondary dark:text-body-secondary-dark"
+              className="w-14 text-right text-xs text-body-secondary dark:text-body-secondary-dark"
               style={{ fontFamily: "JetBrainsMono_400Regular" }}
             >
               {v}
