@@ -164,7 +164,7 @@ export function isBroken(verdicts, cadence, porSemana = 3) {
  * topo, larga-se a carga mais nova e o foco volta pro hábito que está
  * sofrendo — que é a copy do design ("o foco volta pra água por um tempo").
  *
- * @param {{records: Array, goals?: object, now?: number, previousLevel?: number|null, thresholds?: object}} args
+ * @param {{records: Array, goals?: object, now?: number, previousLevel?: number|null, granted?: string[], thresholds?: object}} args
  * @returns {{level: number, habits: object, focus: string|null, regressed: boolean}}
  */
 export function deriveJourney({
@@ -172,6 +172,7 @@ export function deriveJourney({
   goals,
   now = Date.now(),
   previousLevel = null,
+  granted = [],
   thresholds = THRESHOLDS,
 }) {
   const janela = thresholds.window;
@@ -191,11 +192,16 @@ export function deriveJourney({
     // derrubar. Quem derruba é o portão. E hábito sem nenhum acerto na janela
     // não está quebrado: não começou.
     const comecou = signals.consistency.hits > 0;
+    // Concessão por conferência (#295): o hábito entra graduado sem esperar a
+    // barra alta. A evidência exigida foi a do portão, avaliada sobre o mesmo
+    // histórico — não é atalho, é reconhecimento antecipado.
+    const concedido = (granted ?? []).includes(metric);
     porMetrica[metric] = {
       signals,
-      graduated: passesGraduation(signals, thresholds),
-      gated: passesGate(signals, thresholds),
-      broken: comecou && isBroken(verdicts, GOAL_CADENCE[metric]),
+      granted: concedido,
+      graduated: concedido || passesGraduation(signals, thresholds),
+      gated: concedido || passesGate(signals, thresholds),
+      broken: !concedido && comecou && isBroken(verdicts, GOAL_CADENCE[metric]),
     };
   }
 

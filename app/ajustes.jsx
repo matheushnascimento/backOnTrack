@@ -16,11 +16,14 @@ import { useTable, useValue } from "tinybase/ui-react";
 
 import { goBack } from "@/constants/navigation";
 import MyView from "@/components/MyView";
+import SkipLevelSheet from "@/components/journey/SkipLevelSheet";
 
 import {
   clearAll,
   getGoals,
   acknowledgeJourneyLevel,
+  getGrantedHabits,
+  grantHabit,
   raiseJourneyPeak,
   setJourneyDemoLevel,
   setDisplayName,
@@ -42,6 +45,7 @@ import { getEnvironmentInfo, isDevSurface } from "@/constants/environment";
 import { useThemeTokens } from "@/constants/themeTokens";
 import { JOURNEY_ORDER, formatGoal, goalFor } from "@/constants/goals";
 import { habitSignals } from "@/constants/habitSignals";
+import { skipCopy, skipEvidence, skipQualifies } from "@/constants/journeySkip";
 import {
   BUILDING,
   GRADUATED,
@@ -107,6 +111,39 @@ export default function Ajustes() {
   const goalsTable = useTable("goals", store);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const goals = useMemo(() => getGoals(), [goalsTable]);
+
+  // Pular nível (#295): a pessoa declara que já tem o hábito, o app confere o
+  // histórico com o MESMO critério do portão e concede — ou diz que observa.
+  const [skipMetric, setSkipMetric] = useState(null);
+  const recordsTable = useTable("records", store);
+  const grantedValue = useValue("journeyGranted", store);
+  const skipInfo = useMemo(() => {
+    if (!skipMetric) return null;
+    const lista = Object.values(recordsTable ?? {});
+    const signals = habitSignals(
+      lista,
+      skipMetric,
+      goalFor(goals, skipMetric),
+      JANELA_SINAIS,
+    );
+    const qualifies = skipQualifies(signals);
+    const jornadaAtual = deriveJourney({
+      records: lista,
+      goals,
+      granted: getGrantedHabits(),
+    });
+    return {
+      signals,
+      qualifies,
+      evidence: skipEvidence(signals, JANELA_SINAIS),
+      copy: skipCopy({
+        metric: skipMetric,
+        qualifies,
+        nextLevel: jornadaAtual.level + 1,
+      }),
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [skipMetric, recordsTable, goals, grantedValue]);
 
   function handleClear() {
     confirmAction({
@@ -263,6 +300,26 @@ export default function Ajustes() {
           </Section>
         )}
 
+        {/* Já tenho esse hábito — pular nível com conferência (#295). */}
+        <Section title="Já tenho esse hábito">
+          {JOURNEY_ORDER.map((metric) => (
+            <Row
+              key={metric}
+              label={METAS_LABEL[metric]}
+              value={
+                getGrantedHabits().includes(metric) ? "estável" : "conferir"
+              }
+              valueChevron={!getGrantedHabits().includes(metric)}
+              disabled={getGrantedHabits().includes(metric)}
+              onPress={
+                getGrantedHabits().includes(metric)
+                  ? undefined
+                  : () => setSkipMetric(metric)
+              }
+            />
+          ))}
+        </Section>
+
         {/* Avançado */}
         <Section title="Avançado">
           <SignalsBlock goals={goals} />
@@ -291,6 +348,21 @@ export default function Ajustes() {
           </Text>
         ) : null}
       </ScrollView>
+
+      {skipInfo ? (
+        <SkipLevelSheet
+          visible
+          metric={skipMetric}
+          copy={skipInfo.copy}
+          evidence={skipInfo.evidence}
+          qualifies={skipInfo.qualifies}
+          onDismiss={() => setSkipMetric(null)}
+          onConfirm={() => {
+            grantHabit(skipMetric);
+            setSkipMetric(null);
+          }}
+        />
+      ) : null}
 
       {nameModalOpen && (
         <NameEditModal
