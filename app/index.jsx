@@ -17,7 +17,6 @@ import CompactRow from "@/components/journey/CompactRow";
 import {
   acknowledgeJourneyLevel,
   add,
-  getGoals,
   getToday,
   raiseJourneyPeak,
   store,
@@ -28,7 +27,6 @@ import { useThemeTokens } from "@/constants/themeTokens";
 import { CATEGORY_MAP } from "@/components/categoryUtils";
 import { minutesToHHMM } from "@/constants/duration";
 import { getGreeting } from "@/constants/greeting";
-import { deriveJourney } from "@/constants/journey";
 import {
   headerCopy,
   levelChip,
@@ -45,6 +43,7 @@ import {
 } from "@/constants/journeyMoments";
 import { JOURNEY_ORDER } from "@/constants/goals";
 import { GRADUATED, PAUSED } from "@/constants/journey";
+import { useJourney } from "@/infra/useJourney";
 //#endregion
 
 const METRICS = Object.keys(CATEGORY_MAP);
@@ -122,20 +121,11 @@ export default function Home() {
 
   const totalRecords = METRICS.reduce((s, m) => s + (today[m]?.length ?? 0), 0);
 
-  // Estado da jornada (#289). O peak vem do store e é o que torna regressão
-  // detectável — sem ele não dá pra distinguir "caiu" de "ainda não chegou".
-  const peak = useValue("journeyPeakLevel", store);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const goals = useMemo(() => getGoals(), [records]);
-  const journeyReal = useMemo(
-    () =>
-      deriveJourney({
-        records: Object.values(records ?? {}),
-        goals,
-        previousLevel: Number(peak) || null,
-      }),
-    [records, goals, peak],
-  );
+  // Origem única da derivação (#297). Antes cada tela montava os argumentos
+  // por conta própria, e a Home esquecia `granted` — a conferência da #295 e
+  // a previsualização não tinham efeito aqui, com os testes todos verdes.
+  const journeyReal = useJourney();
+
   // Previsualização de nível (#293). Substitui só o nível e o foco — o resto
   // do estado segue real. Testa a TELA, não o modelo.
   const demoLevel = useValue("journeyDemoLevel", store);
