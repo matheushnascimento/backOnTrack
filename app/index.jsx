@@ -10,9 +10,12 @@ import InstallApp from "@/components/InstallApp";
 import Icon1c from "@/components/Icon1c";
 import RetomadaState from "@/components/RetomadaState";
 import FocusCard from "@/components/journey/FocusCard";
+import RegressionNotice from "@/components/journey/RegressionNotice";
+import LevelUpSheet from "@/components/journey/LevelUpSheet";
 import CompactRow from "@/components/journey/CompactRow";
 
 import {
+  acknowledgeJourneyLevel,
   add,
   getGoals,
   getToday,
@@ -31,6 +34,15 @@ import {
   restBadge,
   splitZones,
 } from "@/constants/journeyHome";
+import {
+  MOMENT_LEVEL_UP,
+  MOMENT_REGRESSION,
+  levelUpCopy,
+  pendingMoment,
+  regressionCopy,
+} from "@/constants/journeyMoments";
+import { JOURNEY_ORDER } from "@/constants/goals";
+import { PAUSED } from "@/constants/journey";
 //#endregion
 
 const METRICS = Object.keys(CATEGORY_MAP);
@@ -129,6 +141,18 @@ export default function Home() {
 
   const { focus, rest } = splitZones(journey);
   const copy = headerCopy(journey);
+
+  // Momento pendente (#293). O ack é o que garante "uma vez e some": sem ele
+  // o aviso de regressão voltaria em toda abertura.
+  const ackLevel = useValue("journeyAckLevel", store);
+  const moment = pendingMoment(journey.level, Number(ackLevel ?? -1));
+  const pausados = JOURNEY_ORDER.filter(
+    (m) => journey.habits[m]?.status === PAUSED,
+  );
+
+  function dispensarMomento() {
+    acknowledgeJourneyLevel(journey.level);
+  }
 
   // Retomada aparece quando: (a) nunca registrou, ou (b) 3+ dias corridos sem
   // registro em nenhuma métrica. Dismissal in-memory desliga só nesta sessão.
@@ -280,6 +304,16 @@ export default function Home() {
           </Text>
         </View>
 
+        {/* Aviso de regressão: no topo, acima de tudo. Não é modal de
+            propósito — não bloqueia, e a pessoa pode ignorar e registrar. */}
+        {moment === MOMENT_REGRESSION ? (
+          <RegressionNotice
+            copy={regressionCopy({ focus: focus ?? "sleep", paused: pausados })}
+            onHistory={() => router.navigate("/history")}
+            onDismiss={dispensarMomento}
+          />
+        ) : null}
+
         {/* Zona de foco: o hábito do nível, com número grande e ação rápida.
             É o único com essa altura — a hierarquia mora aqui. */}
         {focus ? (
@@ -335,6 +369,27 @@ export default function Home() {
             o auto-load da sessão, o gate `!user` piscava o botão logo depois
             de logar. Concentrar em Ajustes elimina o flicker e centraliza. */}
       </ScrollView>
+
+      {/* Subir de nível: bottom sheet, fora do ScrollView. Fullscreen trataria
+          a subida como interrupção solene; sheet trata como recado. */}
+      {moment === MOMENT_LEVEL_UP && focus ? (
+        <LevelUpSheet
+          visible
+          copy={levelUpCopy({
+            from: Number(ackLevel ?? 0),
+            to: journey.level,
+            achieved: JOURNEY_ORDER[Math.max(0, journey.level - 2)],
+            next: focus,
+          })}
+          achieved={JOURNEY_ORDER[Math.max(0, journey.level - 2)]}
+          next={focus}
+          onDismiss={dispensarMomento}
+          onConfirm={() => {
+            dispensarMomento();
+            router.navigate(`/(metrics)/${focus}`);
+          }}
+        />
+      ) : null}
     </MyView>
   );
 }

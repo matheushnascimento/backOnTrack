@@ -51,6 +51,13 @@ export const store = createMergeableStore()
     // o presente não dá pra distinguir "caiu do lvl 3" de "nunca passou do 2".
     // Só sobe — cair é justamente o que se quer poder detectar.
     journeyPeakLevel: { type: "number", default: 0 },
+    // Nível que o usuário já VIU e reconheceu (#293). Diferente do peak:
+    // o peak dirige o estado (o que aparece "em pausa" na Home, de forma
+    // persistente), o ack dirige o momento (aparece uma vez e some). Se o ack
+    // governasse o estado, hábito pausado viraria trancado no instante em que
+    // a pessoa tocasse "Entendi" — e o design mostra "em pausa" DEPOIS disso.
+    // -1 = nunca reconheceu nada, pra distinguir de "reconheceu o lvl 0".
+    journeyAckLevel: { type: "number", default: -1 },
   });
 
 // Espalha `details` (JSON) de volta pro topo. É espalhado por último de
@@ -239,6 +246,12 @@ export function raiseJourneyPeak(level) {
   if (!Number.isFinite(level)) return;
   const atual = Number(store.getValue("journeyPeakLevel")) || 0;
   if (level > atual) store.setValue("journeyPeakLevel", level);
+}
+
+/** Marca o nível como visto. Chamar ao dispensar um momento. */
+export function acknowledgeJourneyLevel(level) {
+  if (!Number.isFinite(level)) return;
+  store.setValue("journeyAckLevel", level);
 }
 
 // --- Testers (tela de admin, Track A do M3-5) ---
