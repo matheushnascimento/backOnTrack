@@ -20,7 +20,9 @@ import MyView from "@/components/MyView";
 import {
   clearAll,
   getGoals,
+  acknowledgeJourneyLevel,
   raiseJourneyPeak,
+  setJourneyDemoLevel,
   setDisplayName,
   store,
 } from "@/infra/database";
@@ -36,7 +38,7 @@ import {
 } from "@/infra/sync";
 import { saveThemePreference } from "@/infra/theme";
 import { confirmAction } from "@/constants/dialogs";
-import { getEnvironmentInfo } from "@/constants/environment";
+import { getEnvironmentInfo, isDevSurface } from "@/constants/environment";
 import { useThemeTokens } from "@/constants/themeTokens";
 import { JOURNEY_ORDER, formatGoal, goalFor } from "@/constants/goals";
 import { habitSignals } from "@/constants/habitSignals";
@@ -49,6 +51,8 @@ import {
 } from "@/constants/journey";
 
 const ENV = getEnvironmentInfo();
+// Ferramenta de dev não vai pro app dos testers. Ver isDevSurface.
+const DEV_SURFACE = isDevSurface();
 
 // Tela Ajustes (M5-B fatia 4, mockup 2a·8).
 //
@@ -551,6 +555,8 @@ function SyncRow() {
 function SignalsBlock({ goals }) {
   const records = useTable("records", store);
   const peak = useValue("journeyPeakLevel", store);
+  const demo = Number(useValue("journeyDemoLevel", store) ?? -1);
+  const emDemo = demo >= 0;
 
   const jornada = useMemo(
     () =>
@@ -635,6 +641,95 @@ function SignalsBlock({ goals }) {
           </Text>
         ))}
       </View>
+
+      {/* Controles de desenvolvimento — NÃO aparecem no app dos testers.
+          Ver `isDevSurface`: só em dev e no canal `staging`. */}
+      {DEV_SURFACE ? (
+        <>
+          {/* Previsualização de nível: força o nível pra ver as telas que o
+          histórico curto não alcança. Afrouxar limiar não resolveria — com
+          21% de consistência o portão teria que cair tão fundo que deixaria
+          de ser o mesmo portão. Isto testa a TELA; o modelo continua coberto
+          por tests/journey.test.js com dado sintético. */}
+          <View className="mt-3 flex-row items-center gap-2">
+            <Text
+              className="flex-1 text-xs text-label dark:text-label-dark"
+              style={{ fontFamily: "JetBrainsMono_400Regular" }}
+            >
+              {emDemo ? `demo: lvl ${demo}` : "previsualizar nível"}
+            </Text>
+            {[2, 3].map((n) => (
+              <Pressable
+                key={n}
+                accessibilityRole="button"
+                accessibilityLabel={`Previsualizar nível ${n}`}
+                onPress={() => {
+                  setJourneyDemoLevel(n, jornada.level);
+                  // ack um abaixo → a Home dispara o sheet de subida.
+                  acknowledgeJourneyLevel(n - 1);
+                }}
+                className="rounded-lg border border-border-subtle dark:border-border-subtle-dark px-3 py-1.5 active:opacity-70"
+              >
+                <Text
+                  className="text-xs text-body-secondary dark:text-body-secondary-dark"
+                  style={{ fontFamily: "JetBrainsMono_400Regular" }}
+                >
+                  lvl {n}
+                </Text>
+              </Pressable>
+            ))}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Sair da previsualização"
+              onPress={() => setJourneyDemoLevel(-1, jornada.level)}
+              className="rounded-lg border border-border-subtle dark:border-border-subtle-dark px-3 py-1.5 active:opacity-70"
+            >
+              <Text
+                className="text-xs text-body-secondary dark:text-body-secondary-dark"
+                style={{ fontFamily: "JetBrainsMono_400Regular" }}
+              >
+                sair
+              </Text>
+            </Pressable>
+          </View>
+
+          {/* Controles de simulação (#293).
+          Os dois momentos são inobserváveis com histórico curto: nada sobe,
+          nada cai. Estes botões só mexem no `journeyAckLevel` — o nível que a
+          pessoa "já viu" — pra forçar a comparação a dar subida ou queda.
+          Nenhum registro é tocado, e dispensar o momento devolve o ack ao
+          nível real. É o equivalente ao server em `required` que usamos pra
+          ver o estado de "precisa entrar". */}
+          <View className="mt-3 flex-row gap-2">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Simular subida de nível"
+              onPress={() => acknowledgeJourneyLevel(jornada.level - 1)}
+              className="flex-1 rounded-xl border border-border-subtle dark:border-border-subtle-dark py-2 active:opacity-70"
+            >
+              <Text
+                className="text-center text-xs text-body-secondary dark:text-body-secondary-dark"
+                style={{ fontFamily: "JetBrainsMono_400Regular" }}
+              >
+                simular subida
+              </Text>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Simular regressão"
+              onPress={() => acknowledgeJourneyLevel(jornada.level + 2)}
+              className="flex-1 rounded-xl border border-border-subtle dark:border-border-subtle-dark py-2 active:opacity-70"
+            >
+              <Text
+                className="text-center text-xs text-body-secondary dark:text-body-secondary-dark"
+                style={{ fontFamily: "JetBrainsMono_400Regular" }}
+              >
+                simular regressão
+              </Text>
+            </Pressable>
+          </View>
+        </>
+      ) : null}
 
       {linhas.map((l) => (
         <View key={l.metric} className="mt-1.5 flex-row">

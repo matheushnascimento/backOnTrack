@@ -39,6 +39,33 @@ function describeBundle() {
 }
 
 /**
+ * Estamos numa superfície de desenvolvimento? (#293)
+ *
+ * Serve pra manter ferramenta de dev fora do app dos testers sem perder a
+ * capacidade de validar no BoT Staging.
+ *
+ * ⚠️ **`__DEV__` sozinho não serve.** O BoT Staging é build de produção
+ * (`--environment preview`), então `__DEV__` é `false` lá — e apagaria os
+ * controles justamente no lugar onde a validação acontece, que é a regra do
+ * projeto.
+ *
+ * `Updates.channel` é o canal do **build**, não do update: sobrevive a OTA e
+ * distingue os dois APKs de verdade. BoT Staging é `staging`; o dos testers é
+ * `preview`. Em dev e Expo Go vem `null`, daí o `__DEV__` como complemento.
+ *
+ * @returns {boolean}
+ */
+export function isDevSurface() {
+  try {
+    // eslint-disable-next-line no-undef
+    if (typeof __DEV__ !== "undefined" && __DEV__) return true;
+    return Updates.channel === "staging";
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Tudo que o app sabe sobre o próprio ambiente, sem o tester digitar nada.
  * @returns {{ environment: string, userAgent: string, appVersion: string, bundle: string }}
  */

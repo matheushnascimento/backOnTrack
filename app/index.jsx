@@ -10,9 +10,12 @@ import InstallApp from "@/components/InstallApp";
 import Icon1c from "@/components/Icon1c";
 import RetomadaState from "@/components/RetomadaState";
 import FocusCard from "@/components/journey/FocusCard";
+import RegressionNotice from "@/components/journey/RegressionNotice";
+import LevelUpSheet from "@/components/journey/LevelUpSheet";
 import CompactRow from "@/components/journey/CompactRow";
 
 import {
+  acknowledgeJourneyLevel,
   add,
   getGoals,
   getToday,
@@ -31,6 +34,16 @@ import {
   restBadge,
   splitZones,
 } from "@/constants/journeyHome";
+import {
+  MOMENT_LEVEL_UP,
+  MOMENT_REGRESSION,
+  achievedHabit,
+  levelUpCopy,
+  pendingMoment,
+  regressionCopy,
+} from "@/constants/journeyMoments";
+import { JOURNEY_ORDER } from "@/constants/goals";
+import { PAUSED } from "@/constants/journey";
 //#endregion
 
 const METRICS = Object.keys(CATEGORY_MAP);
@@ -113,7 +126,7 @@ export default function Home() {
   const peak = useValue("journeyPeakLevel", store);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const goals = useMemo(() => getGoals(), [records]);
-  const journey = useMemo(
+  const journeyReal = useMemo(
     () =>
       deriveJourney({
         records: Object.values(records ?? {}),
@@ -122,13 +135,43 @@ export default function Home() {
       }),
     [records, goals, peak],
   );
-  // Escrita no store fica em efeito, nunca em render.
+  // Previsualização de nível (#293). Substitui só o nível e o foco — o resto
+  // do estado segue real. Testa a TELA, não o modelo.
+  const demoLevel = useValue("journeyDemoLevel", store);
+  const emDemo = Number(demoLevel ?? -1) >= 0;
+  const journey = emDemo
+    ? {
+        ...journeyReal,
+        level: Number(demoLevel),
+        focus: JOURNEY_ORDER[Number(demoLevel) - 1] ?? null,
+      }
+    : journeyReal;
+
+  // Escrita no store fica em efeito, nunca em render. Em demo o peak NÃO sobe:
+  // senão sair do demo deixaria o app permanentemente "regredido".
   useEffect(() => {
-    raiseJourneyPeak(journey.level);
-  }, [journey.level]);
+    if (!emDemo) raiseJourneyPeak(journey.level);
+  }, [journey.level, emDemo]);
 
   const { focus, rest } = splitZones(journey);
   const copy = headerCopy(journey);
+
+  // Momento pendente (#293). O ack é o que garante "uma vez e some": sem ele
+  // o aviso de regressão voltaria em toda abertura.
+  const ackLevel = useValue("journeyAckLevel", store);
+  const moment = pendingMoment(journey.level, Number(ackLevel ?? -1));
+  const pausados = JOURNEY_ORDER.filter(
+    (m) => journey.habits[m]?.status === PAUSED,
+  );
+
+  // `null` no lvl 1: nada foi conquistado ainda, o primeiro hábito está sendo
+  // construído. Sem isso o sheet diria "Sono virou seu" com Sono também como
+  // próximo foco.
+  const conquistado = achievedHabit(journey.level, JOURNEY_ORDER);
+
+  function dispensarMomento() {
+    acknowledgeJourneyLevel(journey.level);
+  }
 
   // Retomada aparece quando: (a) nunca registrou, ou (b) 3+ dias corridos sem
   // registro em nenhuma métrica. Dismissal in-memory desliga só nesta sessão.
@@ -280,6 +323,16 @@ export default function Home() {
           </Text>
         </View>
 
+        {/* Aviso de regressão: no topo, acima de tudo. Não é modal de
+            propósito — não bloqueia, e a pessoa pode ignorar e registrar. */}
+        {moment === MOMENT_REGRESSION ? (
+          <RegressionNotice
+            copy={regressionCopy({ focus: focus ?? "sleep", paused: pausados })}
+            onHistory={() => router.navigate("/history")}
+            onDismiss={dispensarMomento}
+          />
+        ) : null}
+
         {/* Zona de foco: o hábito do nível, com número grande e ação rápida.
             É o único com essa altura — a hierarquia mora aqui. */}
         {focus ? (
@@ -335,6 +388,27 @@ export default function Home() {
             o auto-load da sessão, o gate `!user` piscava o botão logo depois
             de logar. Concentrar em Ajustes elimina o flicker e centraliza. */}
       </ScrollView>
+
+      {/* Subir de nível: bottom sheet, fora do ScrollView. Fullscreen trataria
+          a subida como interrupção solene; sheet trata como recado. */}
+      {moment === MOMENT_LEVEL_UP && conquistado ? (
+        <LevelUpSheet
+          visible
+          copy={levelUpCopy({
+            from: Number(ackLevel ?? 0),
+            to: journey.level,
+            achieved: conquistado,
+            next: focus,
+          })}
+          achieved={conquistado}
+          next={focus}
+          onDismiss={dispensarMomento}
+          onConfirm={() => {
+            dispensarMomento();
+            router.navigate(`/(metrics)/${focus}`);
+          }}
+        />
+      ) : null}
     </MyView>
   );
 }
