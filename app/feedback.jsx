@@ -292,7 +292,7 @@ function SuccessState({ result, onSendAnother, onHome }) {
           style={{ fontFamily: "Inter_400Regular", marginTop: 2 }}
         >
           {result?.number
-            ? `Abrimos o chamado #${result.number}. Obrigado por reportar — dá pra acompanhar quando quiser.`
+            ? `Abrimos o chamado #${result.number}. Obrigado por reportar. Dá pra acompanhar quando quiser.`
             : "Obrigado por reportar."}
         </Text>
       </View>
