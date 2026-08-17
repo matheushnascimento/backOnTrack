@@ -95,7 +95,7 @@ export default function Login() {
           <View className="gap-4">
             <SoftMessage
               title="Verifique seu email 📬"
-              body={`Enviamos um link mágico pra ${email}. Toque no link do email pra entrar — o app abre logado sozinho.`}
+              body={`Enviamos um link mágico pra ${email}. Toque no link do email pra entrar, e o app abre logado sozinho.`}
             />
             <SecondaryAction
               label="Não recebi, enviar de novo"

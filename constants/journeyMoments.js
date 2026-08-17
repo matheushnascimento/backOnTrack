@@ -76,7 +76,7 @@ export function levelUpCopy({ from, to, achieved, next }) {
     nextName: proximo ? capitalizar(proximo) : null,
     nextHint: proximo ? (CATEGORY_MAP[next]?.subtitle ?? null) : null,
     // O ponto mais importante da tela: a queda já vem anunciada, e sem peso.
-    reassurance: `${conquistado} continua na tela. Se ficar instável por uns dias, o foco volta pra ele — sem drama.`,
+    reassurance: `${conquistado} continua na tela. Se ficar instável por uns dias, o foco volta pra ele, sem drama.`,
     dismiss: "Depois",
     confirm: proximo ? `Começar com ${proximo}` : "Continuar",
   };
@@ -106,7 +106,7 @@ export function regressionCopy({ focus, paused }) {
 
   return {
     title: `voltamos pra ${foco}`,
-    body: `${quem} ${verbo} uns dias em branco. O foco volta pra ${foco} por um tempo — quando ela estiver de novo estável, o resto retoma.`,
+    body: `${quem} ${verbo} uns dias em branco. O foco volta pra ${foco} por um tempo. Quando ela estiver de novo estável, o resto retoma.`,
     // Dito em voz alta porque é a dúvida que a regressão levanta.
     preserved:
       "Nada do que você já registrou foi perdido. Você continua podendo registrar tudo.",

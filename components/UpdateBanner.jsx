@@ -159,7 +159,7 @@ export default function UpdateBanner() {
         color={t.accentToday}
         bottomPad={bottomPad}
         onPress={() => reloadAsync()}
-        accessibilityLabel="Atualização pronta — toque para reiniciar"
+        accessibilityLabel="Atualização pronta. Toque para reiniciar"
       >
         <Text
           className="text-center text-white"

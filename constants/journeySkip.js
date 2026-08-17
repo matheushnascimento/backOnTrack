@@ -81,16 +81,16 @@ export function skipCopy({ metric, qualifies, nextLevel }) {
 
   return {
     claimLabel: "você disse",
-    claim: `"Já cuido de ${nome} — quero pular."`,
+    claim: `"Já cuido de ${nome}, quero pular."`,
     evidenceLabel: "o que o histórico mostra",
 
     verdict: qualifies
-      ? `Bate com o que você disse. Você começa direto no lvl ${nextLevel} — ${nome} já entra estável.`
+      ? `Bate com o que você disse. Você começa direto no lvl ${nextLevel}, e ${nome} já entra estável.`
       : `O histórico ainda não mostra isso. Começamos no lvl 1 e ${nome} entra estável quando os dados acompanharem.`,
 
     // Antecipar o desfecho oposto tira o peso de julgamento dos dois lados.
     alternate: qualifies
-      ? "Se não batesse, o app começaria no lvl 1 e observaria por duas semanas antes de considerar estável — sem drama."
+      ? "Se não batesse, o app começaria no lvl 1 e observaria por duas semanas antes de considerar estável, sem drama."
       : "Nada foi descartado: seus registros continuam contando, e a conferência refaz sozinha conforme o histórico cresce.",
 
     dismiss: "Refazer",

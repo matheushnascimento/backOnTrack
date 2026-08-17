@@ -30,8 +30,8 @@ export default function RetomadaState({ daysSinceLast, onDismiss }) {
 
   const title = isFirstTime ? "Bem-vindo." : "Que bom te ver de volta.";
   const subtitle = isFirstTime
-    ? "Sem pressa. O primeiro registro pode ser qualquer coisa — comece pelo mais fácil."
-    : `Faz ${daysSinceLast} ${daysSinceLast === 1 ? "dia" : "dias"} que nada foi registrado. Sem cobrança — o que importa é o próximo registro.`;
+    ? "Sem pressa. O primeiro registro pode ser qualquer coisa. Comece pelo mais fácil."
+    : `Faz ${daysSinceLast} ${daysSinceLast === 1 ? "dia" : "dias"} que nada foi registrado. Sem cobrança. O que importa é o próximo registro.`;
 
   return (
     <View className="flex-1 gap-6 p-6">

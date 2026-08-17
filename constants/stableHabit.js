@@ -63,7 +63,7 @@ export function stableExplanation(metric) {
   const capitalizado = `${nome.charAt(0).toUpperCase()}${nome.slice(1)}`;
   return {
     label: 'o que "estável" quer dizer',
-    body: `${capitalizado} não precisa mais do seu esforço ativo. Pode continuar registrando pra manter os dados apurados — mas não derruba mais o seu nível.`,
+    body: `${capitalizado} não precisa mais do seu esforço ativo. Pode continuar registrando pra manter os dados apurados, mas não derruba mais o seu nível.`,
   };
 }
 

@@ -462,7 +462,7 @@ function TimeRow({ label, value, onChange, dayLabel, placeholder }) {
           value={value}
           onChangeText={onChange}
           placeholder={placeholder}
-          accessibilityLabel={`Horário — ${label}`}
+          accessibilityLabel={`Horário: ${label}`}
           style={{
             fontFamily: "JetBrainsMono_500Medium",
             fontSize: 24,
