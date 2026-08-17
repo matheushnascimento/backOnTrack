@@ -8,6 +8,8 @@ Cada milestone tem um objetivo de saída claro. Sabe-se que terminou quando esse
 
 **Nota sobre sincronização:** A ideia é: local + sync na nuvem desde o início. A arquitetura (ADR-004, TinyBase) já nasce pronta para isso, mas a milestone de _ativar e validar_ sync (M6) vem depois de o MVP local estar sólido. Isso evita empilhar duas curvas de aprendizado ao mesmo tempo (RN + sync), exatamente o tipo de gargalo que o projeto nasceu pra resolver.
 
+**Nota de premissa (14/08/2026):** o projeto nasceu como veículo de aprendizado de React Native — é essa premissa que explica o cuidado da nota acima em não empilhar duas curvas ao mesmo tempo. Esse papel se esgotou. A partir do **M9**, o Back on Track é uma ferramenta pessoal de hábitos organizada por níveis, e as decisões passam a ser julgadas por isso: o que serve a quem usa, não o que ensina mais. Os milestones anteriores ficam como estão — são registro do que aconteceu, não promessa do que vem. Onde o M9 contradiz uma entrega antiga (a Home das 5 métricas, do M3 e da fatia 1 do M5-B), quem vale é o M9.
+
 ---
 
 ## M0: Fundamentos & Setup ✅ concluído
@@ -110,7 +112,7 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 
 - ⬜ Gráficos/tendências simples por métrica (ex: água por semana)
 - ⬜ Lembretes e notificações (`expo-notifications`)
-- ⬜ Metas personalizadas por métrica
+- 🟡 Metas personalizadas por métrica — a metade de baixo saiu na fatia 0 do M9 (#288): as metas viraram dado no store (`constants/goals.js` + tabela `goals`), com alvo, tipo e cadência por métrica, e Ajustes já **exibe** os valores vindos de lá. Falta a edição pelo usuário — hoje todo mundo roda no default
 - ⬜ **Autocuidado como 6ª métrica** (novo valor de `tipo` + config de tela; sem estrutura nova)
 - ⬜ Micro-interações e feedback visual ao registrar
 
@@ -127,8 +129,35 @@ Esta milestone não existia no plano original — ela nasceu do diagnóstico do 
 
 ---
 
+## M9 — Jornada por Níveis
+
+**Objetivo de saída:** o app sugere **um hábito por vez** e o nível acompanha o que a pessoa realmente fixou — em vez de mostrar as 5 métricas lado a lado e devolver pra ela a escolha (e a culpa por não dar conta de todas).
+
+A referência declarada é o Fabulous, com uma recusa explícita: a progressão por níveis é gamificação, sim, mas a estética lúdica (confete, mascote, celebração) fica de fora. O registro é **reforço sóbrio**. E a queda é mais gentil que ofensiva: quebrar o fluxo **volta um nível**, não zera o histórico — o pico fica guardado, e o hábito de baixo continua valendo (cumulativo).
+
+- ✅ **Modelo escrito antes do código** (#287): `docs/11-modelo-de-niveis.md` (13 seções) fixa portão, graduação, regressão e tom, embasado em literatura de hábito — Lally 2010 (mediana de 66 dias até automaticidade, faixa 18–254; **um dia perdido custa quase nada**), o efeito "que-se-dane" que transforma uma falha em abandono, e o Streak Freeze do Duolingo (−21% de churn: afrouxar melhorou engajamento **e** aprendizado). `docs/12-briefing-home-niveis.md` traduz isso em briefing pro Claude Design
+- ✅ **Fatia 0 — metas como dado + sinais de automaticidade** (#288): `constants/goals.js` (alvo, tipo `sum`/`presence`, cadência diária/semanal, ordem sugerida da jornada) e `constants/habitSignals.js` (consistência, regularidade por estatística circular, resiliência). Sono é `presence` de propósito: o portão é **comportamento, nunca resultado** — ninguém controla se dormiu bem, só se foi deitar
+- ✅ **Fatia 1 — derivar o estado e lembrar o pico** (#290): `constants/journey.js` com `LOCKED`/`BUILDING`/`GRADUATED`/`PAUSED`, portão de graduação e detecção de quebra. A regressão **pausa o topo** (o hábito mais recente, não o mais antigo) e o pico persiste em `journeyPeakLevel`
+- ✅ **Fatia 2 — Home com card de foco + zona "resto do dia"** (#292): um hábito em destaque, os outros logo abaixo a um toque. Nada sumiu; a ordem é sugestão, não regra
+- ✅ **Fatia 3a — momentos de subir de nível e de regressão** (#294): as duas telas que o modelo exige, com o texto da queda sem drama e sem cobrança
+- ✅ **Fatia 3b — pular nível quando o histórico já sustenta** (#296): quem já resolveu sono não é obrigado a "provar" de novo. Pular **concede graduação**, então o hábito pulado entra no acumulado como qualquer outro
+- ✅ **Fatia 3c — tela do hábito estável** (#298): onde mora o que virou automático. Chip cinza, nunca verde — status, não medalha
+- ✅ **Promovido pros testers** em 17/08/2026 (canal `preview`, 1.2.0, por OTA — sem reinstalação)
+
+**Fora de escopo, consciente:** os controles de previsualização de nível/estabilidade existem só em superfície de dev (`isDevSurface()` — `__DEV__` ou canal `staging`) e **não chegam ao APK dos testers**.
+
+**Dívida reconhecida, aberta:**
+
+- 🟡 **Limiares ainda provisórios.** `THRESHOLDS` está marcado como tal no código: os números saíram da literatura e de uma passada no histórico existente, não de medição do app rodando. A medição começou em 15/08/2026 e ainda não voltou número pra calibrar
+- 🟡 **`RetomadaState` × lvl 0 se sobrepõem.** Quem passa 3+ dias sem registrar cai na tela de retomada em vez da Home nova. Foi deliberado deixar pra decidir vendo as duas rodando — só que agora isso atinge tester de verdade
+- ⬜ **Deixar o usuário escolher o registro de reforço** (#286 — sóbrio ou lúdico). Ideia registrada, depende de investimento, fora do escopo atual
+
+**Sobre a ordem:** o M9 passou na frente do M7 e do M8, que seguem abertos. Não foi escopo vazando — foi mudança de premissa (ver a nota no topo). O que o M9 entrega não estava previsto em milestone nenhum.
+
+---
+
 ## Como usar este roadmap
 
-Cada milestone deve ser concluído (ou conscientemente abreviado, com anotação do porquê) antes de avançar. Se um milestone crescer demais durante o desenvolvimento, é sinal de escopo vazando — volte ao documento de Escopo & MVP antes de continuar.
+Cada milestone deve ser concluído (ou conscientemente abreviado, com anotação do porquê) antes de avançar. Se um milestone crescer demais durante o desenvolvimento, é sinal de escopo vazando — volte ao documento de Escopo & MVP antes de continuar. A exceção registrada é o M9, que nasceu de uma virada de premissa e passou na frente de milestones abertos; quando isso acontecer de novo, o certo é anotar o porquê aqui, não reordenar a lista em silêncio.
 
 A ordem M1 → M2 é deliberada: **sanear a fundação (persistência + estilo) antes de unificar as telas.** Não adianta extrair um componente-base de tela que renderiza quebrado no Android ou que grava dados que somem no reload. Primeiro o chão firme, depois construir por cima.
