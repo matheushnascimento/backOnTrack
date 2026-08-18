@@ -18,7 +18,7 @@ O MVP cobre **5 métricas**, que são as que já existem como tela no código at
 
 Como as 6 métricas compartilham estrutura, o sistema é modelado em torno de uma única entidade genérica - o **Registro** - em vez de 6 entidades separadas e desconectadas. Campos específicos de cada métrica fica isolada num campo de detalhes, mantendo o núcleo do modelo uniforme.
 
-> **Modelo-alvo (M2), não o schema atual.** A `interface Registro` abaixo é o **modelo maduro** que o projeto pretende alcançar no M2 — a forma final de seus campos ainda será decidida nesse marco, informada pelo uso real. Ela **não** descreve o schema em uso hoje. O schema atual é o **frouxo do ADR-008** (`type` / `date` / `details` / `createdAt`), no qual os campos específicos de cada métrica ficam serializados como JSON dentro de `details`.
+> **Modelo-alvo (M2), não o schema atual.** A `interface Registro` abaixo é o **modelo maduro** que o projeto pretende alcançar no M2. A forma final de seus campos ainda será decidida nesse marco, informada pelo uso real. Ela **não** descreve o schema em uso hoje. O schema atual é o **frouxo do ADR-008** (`type` / `date` / `details` / `createdAt`), no qual os campos específicos de cada métrica ficam serializados como JSON dentro de `details`.
 
 ```typescript
 interface Registro {
@@ -26,7 +26,7 @@ interface Registro {
   // "autocuidado" fica reservado para a expansão pós-MVP.
   tipo: "agua" | "sono" | "alimentacao" | "atividade_fisica" | "estudo";
   data: string; // dia do registro, formato ISO (YYYY-MM-DD)
-  quantidade: number; // valor principal — significado depende do tipo
+  quantidade: number; // valor principal; significado depende do tipo
   unidade: string; // "ml", "min", "sessao", etc.
   nota?: string; // observação livre, opcional
   detalhes?: Record<string, unknown>; // campos extras específicos do tipo

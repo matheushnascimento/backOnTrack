@@ -8,11 +8,11 @@ Até aqui existia **um** canal (`preview`) apontando pra **uma** branch (`previe
 
 O histórico do projeto cobrou o preço disso:
 
-- **#126** — regressão introduzida ao corrigir o #108. Passou por CI verde e foi pra produção via OTA; só apareceu quando um humano testou.
-- **#218** — dep nativa nova sem bump de `version` deixou os testers em **crash loop**.
-- **#239 / #249** — quebras de renderização de fonte no Android. Passaram por CI **e** pelo preview da Vercel, porque só se manifestam no APK nativo.
+- **#126**: regressão introduzida ao corrigir o #108. Passou por CI verde e foi pra produção via OTA; só apareceu quando um humano testou.
+- **#218**: dep nativa nova sem bump de `version` deixou os testers em **crash loop**.
+- **#239 / #249**: quebras de renderização de fonte no Android. Passaram por CI **e** pelo preview da Vercel, porque só se manifestam no APK nativo.
 
-O ponto comum: nada disso é pegável por lint, teste ou preview web. Precisa rodar no APK — e antes disso, precisa existir um lugar onde rodar que não seja o celular do tester.
+O ponto comum: nada disso é pegável por lint, teste ou preview web. Precisa rodar no APK, e antes disso precisa existir um lugar onde rodar que não seja o celular do tester.
 
 ## Como funciona agora
 
@@ -38,13 +38,13 @@ Três branches, dois canais, dois apps no seu aparelho:
 Duas coisas fazem isso funcionar sem ninguém reinstalar nada:
 
 1. **O APK é assado com um _canal_, não com uma branch.** O canal aponta pra uma branch, e esse mapeamento vive no servidor. O APK 1.2.0 que os testers já têm segue no canal `preview`; mudamos só o que alimenta a branch `preview`.
-2. **`eas update:republish` copia um grupo de update entre branches.** Promover não é rebuildar nem republicar do zero — é apontar pro mesmo artefato já validado.
+2. **`eas update:republish` copia um grupo de update entre branches.** Promover é apontar pro mesmo artefato já validado, sem rebuildar nem republicar do zero.
 
 ### Por que `release` existe
 
-Validar no aparelho só vale **antes** do merge — os bugs que motivaram todo esse gate (quebra de fonte no Android, #239/#249) não aparecem no CI nem no preview da Vercel, só no APK. Validar depois do merge deixa a main carregando o bug até sair um segundo PR de correção, que foi exatamente o padrão do #239 → #249.
+Validar no aparelho só vale **antes** do merge, porque os bugs que motivaram todo esse gate (quebra de fonte no Android, #239/#249) não aparecem no CI nem no preview da Vercel, só no APK. Validar depois do merge deixa a main carregando o bug até sair um segundo PR de correção, que foi exatamente o padrão do #239 → #249.
 
-Mas isso torna `staging` uma fonte insegura pra promoção: se ela recebe PRs não-mergeados, promover de lá poderia mandar código não-mergeado pros testers. A `release`, alimentada só por push na main, é **barreira estrutural** contra isso — não depende de ninguém lembrar da regra na hora de promover.
+Mas isso torna `staging` uma fonte insegura pra promoção: se ela recebe PRs não-mergeados, promover de lá poderia mandar código não-mergeado pros testers. A `release`, alimentada só por push na main, é **barreira estrutural** contra isso, e não depende de ninguém lembrar da regra na hora de promover.
 
 ## O fluxo do dia a dia
 
@@ -52,7 +52,7 @@ Mas isso torna `staging` uma fonte insegura pra promoção: se ela recebe PRs n�
 
 ⚠️ **A bancada é um slot só.** Existe um canal `staging` e um app no aparelho, então o BoT staging mostra sempre **o push mais recente**, seja de qual PR for. Não dá pra ter dois PRs carregados ao mesmo tempo; o resumo de cada run diz o que ficou.
 
-**Merge na main NÃO toca a bancada.** Publicava antes, e o efeito era o merge sobrescrever em silêncio o PR que estava sendo validado — aconteceu três vezes, com PRs sendo reportados como "não funciona" quando o código deles nem estava no aparelho. Hoje a bancada é exclusiva de PR.
+**Merge na main NÃO toca a bancada.** Publicava antes, e o efeito era o merge sobrescrever em silêncio o PR que estava sendo validado. Aconteceu três vezes, com PRs sendo reportados como "não funciona" quando o código deles nem estava no aparelho. Hoje a bancada é exclusiva de PR.
 
 **Quem não publica:** PR em draft, PR com a label `skip-staging`, PR de fork (não recebe o `EXPO_TOKEN`) e mudança que só toca `docs/**`, `**/*.md` ou `.github/**` (não altera o bundle).
 
@@ -62,7 +62,7 @@ Pra forçar qualquer PR ignorando esses filtros: workflow **Test PR on Staging**
 
 **3. Promover** → rodar a workflow **Promote Update** (aba Actions). Ela pega o último grupo de `release` e republica em `preview`. Os testers recebem na próxima abertura do app.
 
-Merges se acumulam em `release` até você promover — dá pra soltar um lote coerente em vez de pingar mudança solta.
+Merges se acumulam em `release` até você promover, então dá pra soltar um lote coerente em vez de pingar mudança solta.
 
 ## Rollback
 
@@ -87,7 +87,7 @@ eas update:roll-back-to-embedded --branch preview --runtime-version 1.2.0 --plat
 
 ## O APK de staging
 
-Cortado sob demanda — só quando uma mudança **nativa** precisa de validação (dep nova, plugin, ícone, splash). Mudança só-JS não precisa: o OTA chega sozinho no BoT staging que você já tem instalado (seja de um PR com label, seja da main).
+Cortado sob demanda, só quando uma mudança **nativa** precisa de validação (dep nova, plugin, ícone, splash). Mudança só-JS não precisa: o OTA chega sozinho no BoT staging que você já tem instalado (seja de um PR com label, seja da main).
 
 ```bash
 eas build --platform android --profile staging
@@ -102,11 +102,11 @@ O profile `staging` do `eas.json` seta `APP_VARIANT=staging`, e o `app.config.js
 | scheme        | `backontrack://`                     | `backontrack-staging://` |
 | canal         | `preview`                            | `staging`                |
 
-O que **não** muda: `slug`, `projectId` do EAS e `updates.url`. É o mesmo projeto EAS batendo no mesmo servidor — o canal é que separa.
+O que **não** muda: `slug`, `projectId` do EAS e `updates.url`. É o mesmo projeto EAS batendo no mesmo servidor, e o canal é que separa.
 
 ### Por que o scheme também bifurca
 
-Com os dois apps instalados sob o mesmo `backontrack://`, o Android não sabe qual abrir no callback do magic link — o login cairia no app errado, ou num seletor.
+Com os dois apps instalados sob o mesmo `backontrack://`, o Android não sabe qual abrir no callback do magic link, e o login cairia no app errado, ou num seletor.
 
 **Passo manual necessário** (uma vez, no dashboard do Supabase → Authentication → URL Configuration → Additional Redirect URLs):
 
@@ -118,5 +118,5 @@ Sem isso, login **no BoT staging** cai no fallback da Site URL e mostra `otp_exp
 
 ## Ver também
 
-- [04-roadmap-milestones.md](./04-roadmap-milestones.md) — M6 (sync) e M8 (estabilização/loja)
+- [04-roadmap-milestones.md](./04-roadmap-milestones.md): M6 (sync) e M8 (estabilização/loja)
 - A regra de **bump de `version` quando entra dep nativa** continua valendo, e é independente disto: OTA não atravessa fronteira de módulo nativo. Um APK de staging valida a mudança, mas não dispensa o bump.

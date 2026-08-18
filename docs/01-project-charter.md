@@ -15,13 +15,13 @@ Nenhum dos dois pode ser sacrificado pelo outro: atalhos técnicos que compromet
 
 ## Justificativa
 
-Alguns meses de registro analógico de métricas de saúde e autodesenvolvimento trouxeram resultados sólidos, mas o processo se tornou caro em tempo à medida que a rotina de registro se consolidou. O projeto existe para resolver esse custo de tempo — sem perder o que fazia o método em papel funcionar.
+Alguns meses de registro analógico de métricas de saúde e autodesenvolvimento trouxeram resultados sólidos, mas o processo se tornou caro em tempo à medida que a rotina de registro se consolidou. O projeto existe para resolver esse custo de tempo, sem perder o que fazia o método em papel funcionar.
 
 ## O nome
 
-"Back on Track" — voltar aos trilhos. Essas métricas representam o mínimo necessário para estar em plena capacidade física e mental. O projeto não busca otimização extrema; busca manter o básico consistentemente em dia.
+"Back on Track" quer dizer voltar aos trilhos. Essas métricas representam o mínimo necessário para estar em plena capacidade física e mental. O projeto não busca otimização extrema; busca manter o básico consistentemente em dia.
 
-> A visão completa contempla seis métricas (incluindo autocuidado). O MVP entrega as cinco que já existem no app — água, sono, alimentação, atividade física e estudo — e autocuidado fica como expansão planejada (ver Escopo & MVP). A meta de longo prazo segue sendo as seis.
+> A visão completa contempla seis métricas (incluindo autocuidado). O MVP entrega as cinco que já existem no app (água, sono, alimentação, atividade física e estudo), e autocuidado fica como expansão planejada (ver Escopo & MVP). A meta de longo prazo segue sendo as seis.
 
 ## Público
 
@@ -39,4 +39,4 @@ Uso pessoal. Isso simplifica várias decisões (sem multi-usuário, sem necessid
 - O app substitui completamente o papel na rotina diária.
 - Registrar uma métrica leva poucos segundos, sem fricção.
 - Os dados sobrevivem a perda ou troca de aparelho.
-- Ao final, o conhecimento de React Native adquirido é transferível para outros projetos — não é conhecimento de "copiar tutorial".
+- Ao final, o conhecimento de React Native adquirido é transferível para outros projetos, acima do nível de "copiar tutorial".
