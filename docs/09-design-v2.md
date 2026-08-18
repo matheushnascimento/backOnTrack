@@ -1,6 +1,6 @@
-# Design v2 — Back on Track
+# Design v2 do Back on Track
 
-Este documento é a fonte única dos tokens visuais do redesign completo (M5-B) baseado no Turno 2 do Claude Design. **Estende** e progressivamente substitui a base do [08-design-tokens.md](./08-design-tokens.md) — os tokens M5 continuam válidos até que cada tela seja migrada.
+Este documento é a fonte única dos tokens visuais do redesign completo (M5-B) baseado no Turno 2 do Claude Design. **Estende** e progressivamente substitui a base do [08-design-tokens.md](./08-design-tokens.md): os tokens M5 continuam válidos até que cada tela seja migrada.
 
 ## Tom
 
@@ -24,7 +24,7 @@ Vindos do design, mapeando aos usos concretos das mockups.
 | Token            | Hex       | Uso                                                                             |
 | ---------------- | --------- | ------------------------------------------------------------------------------- |
 | `label`          | `#6B7280` | Section labels (MENU, MÉTRICAS DE HOJE), metadados (data, contadores discretos) |
-| `body-secondary` | `#4B5563` | Texto secundário — descrições curtas embaixo de headings                        |
+| `body-secondary` | `#4B5563` | Texto secundário, descrições curtas embaixo de headings                         |
 | `border-subtle`  | `#E5E7EB` | Borda de card, divisor fino                                                     |
 | `border-strong`  | `#D1D5DB` | Borda mais forte quando precisa contraste                                       |
 | `surface-subtle` | `#F3F4F6` | Fundo interno de área secundária (row hover, section bg)                        |
@@ -36,18 +36,18 @@ Vindos do design, mapeando aos usos concretos das mockups.
 | ----------- | --------- | --------------------------------------------------------- |
 | `tint-blue` | `#EAF3FB` | Fundo do container de ícone da métrica água (azul lavado) |
 
-Métricas usam o mesmo padrão de tint. Cada métrica ganha o seu no roadmap — não hardcode aqui além do exemplo água.
+Métricas usam o mesmo padrão de tint. Cada métrica ganha o seu no roadmap, então não hardcode aqui além do exemplo água.
 
 ## Tipografia
 
 Duas famílias, ambas via `expo-font` + `@expo-google-fonts/*` (OTA-safe, sem native change):
 
-- **Inter** (400/500/600) — corpo e headings
-- **JetBrains Mono** (400/500) — labels em uppercase (section headers, chips)
+- **Inter** (400/500/600): corpo e headings
+- **JetBrains Mono** (400/500): labels em uppercase (section headers, chips)
 
-⚠️ **O boot BLOQUEIA até as fontes carregarem** (`app/_layout.jsx` retorna `null` enquanto `useFonts` não resolve, com o splash nativo segurado pelo `expo-splash-screen`). A fatia 0 tinha feito o contrário — carregava em background pra "não introduzir splash extra" — e isso custou caro: no Android a UI montava com a fonte de fallback, o sistema media o texto com ela, e quando a Inter chegava o glifo real não cabia mais na caixa já dimensionada. A última letra cortava ("Depois" virava "Depoi"). Foi diagnosticado errado três vezes (#239, #249, #268) antes de achar a corrida. Não voltar a descartar o retorno do `useFonts`.
+⚠️ **O boot BLOQUEIA até as fontes carregarem** (`app/_layout.jsx` retorna `null` enquanto `useFonts` não resolve, com o splash nativo segurado pelo `expo-splash-screen`). A fatia 0 tinha feito o contrário, carregando em background pra "não introduzir splash extra", e isso custou caro: no Android a UI montava com a fonte de fallback, o sistema media o texto com ela, e quando a Inter chegava o glifo real não cabia mais na caixa já dimensionada. A última letra cortava ("Depois" virava "Depoi"). Foi diagnosticado errado três vezes (#239, #249, #268) antes de achar a corrida. Não voltar a descartar o retorno do `useFonts`.
 
-### Escala (px direto — sem rem, sem `62.5%`)
+### Escala (px direto, sem rem e sem `62.5%`)
 
 | Papel         | Size / Weight / Family            | Nota                                       |
 | ------------- | --------------------------------- | ------------------------------------------ |
@@ -60,7 +60,7 @@ Duas famílias, ambas via `expo-font` + `@expo-google-fonts/*` (OTA-safe, sem na
 | H1 tela       | 24px · 600 · Inter                | "Bom dia, Ana."                            |
 | H1 documento  | 32px · 600 · Inter                | headers de página fora do app (docs, mock) |
 
-Corpo em 14-15px é **menor** que o M5 baseline de 17px (iOS-aligned). Migração é gradual — telas velhas seguem no 17, telas novas nascem no 14. Convergem quando todas migrarem.
+Corpo em 14-15px é **menor** que o M5 baseline de 17px (iOS-aligned). Migração é gradual: telas velhas seguem no 17, telas novas nascem no 14. Convergem quando todas migrarem.
 
 ## Radius
 
@@ -108,6 +108,6 @@ Fatia 6: substituir os 4 assets do ícone (`icon.png`, `adaptive-icon.png`, `spl
 
 ## Ver também
 
-- [08-design-tokens.md](./08-design-tokens.md) — baseline M5 (ainda válido pras telas não migradas)
-- [04-roadmap-milestones.md](./04-roadmap-milestones.md) — item M5-B na milestone Design System
-- Arquivo `Back on Track - Icon Directions.html` no repo local (gitignored) — fonte visual do Claude Design
+- [08-design-tokens.md](./08-design-tokens.md): baseline M5 (ainda válido pras telas não migradas)
+- [04-roadmap-milestones.md](./04-roadmap-milestones.md): item M5-B na milestone Design System
+- Arquivo `Back on Track - Icon Directions.html` no repo local (gitignored): fonte visual do Claude Design
