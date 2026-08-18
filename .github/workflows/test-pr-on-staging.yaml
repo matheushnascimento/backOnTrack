@@ -18,8 +18,19 @@ name: Test PR on Staging
 # - **Draft** — trabalho em andamento não precisa ocupar a bancada.
 # - **Label `skip-staging`** — escape hatch manual.
 # - **PR de fork** — não recebe `EXPO_TOKEN`, falharia com erro confuso.
-# - **Mudança só de docs/workflow** — `paths-ignore` abaixo; não altera o
-#   bundle, publicar seria gasto de update à toa.
+# - **Mudança só de doc ou de workflow**, pelo filtro `paths` abaixo. Não
+#   altera o bundle, e publicar seria gasto de update à toa.
+#
+#   **Com uma exceção, e ela existe porque a regra acima já foi falsa.** O
+#   `docs/04-roadmap-milestones.md` É código: o `babel-plugin-inline-import`
+#   (ver `babel.config.js`) compila o markdown pra dentro do bundle como
+#   string literal, e `app/roadmap.jsx` o importa. Editar esse arquivo muda o
+#   app. Enquanto ele estava no filtro, duas mudanças reais de tela pularam a
+#   bancada **em silêncio**, sem falha e sem aviso, e foi preciso disparar o
+#   `workflow_dispatch` na mão nos dois casos (#300 e #307). Ver #301.
+#
+#   Se algum dia outro doc virar import, ele entra na lista de exceção junto.
+#   Hoje é o único: `grep -rn 'from \".*\.md\"' app/ components/ constants/`.
 #
 # ## O que garante que isto não vaze pros testers
 #
@@ -30,10 +41,16 @@ name: Test PR on Staging
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
-    paths-ignore:
-      - "docs/**"
-      - "**/*.md"
-      - ".github/**"
+    # `paths` com negação em vez de `paths-ignore`, porque `paths-ignore` não
+    # sabe re-incluir. A ordem decide: cada padrão reavalia o caminho, e o
+    # último que casa manda. Por isso a exceção do roadmap vem por último, e
+    # precisa vencer DOIS padrões (`docs/**` e `**/*.md`).
+    paths:
+      - "**"
+      - "!docs/**"
+      - "!**/*.md"
+      - "!.github/**"
+      - "docs/04-roadmap-milestones.md"
   workflow_dispatch:
     inputs:
       pr:
