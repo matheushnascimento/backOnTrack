@@ -78,7 +78,17 @@ describe("getDigest", () => {
     expect(d.milestonesDone).toBe(1);
     expect(d.milestonesTotal).toBe(2);
     expect(d.current.id).toBe("M1"); // primeira não-done
-    expect(d.currentProgress).toEqual({ done: 1, total: 3 });
+  });
+
+  test("devolve só o que a tela não deriva sozinha (#303)", () => {
+    // A tela lista todas as milestones e conta os itens de cada uma, então
+    // `recentDone` e `currentProgress` perderam consumidor. Este teste existe
+    // pra que voltar a adicioná-los seja uma decisão, e não um acidente.
+    expect(Object.keys(getDigest(parseRoadmap(MD))).sort()).toEqual([
+      "current",
+      "milestonesDone",
+      "milestonesTotal",
+    ]);
   });
 
   test("current pula milestones ⬜ do meio pra pegar a próxima na ordem (#147)", () => {
@@ -96,15 +106,5 @@ describe("getDigest", () => {
 - ⬜ d
 `;
     expect(getDigest(parseRoadmap(md)).current.id).toBe("M1");
-  });
-
-  test("recentDone completa com a milestone anterior quando há poucos", () => {
-    const d = getDigest(parseRoadmap(MD));
-    // M1 só tem 1 ✅; completa com os 2 ✅ do M0.
-    expect(d.recentDone.map((i) => i.text)).toEqual([
-      "Ambiente configurado",
-      "Navegação entre telas",
-      "Persistência integrada",
-    ]);
   });
 });
