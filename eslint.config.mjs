@@ -49,6 +49,16 @@ export default defineConfig([
     },
   },
   {
+    // Tooling de repo (scripts/) roda em Node CommonJS, fora do bundle do app.
+    // Mesmo caso do plugins/ acima: precisa dos globals de Node (require,
+    // module, process) que o bloco do app não tem.
+    files: ["scripts/**/*.js"],
+    languageOptions: {
+      sourceType: "commonjs",
+      globals: globals.node,
+    },
+  },
+  {
     // Funções serverless (Vercel) rodam em Node (ESM), não no app.
     files: ["api/**/*.js"],
     languageOptions: {
