@@ -1,3 +1,4 @@
+// @ts-nocheck -- teste; globals do jest não são tipados (ADR-002)
 // Testes da barreira contra o travessão de prosa (#310).
 //
 // O que importa aqui não é achar o travessão, que é trivial, e sim **não

@@ -1,3 +1,6 @@
+// @ts-nocheck -- tooling Node (CommonJS), fora do tsc do app (ADR-002).
+// O `exclude` do tsconfig não basta: o teste importa este módulo, e o tsc
+// segue o import pra dentro de pasta excluída.
 // Barreira mecânica contra o travessão de prosa (#310, fatia 4 da #302).
 //
 // O travessão espaçado (` — `) usado como aposto de propósito geral dá ao
@@ -73,7 +76,7 @@ function temTravessaoDeProsa(linha) {
  * Espera `--unified=0`, onde cada hunk header já dá a linha inicial exata e
  * não há contexto pra descontar.
  *
- * @param {string} diff Saída de `git diff --unified=0`.
+ * @param {string|null|undefined} diff Saída de `git diff --unified=0`.
  * @returns {Array<{file: string, line: number, text: string}>}
  */
 function linhasAdicionadas(diff) {
@@ -102,7 +105,7 @@ function linhasAdicionadas(diff) {
 /**
  * Achados de travessão de prosa nas linhas adicionadas de um diff.
  *
- * @param {string} diff
+ * @param {string|null|undefined} diff
  * @returns {Array<{file: string, line: number, text: string}>}
  */
 function achados(diff) {
