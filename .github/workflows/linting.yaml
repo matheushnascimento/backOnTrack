@@ -59,6 +59,22 @@ jobs:
 
       - run: npm test
 
+  text:
+    name: Texto
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "lts/jod"
+
+      # Sem `npm ci`: o script não tem dependência além do node e do git.
+      - name: Travessão de prosa em linha adicionada
+        run: node scripts/check-em-dash.js --range ${{ github.event.pull_request.base.sha }} ${{ github.event.pull_request.head.sha }}
+
   commitlint:
     name: commitlint
     runs-on: ubuntu-latest

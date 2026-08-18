@@ -7,6 +7,10 @@
           {
             "type": "command",
             "command": ".claude/hooks/check-commit-english.sh"
+          },
+          {
+            "type": "command",
+            "command": ".claude/hooks/check-em-dash.sh"
           }
         ]
       }

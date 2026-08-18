@@ -15,6 +15,7 @@
     "lint:prettier:fix": "prettier --write .",
     "lint:eslint:check": "eslint .",
     "lint:types:check": "tsc --noEmit",
+    "lint:text:check": "node scripts/check-em-dash.js",
     "prepare": "husky",
     "commit": "cz",
     "test": "jest"
