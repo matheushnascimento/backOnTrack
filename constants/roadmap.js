@@ -112,7 +112,13 @@ export function parseRoadmap(md) {
 }
 
 /**
- * Seleciona o resumo para a Home a partir das milestones parseadas.
+ * Resumo do roadmap: contagem geral e qual milestone está em andamento.
+ *
+ * A tela lista todas as milestones (#303), então o digest ficou só com o que
+ * ela não consegue derivar sozinha. Saíram daqui `recentDone` e
+ * `currentProgress`: o primeiro existia pra compensar a falta de navegação, e
+ * o segundo virou o contador de cada linha do acordeão.
+ *
  * @param {Milestone[]} milestones
  */
 export function getDigest(milestones) {
@@ -128,24 +134,9 @@ export function getDigest(milestones) {
     return next !== -1 ? next : Math.max(0, milestones.length - 1);
   })();
 
-  const current = milestones[currentIndex] ?? null;
-  const currentItems = current?.items ?? [];
-  const currentDone = currentItems.filter((i) => i.status === "done").length;
-
-  // "Concluído recentemente": os ✅ da milestone atual; se poucos, completa
-  // com os da milestone anterior.
-  let recentDone = currentItems.filter((i) => i.status === "done");
-  if (recentDone.length < 3 && currentIndex > 0) {
-    const prev = milestones[currentIndex - 1]?.items ?? [];
-    recentDone = [...prev.filter((i) => i.status === "done"), ...recentDone];
-  }
-  recentDone = recentDone.slice(-4);
-
   return {
     milestonesDone: done,
     milestonesTotal: total,
-    current,
-    currentProgress: { done: currentDone, total: currentItems.length },
-    recentDone,
+    current: milestones[currentIndex] ?? null,
   };
 }
