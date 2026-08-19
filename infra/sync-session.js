@@ -10,8 +10,8 @@
  * As duas funções aqui existem porque o sync errava ao tratar "ainda não sei"
  * como se fosse uma resposta:
  *
- * - `resolveRoomId` — sessão carregando não é "deslogado".
- * - `isTokenExpired` — token vencido na mão não é motivo pra tentar conectar.
+ * - `resolveRoomId`: sessão carregando não é "deslogado".
+ * - `isTokenExpired`: token vencido na mão não é motivo pra tentar conectar.
  */
 
 /**
@@ -19,14 +19,14 @@
  *
  * `getSession()` do Supabase é assíncrono: no 1º render do app o `session` é
  * `null` mesmo pra quem está logado. Ler `user?.id ?? anonRoomId` nesse
- * instante devolve a sala **anônima** — e o `startSync()` que vem logo atrás
+ * instante devolve a sala **anônima**, e o `startSync()` que vem logo atrás
  * empurra a store inteira pra lá antes da sessão resolver.
  *
  * Com `AUTH_MODE=optional` isso vira uma cópia completa dos dados
  * autenticados numa sala que conecta sem token. Depois do flip pra `required`
  * viraria falha garantida em toda abertura.
  *
- * Por isso o gate em `ready`: sem sessão resolvida, não há sala — o caller
+ * Por isso o gate em `ready`: sem sessão resolvida, não há sala, e o caller
  * trata `null` como "espera", não como "desligado".
  *
  * @param {boolean} ready Sessão já resolvida (`SessionProvider.ready`).
@@ -45,7 +45,7 @@ export function resolveRoomId(ready, user, anonRoomId) {
  * Voltar do background reconecta na hora (`AppState` → `active`), mas o token
  * que está no state do React pode ter vencido enquanto o app dormia. Tentar
  * com ele produz `rejecting: invalid token: expired` no server e uma
- * piscada de "offline" — foram 8 dessas no log entre 06/08 e 12/08.
+ * piscada de "offline". Foram 8 dessas no log entre 06/08 e 12/08.
  *
  * Quando isto devolve `true`, o caller **não** reconecta: o
  * `startAutoRefresh` (ligado no `SessionProvider`) renova, o
@@ -54,12 +54,12 @@ export function resolveRoomId(ready, user, anonRoomId) {
  *
  * `expires_at` do Supabase vem em **segundos** epoch, não milissegundos.
  *
- * Sessão anônima (sem token) nunca está vencida — não há o que renovar.
+ * Sessão anônima (sem token) nunca está vencida, porque não há o que renovar.
  *
  * @param {{ expires_at?: number, access_token?: string } | null | undefined} session
  * @param {number} [now] Epoch em ms; injetável pra teste.
  * @param {number} [skewMs] Margem pra contar como vencido um token prestes a
- *   vencer — o round-trip até o server leva algum tempo. Default 5s.
+ *   vencer, porque o round-trip até o server leva algum tempo. Default 5s.
  * @returns {boolean}
  */
 export function isTokenExpired(session, now = Date.now(), skewMs = 5_000) {
@@ -70,13 +70,13 @@ export function isTokenExpired(session, now = Date.now(), skewMs = 5_000) {
 }
 
 /**
- * A conexão caiu porque falta login — e não porque a rede caiu? (#278)
+ * A conexão caiu porque falta login, em vez de porque a rede caiu? (#278)
  *
  * Só é verdade quando as duas coisas valem: o client não tem token **e** o
  * server declarou `authMode: "required"` no `/healthz`. Nesse par a recusa é
  * determinística: anônimo nunca vai entrar, por mais que tente.
  *
- * Fora disso, `false` — inclusive quando o modo é desconhecido (o `/healthz`
+ * Fora disso, `false`, inclusive quando o modo é desconhecido (o `/healthz`
  * não respondeu). Server inalcançável **é** problema de rede, então cair no
  * caminho de "sem conexão" está certo ali.
  *

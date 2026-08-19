@@ -15,7 +15,7 @@
 //
 // O envio é opt-in porque manda mensagem real e irreversível pros testers. Não
 // existe lista de transmissão via API (a Evolution API não suporta: issue #2081),
-// então o disparo é um DM por tester, em loop e com delay — o que também é mais
+// então o disparo é um DM por tester, em loop e com delay, o que também é mais
 // privado (ninguém vê a lista) e menos chamativo pro antispam do WhatsApp.
 //
 // Env do modo --send:
@@ -25,7 +25,7 @@
 //   EVO_DELAY_MS  opcional, delay entre envios (default 4000)
 //
 // A lista sai da tela de admin do app ("Exportar lista") e vai em
-// scripts/testers.json — gitignored, porque é PII.
+// scripts/testers.json, gitignored, porque é PII.
 
 import { execFileSync } from "node:child_process";
 import { readFileSync, existsSync } from "node:fs";
@@ -72,9 +72,9 @@ function readLatestRelease() {
 
 /**
  * Monta a mensagem WhatsApp de aviso de nova APK. Tom comercial e enxuto: o
- * tester decide em segundos se instala agora ou depois — não é changelog de
+ * tester decide em segundos se instala agora ou depois. Não é changelog de
  * dev. As **notas da release** (`-f notes=` no workflow) viram o "o que
- * mudou" — escreva user-facing (features/fixes visíveis), não dev-facing
+ * mudou": escreva user-facing (features/fixes visíveis), não dev-facing
  * (SDK bumps, refactors internos). A versão fica no rodapé pra referência,
  * sem competir com a headline.
  *
@@ -207,7 +207,7 @@ async function sendText(cfg, phone, text) {
   });
   if (!res.ok) {
     const detalhe = await res.text();
-    throw new Error(`HTTP ${res.status} — ${detalhe.slice(0, 200)}`);
+    throw new Error(`HTTP ${res.status}: ${detalhe.slice(0, 200)}`);
   }
 }
 
@@ -221,7 +221,7 @@ async function runSend(message) {
   console.log(`Instância: ${cfg.instance} @ ${cfg.url}`);
   console.log(`Delay entre envios: ${cfg.delayMs}ms`);
   console.log(`Testers (${testers.length}):`);
-  for (const t of testers) console.log(`  • ${t.name} — ${t.phone}`);
+  for (const t of testers) console.log(`  • ${t.name}: ${t.phone}`);
 
   if (!process.argv.includes("--yes") && !(await confirmSend(testers.length))) {
     console.log("Cancelado. Nada foi enviado.");
@@ -238,7 +238,7 @@ async function runSend(message) {
       console.log(`✓ ${t.name} (${t.phone})`);
     } catch (e) {
       falhas.push(`${t.name} (${t.phone}): ${e.message}`);
-      console.error(`✖ ${t.name} (${t.phone}) — ${e.message}`);
+      console.error(`✖ ${t.name} (${t.phone}): ${e.message}`);
     }
     // Delay entre envios: baixa a chance de o WhatsApp tratar como spam.
     if (i < testers.length - 1) await sleep(cfg.delayMs);
@@ -261,7 +261,7 @@ function runPrint(message) {
   if (copied) {
     console.log(`✓ Copiado pro clipboard (${copied}). Cole na conversa.`);
   } else {
-    console.log("ℹ Clipboard indisponível — copie o texto acima manualmente.");
+    console.log("ℹ Clipboard indisponível, copie o texto acima manualmente.");
   }
 }
 
@@ -272,7 +272,7 @@ function runPrint(message) {
 function resolveMessage() {
   const i = process.argv.indexOf("--text-file");
   if (i === -1) {
-    // Só toca no `gh` no modo release — com --text-file nem precisa de release.
+    // Só toca no `gh` no modo release, porque com --text-file nem precisa de release.
     return buildMessage(readLatestRelease(), readHomepage());
   }
   const caminho = process.argv[i + 1];

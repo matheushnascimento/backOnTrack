@@ -7,7 +7,7 @@
 // NativeWind pra respeitar o toggle manual + o `prefers-color-scheme` do OS.
 //
 // Para classes utilitárias (`bg-*`, `text-*`, `border-*`), continue usando
-// `className="... dark:..."` — este helper existe SÓ pros callsites que não
+// `className="... dark:..."`. Este helper existe SÓ pros callsites que não
 // aceitam className.
 
 import { useColorScheme } from "nativewind";

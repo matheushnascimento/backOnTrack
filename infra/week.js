@@ -8,7 +8,7 @@
 //
 // Range: últimos 7 dias incluindo hoje (rolling), pra HOJE aparecer sempre no
 // último slot. Header exibe o número da semana ISO da data de hoje pra dar
-// contexto — não é o range ISO Mon-Sun (que seria confuso quando o rolling
+// contexto, em vez do range ISO Mon-Sun (que seria confuso quando o rolling
 // atravessa duas semanas).
 
 import { store } from "@/infra/database";
@@ -30,7 +30,7 @@ const MONTH_ABBR = [
   "dez",
 ];
 
-// ISO 8601 week number. Cópia direta do algoritmo canônico — não vale trazer
+// ISO 8601 week number. Cópia direta do algoritmo canônico, porque não vale trazer
 // date-fns só pra isso.
 function isoWeek(d) {
   const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));

@@ -36,7 +36,7 @@ export const SYNC_NEEDS_AUTH = "needs-auth";
  *
  * Serve a dois propósitos de uma vez: se responde, a rede está de pé e a
  * recusa do WS foi política; se não responde, é rede mesmo. Por isso o
- * `catch` devolve `null` em vez de propagar — "não sei" é uma resposta útil
+ * `catch` devolve `null` em vez de propagar, porque "não sei" é uma resposta útil
  * aqui, e o caller trata como offline.
  *
  * @param {string | null} healthzUrl
@@ -77,7 +77,7 @@ async function fetchAuthMode(healthzUrl, timeoutMs = 4000) {
  *
  * `getSession()` é assíncrono: no 1º render, quem está logado ainda aparece
  * como `user: null`. Conectar aí resolvia pra sala **anônima**, e o
- * `startSync()` logo atrás empurrava a store inteira pra lá — com
+ * `startSync()` logo atrás empurrava a store inteira pra lá, com
  * `AUTH_MODE=optional`, uma cópia completa dos dados autenticados numa sala
  * que conecta sem token (#275). Por isso `resolveRoomId` devolve `null`
  * enquanto a sessão não resolveu, e `null` aqui significa "espera", não
@@ -85,7 +85,7 @@ async function fetchAuthMode(healthzUrl, timeoutMs = 4000) {
  *
  * ## Por que a reconexão precisa observar o socket na mão
  *
- * `createWsSynchronizer` **resolve mesmo quando a conexão falha** — ele
+ * `createWsSynchronizer` **resolve mesmo quando a conexão falha**: ele
  * escuta `open` E `error` e resolve nos dois casos (ver
  * `synchronizers/synchronizer-ws-client`). Então um 401 do server produz um
  * synchronizer "válido" envolvendo um socket morto, e nenhum `catch` dispara.
@@ -98,17 +98,17 @@ async function fetchAuthMode(healthzUrl, timeoutMs = 4000) {
  * ## Como a reconexão funciona
  *
  * Ao cair, agenda nova tentativa com backoff exponencial + jitter
- * (`sync-retry.js`). Cada tentativa recria o synchronizer inteiro — bumpar
+ * (`sync-retry.js`). Cada tentativa recria o synchronizer inteiro, e bumpar
  * `generation` muda as deps do `useCreateSynchronizer`, que derruba o antigo
  * e monta um novo. Voltar pro foreground (`AppState` → `active`) reconecta
  * na hora, sem esperar o backoff: o SO costuma matar o socket em background
  * e o usuário que reabre o app quer sync imediato.
  *
- * Depende do `useRegistrosPersistencia` já ter rodado — é ele quem carrega o
+ * Depende do `useRegistrosPersistencia` já ter rodado, porque é ele quem carrega o
  * `syncRoomId` do disco (ou gera no 1º launch).
  *
  * Chamado uma única vez, pelo `SyncStatusProvider`. Telas leem o resultado
- * via `useSyncStatus()` — montar o hook duas vezes abriria dois sockets.
+ * via `useSyncStatus()`, porque montar o hook duas vezes abriria dois sockets.
  *
  * @returns {{ status: "off"|"connecting"|"online"|"offline", reconnect: () => void }}
  */
@@ -117,7 +117,7 @@ export function useRegistrosSync() {
   const anonRoomId = useValue("syncRoomId", store);
 
   // roomId: user.id se logado; senão o UUID anônimo. `null` enquanto a sessão
-  // não resolveu — ver `resolveRoomId`, e o porquê logo abaixo em `waiting`.
+  // não resolveu. Ver `resolveRoomId`, e o porquê logo abaixo em `waiting`.
   // token: JWT se logado; senão null (server em optional-mode aceita anônimo).
   const roomId = resolveRoomId(ready, user, anonRoomId);
   const token = session?.access_token ?? null;
@@ -139,7 +139,7 @@ export function useRegistrosSync() {
   const retryExpRef = useRef(0);
   const retryTimerRef = useRef(null);
   // Socket da tentativa corrente. Usado pra ignorar `close` de conexões
-  // obsoletas — na troca de deps o create do novo roda ANTES do destroy do
+  // obsoletas: na troca de deps o create do novo roda ANTES do destroy do
   // antigo, então o close do antigo chegaria depois e agendaria retry à toa.
   const currentWsRef = useRef(null);
   const mountedRef = useRef(true);
@@ -171,18 +171,18 @@ export function useRegistrosSync() {
     };
   }, [clearRetry]);
 
-  // Voltar pro foreground reconecta na hora se estiver caído — não espera o
+  // Voltar pro foreground reconecta na hora se estiver caído, sem esperar o
   // backoff, que pode estar no teto de 30s.
   useEffect(() => {
     // No web o AppState devolve `undefined` quando não há `document`
-    // (prerender do `expo export`) — sem a guarda, o cleanup quebraria o
+    // (prerender do `expo export`): sem a guarda, o cleanup quebraria o
     // build. Native sempre devolve subscription.
     const sub = AppState.addEventListener?.("change", (next) => {
       if (next !== "active") return;
       // Token vencido enquanto o app dormia: reconectar agora seria rejeitado
       // pelo server e só geraria ruído. O `startAutoRefresh` (session.js)
       // renova, o `onAuthStateChange` publica a sessão nova, a `url` muda e o
-      // synchronizer é recriado sozinho — com token que presta.
+      // synchronizer é recriado sozinho, com token que presta.
       if (isTokenExpired(session)) return;
       const ws = currentWsRef.current;
       // readyState 1 = OPEN. Qualquer outra coisa = reconectar.
@@ -211,7 +211,7 @@ export function useRegistrosSync() {
 
         // Caiu sem token: pode não ser rede. Sob `AUTH_MODE=required` o
         // server recusa anônimo por política, e o 401 do handshake não chega
-        // até aqui — a API WebSocket não expõe status de upgrade recusado.
+        // até aqui, porque a API WebSocket não expõe status de upgrade recusado.
         // Perguntar o modo é o que separa "preciso entrar" de "estou sem
         // sinal"; sem isso o app diz "sem conexão" e oferece um "Tentar de
         // novo" que nunca vai funcionar (#278).
@@ -265,7 +265,7 @@ export function useRegistrosSync() {
     },
     // Reconecta em troca de URL (login/logout/token refresh) e a cada
     // tentativa agendada pelo backoff. `waiting` entra porque com SYNC_URL
-    // vazio a URL é null antes e depois da sessão resolver — sem ele o
+    // vazio a URL é null antes e depois da sessão resolver, e sem ele o
     // callback não rodaria de novo e o status ficaria preso em `connecting`.
     [url, generation, waiting],
   );
@@ -288,7 +288,7 @@ const SyncStatusContext = createContext({
  *
  * Precisa ficar DENTRO do `SessionProvider`: `useRegistrosSync` chama
  * `useSession` por baixo, e acima do provider ele devolveria o default do
- * contexto (`user: null`) — o sync ficaria eternamente anônimo mesmo logado.
+ * contexto (`user: null`), e o sync ficaria eternamente anônimo mesmo logado.
  * Foi exatamente o bug do #217.
  *
  * @param {{ children: any }} props
@@ -303,7 +303,7 @@ export function SyncStatusProvider({ children }) {
 }
 
 /**
- * Estado do sync pra telas. Não abre conexão — só lê o que o provider publica.
+ * Estado do sync pra telas. Não abre conexão: só lê o que o provider publica.
  * @returns {{ status: "off"|"connecting"|"online"|"offline", reconnect: () => void }}
  */
 export function useSyncStatus() {

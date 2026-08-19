@@ -1,13 +1,13 @@
 // @ts-nocheck -- helper puro; tipos vêm quando constants/ for tipado (ADR-002)
 
-// Momentos da jornada (#293, fatia 3a) — telas 4a·2 e 4a·4 do Turno 4.
+// Momentos da jornada (#293, fatia 3a): telas 4a·2 e 4a·4 do Turno 4.
 //
 // Um momento aparece UMA VEZ e some. Quem garante isso é o `journeyAckLevel`
 // no store: o nível que a pessoa já viu. Sem ele o aviso de regressão
 // reapareceria em toda abertura do app.
 //
 // Tom: reforço sóbrio (docs/11-modelo-de-niveis.md §1.5). Subir de nível é
-// reconhecimento em prosa, não celebração — sem confete, sem verde de vitória,
+// reconhecimento em prosa, não celebração: sem confete, sem verde de vitória,
 // sem "🎉". E a regressão não tem vermelho nem palavra de culpa.
 
 import { CATEGORY_MAP } from "@/components/categoryUtils";
@@ -37,7 +37,7 @@ export function pendingMoment(level, ackLevel) {
  * Qual hábito foi conquistado ao chegar neste nível.
  *
  * ⚠️ **`null` abaixo do lvl 2, e isso não é detalhe.** No lvl 1 o primeiro
- * hábito está sendo CONSTRUÍDO, não conquistado — nada virou seu ainda.
+ * hábito está sendo CONSTRUÍDO, não conquistado, e nada virou seu ainda.
  * Sem esta guarda o sheet diria "Sono virou seu" tendo "Sono" também como
  * próximo foco: o mesmo hábito nos dois papéis, na primeira subida que a
  * pessoa veria.
@@ -57,9 +57,9 @@ const capitalizar = (s) => `${s.charAt(0).toUpperCase()}${s.slice(1)}`;
  * Copy do sheet de subir de nível (4a·4).
  *
  * Três movimentos, nessa ordem:
- * 1. **nomeia o que virou seu** — "Sono virou seu" é reconhecimento em prosa;
- * 2. **explica o que muda** — para de cobrar atenção;
- * 3. **antecipa a queda** — "sem drama". Tirar peso do futuro antes que ele
+ * 1. **nomeia o que virou seu**: "Sono virou seu" é reconhecimento em prosa;
+ * 2. **explica o que muda**: para de cobrar atenção;
+ * 3. **antecipa a queda**: "sem drama". Tirar peso do futuro antes que ele
  *    chegue é o que impede o reconhecimento de virar dívida.
  *
  * @param {{from: number, to: number, achieved: string, next: string|null}} args
@@ -85,7 +85,7 @@ export function levelUpCopy({ from, to, achieved, next }) {
 /**
  * Copy do aviso de regressão (4a·2).
  *
- * ⚠️ **"voltamos", primeira pessoa do plural.** O app voltou junto — não é a
+ * ⚠️ **"voltamos", primeira pessoa do plural.** O app voltou junto, e não é a
  * pessoa que falhou sozinha. E o hábito fica **"em pausa"**, nunca "perdido".
  *
  * A promessa de que nada sumiu vem acompanhada de um botão pro histórico:

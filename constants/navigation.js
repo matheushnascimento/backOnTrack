@@ -9,7 +9,7 @@
 //   - deep link direto (`backontrack://admin`, magic link do auth);
 //   - Fast Refresh no dev.
 //
-// Nesses casos o botão "Voltar" ficava morto — o usuário via o controle,
+// Nesses casos o botão "Voltar" ficava morto, e o usuário via o controle,
 // tocava, e nada acontecia. Aqui a Home vira o destino de fallback: sempre
 // existe pra onde voltar.
 

@@ -6,7 +6,7 @@ import { Platform } from "react-native";
 
 // Cliente Supabase pra auth (M6 auth fatia A, #207, ADR-010).
 //
-// URL/ANON KEY vêm do dashboard do Supabase — a anon key é public por design
+// URL/ANON KEY vêm do dashboard do Supabase, e a anon key é public por design
 // (vive no bundle do app), então EXPO_PUBLIC_* é ok. JWT Secret NÃO entra
 // aqui (fica no server WS na fatia B).
 //
@@ -20,12 +20,12 @@ export const SUPABASE_ANON_KEY =
 export const AUTH_ENABLED = Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
 
 // Guarda o erro de init pra caso o cliente precise mostrar diagnóstico.
-// Non-null sse `createClient` lançou (ex.: URL inválida — aconteceu no
+// Non-null sse `createClient` lançou (ex.: URL inválida, aconteceu no
 // rollout do M6 quando as env vars EAS vieram com control char SYN).
 export let supabaseInitError = null;
 
 // Envelope createClient em try/catch pra crash de validação (ex.: URL
-// inválido) NÃO derrubar o app inteiro. Retorna null e loga — app abre
+// inválido) NÃO derrubar o app inteiro. Retorna null e loga, então o app abre
 // com auth desligada em vez de crash na abertura.
 function safeCreateClient() {
   if (!AUTH_ENABLED) return null;
@@ -41,7 +41,7 @@ function safeCreateClient() {
         detectSessionInUrl: Platform.OS === "web",
         // Força PKCE em todas as plataformas. Sem isso, o supabase-js pode
         // gerar magic link em hash-flow (#access_token=...) que só funciona
-        // com detectSessionInUrl=true — quebra no native, onde o callback
+        // com detectSessionInUrl=true, que quebra no native, onde o callback
         // precisa do ?code= pra chamar exchangeCodeForSession.
         flowType: "pkce",
       },

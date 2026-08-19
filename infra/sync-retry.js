@@ -10,7 +10,7 @@
  * **Por que jitter:** quando o server reinicia, todos os clientes caem no
  * mesmo instante. Sem jitter eles voltam juntos no mesmo milissegundo e
  * derrubam de novo (thundering herd). Full jitter espalha cada cliente por
- * uma janela aleatória — sorteia em `[delay/2, delay]` em vez de sempre usar
+ * uma janela aleatória: sorteia em `[delay/2, delay]` em vez de sempre usar
  * o teto.
  */
 

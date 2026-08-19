@@ -1,4 +1,4 @@
-# Backing image slim, sem toolchain — o server só precisa de node runtime.
+# Backing image slim, sem toolchain: o server só precisa de node runtime.
 FROM node:22-alpine
 
 WORKDIR /app
@@ -11,7 +11,7 @@ RUN npm install --omit=dev
 COPY server.js ./
 COPY smoke-client.js ./
 
-# Porta interna — o Traefik na frente mapeia via label, não via publish.
+# Porta interna. O Traefik na frente mapeia via label, não via publish.
 EXPOSE 8787
 
 # Volume onde ficam os JSONs por sala (bind mount no compose).

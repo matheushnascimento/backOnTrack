@@ -1,4 +1,4 @@
-# Deploy do server WS. TLS público via Cloudflare Tunnel — mas o cloudflared já
+# Deploy do server WS. TLS público via Cloudflare Tunnel, mas o cloudflared já
 # roda como serviço systemd no host (servindo outros subdomínios do túnel `home
 # server`), então NÃO subimos um container cloudflared aqui: seria uma segunda
 # replica redundante do mesmo túnel.
@@ -10,7 +10,7 @@
 #        Public Hostname: backontrack-sync . mhdn.com.br
 #        Service:         HTTP  (não HTTPS)
 #        URL:             http://127.0.0.1:8787
-#      Nova rota é puxada automaticamente pelo cloudflared existente — sem
+#      Nova rota é puxada automaticamente pelo cloudflared existente, sem
 #      restart, sem rebuild.
 #
 # Subir:
@@ -25,7 +25,7 @@ services:
       PORT: "8787"
       DATA_DIR: "/data"
     # Carrega .env do lado do container (auth: SUPABASE_JWT_SECRET, AUTH_MODE).
-    # `.env` é gitignored — cada deploy tem o seu.
+    # `.env` é gitignored, e cada deploy tem o seu.
     env_file:
       - .env
     volumes:

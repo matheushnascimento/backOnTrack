@@ -4,11 +4,11 @@
  * Monta a URL WS pro server de sync (M6, fatia C, #211).
  *
  * Isolado num arquivo próprio pra ser testável sem puxar `infra/sync.js`
- * inteiro — que importa Supabase/AsyncStorage e não roda no jest (RN
+ * inteiro, que importa Supabase/AsyncStorage e não roda no jest (RN
  * native module).
  *
  * Retorna `null` se algum insumo essencial faltar (baseUrl vazio, roomId
- * ainda não carregado do disco) — o caller trata como "sync desligado" e
+ * ainda não carregado do disco): o caller trata como "sync desligado" e
  * não tenta abrir WebSocket.
  *
  * `token` é opcional. Quando presente, o server valida HS256 no
@@ -32,7 +32,7 @@ export function buildSyncUrl(baseUrl, roomId, token) {
  * a rede está de pé e a recusa foi política; se nem ele responde, é rede
  * mesmo. Não precisa de heurística.
  *
- * `wss://` vira `https://` e `ws://` vira `http://` — mesmo host, mesma porta.
+ * `wss://` vira `https://` e `ws://` vira `http://`, com mesmo host e mesma porta.
  *
  * @param {string} baseUrl Mesma base do `buildSyncUrl` (ex.: `wss://host`).
  * @returns {string | null} `null` se a base estiver vazia (sync desligado).

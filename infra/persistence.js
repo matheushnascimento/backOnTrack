@@ -13,7 +13,7 @@ const db = openDatabaseSync("back_on_track.db");
  * Chame este hook uma vez, perto da raiz do app (ex: app/_layout.jsx),
  * pra carregar os dados salvos ao abrir o app e manter tudo persistido
  * automaticamente a cada mudança. Sem isso, a store do TinyBase vive só
- * na memória e some a cada reload — é o motivo mais provável do app
+ * na memória e some a cada reload, e é o motivo mais provável do app
  * hoje parecer "só visual".
  *
  * Nota: o persister de Expo SQLite ainda é experimental (a própria

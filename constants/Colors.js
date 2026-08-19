@@ -1,7 +1,7 @@
 export const Colors = {
   primary: "#2E5A88",
   secondary: "#4CAF50",
-  // Ação destrutiva e erro visível — Material red-500, combina com o
+  // Ação destrutiva e erro visível: Material red-500, combina com o
   // secondary que é Material green-500. Ver docs/08-design-tokens.md.
   danger: "#F44336",
   light: {

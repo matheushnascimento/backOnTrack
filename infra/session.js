@@ -18,7 +18,7 @@ const SessionContext = createContext({
 
 export function SessionProvider({ children }) {
   const [session, setSession] = useState(null);
-  // ready só vira true depois da 1ª leitura da sessão persistida — evita
+  // ready só vira true depois da 1ª leitura da sessão persistida, o que evita
   // flash de "deslogado" na abertura pra quem já estava logado.
   const [ready, setReady] = useState(!AUTH_ENABLED);
 
@@ -50,7 +50,7 @@ export function SessionProvider({ children }) {
   // `autoRefreshToken: true` sozinho não basta aqui: o timer de refresh do
   // supabase-js é um `setInterval` do runtime JS, e no RN o runtime dorme com
   // o app em background. O token vence enquanto ninguém está olhando, e ao
-  // voltar o app reconecta o sync com o token velho — foram 8 rejeições
+  // voltar o app reconecta o sync com o token velho. Foram 8 rejeições
   // `invalid token: expired` no server entre 06/08 e 12/08.
   //
   // A Supabase documenta o wiring manual por AppState pra native. No web não

@@ -8,7 +8,7 @@
 // vai pro AsyncStorage e é restaurada no boot.
 //
 // **Por que AsyncStorage e não o TinyBase store**: o store SINCRONIZA entre
-// devices (M6). Tema é preferência POR APARELHO — o celular pode estar no
+// devices (M6). Tema é preferência POR APARELHO, porque o celular pode estar no
 // escuro à noite enquanto o tablet segue claro. Guardar no store faria uma
 // escolha vazar pra outro device. AsyncStorage é local por definição.
 //
@@ -24,7 +24,7 @@ import { useColorScheme } from "nativewind";
 const THEME_KEY = "backontrack.colorScheme";
 
 /**
- * Salva a escolha explícita do usuário. Erro de escrita não quebra a UI — o
+ * Salva a escolha explícita do usuário. Erro de escrita não quebra a UI, e o
  * tema já mudou em memória; só a persistência falha (e o próximo boot volta
  * pro sistema, que é degradação aceitável).
  * @param {"light" | "dark"} scheme
@@ -66,7 +66,7 @@ export function useRestoreThemePreference() {
       cancelled = true;
     };
     // setColorScheme é estável entre renders (vem do NativeWind); rodar só no
-    // mount é o desejado — restauração acontece uma vez por sessão.
+    // mount é o desejado, porque a restauração acontece uma vez por sessão.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 }
