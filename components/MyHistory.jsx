@@ -11,6 +11,7 @@ import { get, getByMonth, remove } from "@/infra/database";
 import { confirmAction } from "@/constants/dialogs";
 import { minutesToHHMM } from "@/constants/duration";
 import { router } from "expo-router";
+import { maisRecentesPrimeiro } from "@/constants/recordOrder";
 //#endregion
 
 function formatDate(date) {
@@ -221,7 +222,7 @@ function HistoryList({
 }) {
   return (
     <MyView safe={false} className="w-full items-center gap-3">
-      {Object.values(data).map((obj) => (
+      {maisRecentesPrimeiro(Object.values(data)).map((obj) => (
         <HistoryCard
           key={obj.id}
           obj={obj}
