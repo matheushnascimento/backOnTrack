@@ -4,7 +4,7 @@
 //
 // Ficam fora do componente pelo mesmo motivo do `bannerPriority.js`: importar
 // a Home no jest puxa a cadeia toda até AsyncStorage. Aqui mora o que tem
-// risco de bug — qual ação rápida, qual copy, o que vai pra cada zona.
+// risco de bug: qual ação rápida, qual copy, o que vai pra cada zona.
 //
 // Telas 4a·1 e 4a·3 do Turno 4 do Claude Design.
 
@@ -25,7 +25,7 @@ export const METRIC_TINT = {
  * Ações rápidas do card de foco, por métrica.
  *
  * ⚠️ **Sono não tem incremento, e isso não é omissão.** O design mostra
- * `+200ml / +300ml / +500ml`, que serve pra água — mas sono se registra por
+ * `+200ml / +300ml / +500ml`, que serve pra água, mas sono se registra por
  * horário de deitar e acordar, não por quantidade acumulada. E sono é o
  * **primeiro** foco da jornada: o card do lvl 1, o primeiro que qualquer
  * pessoa vê, é justamente o que não tem incremento sensato.
@@ -62,7 +62,7 @@ export function quickAddLabel(metric, valor) {
 /**
  * Chip de contexto do header: `lvl N · <hábito>`.
  *
- * O nível é **contexto, não pontuação** — por isso vive num chip discreto e
+ * O nível é **contexto, não pontuação**, e por isso vive num chip discreto e
  * nunca como número grande (docs/11-modelo-de-niveis.md §1.5).
  */
 export function levelChip(level, focus) {
@@ -83,7 +83,7 @@ export function headerCopy(journey) {
   const { focus, habits, regressed } = journey ?? {};
 
   if (!focus) {
-    // lvl 0 — nada conquistado ainda. Convite, não vazio.
+    // lvl 0: nada conquistado ainda. Convite, não vazio.
     return {
       title: "Só registrar hoje.",
       subtitle: "Qualquer coisa. O que aparecer.",
@@ -107,7 +107,7 @@ export function headerCopy(journey) {
   if (estaveis.length === 0) {
     return { title, subtitle: "Sem pressa. Um de cada vez." };
   }
-  // "já é seu" reconhece sem premiar — reforço sóbrio.
+  // "já é seu" reconhece sem premiar: reforço sóbrio.
   const lista =
     estaveis.length === 1
       ? `${estaveis[0]} já é seu`
@@ -121,7 +121,7 @@ export function headerCopy(journey) {
 /**
  * Divide as métricas entre a zona de foco e a de "resto do dia".
  *
- * **Nada some** — é a decisão central do design (hierarquia, não exclusão).
+ * **Nada some**: é a decisão central do design (hierarquia, não exclusão).
  * Métrica trancada continua na lista, só sem valor a mostrar. Por isso o
  * rodapé promete "tudo continua registrável", e a promessa precisa ser
  * verdadeira.

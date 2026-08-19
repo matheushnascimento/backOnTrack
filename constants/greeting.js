@@ -8,7 +8,7 @@
 /**
  * Só o PRIMEIRO nome: corta no primeiro caractere não-alfabético.
  *
- * `\p{L}` (com flag `u`) é letra Unicode, então acento passa — "João da
+ * `\p{L}` (com flag `u`) é letra Unicode, então acento passa, e "João da
  * Silva" vira "João", não "Jo". Cobre de uma vez os separadores que aparecem
  * de verdade: espaço ("Matheus Henrique"), ponto do email
  * ("matheus.mhddn") e dígito.
@@ -52,7 +52,7 @@ export function pickName(user, displayName) {
   const localpart = String(email).split("@")[0] || "";
   const derivado = firstName(localpart);
   if (!derivado) return "";
-  // Aqui o lowercase vale: localpart é derivado, não escolhido — normaliza
+  // Aqui o lowercase vale: localpart é derivado, não escolhido, então normaliza
   // "MATHEUS.MHDDN@..." pra "Matheus".
   return derivado.charAt(0).toUpperCase() + derivado.slice(1).toLowerCase();
 }

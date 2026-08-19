@@ -7,7 +7,7 @@
 //
 // Auth (M6 fatia B, #211, ADR-010): quando o cliente manda `?token=<JWT>` na
 // URL, o server valida a assinatura e enforça que o `sub` do JWT bate com o
-// pathId — quem sabe o path sem o token do dono não conecta.
+// pathId: quem sabe o path sem o token do dono não conecta.
 //
 // Dois algoritmos são aceitos:
 //   - **ES256** (padrão atual do Supabase): chaves assimétricas ECC P-256. A
@@ -47,7 +47,7 @@ const DATA_DIR = resolve(process.env.DATA_DIR ?? "./data");
 const AUTH_MODE = process.env.AUTH_MODE ?? "optional";
 const JWT_SECRET = process.env.SUPABASE_JWT_SECRET ?? "";
 // URL base do projeto Supabase (ex.: https://abc.supabase.co). Necessária pra
-// validar tokens ES256 — é dela que sai o endpoint JWKS.
+// validar tokens ES256, porque é dela que sai o endpoint JWKS.
 const SUPABASE_URL = (process.env.SUPABASE_URL ?? "").replace(/\/+$/, "");
 const JWKS_URL = SUPABASE_URL
   ? `${SUPABASE_URL}/auth/v1/.well-known/jwks.json`
@@ -96,7 +96,7 @@ async function fetchJwks() {
   if (!JWKS_URL) throw new Error("SUPABASE_URL not set, cannot verify ES256");
   const now = Date.now();
   if (now - jwksFetchedAt < JWKS_MIN_REFETCH_MS && jwksCache.size > 0) {
-    // Refetch recente demais — usa o cache atual (kid segue desconhecido).
+    // Refetch recente demais, então usa o cache atual (kid segue desconhecido).
     return;
   }
   jwksFetchedAt = now;
@@ -138,7 +138,7 @@ async function verifyJwt(token) {
 
   if (header.alg === "ES256") {
     const key = await getPublicKey(header.kid);
-    // Assinatura JWT ES256 é R||S cru (64 bytes), não DER — daí o
+    // Assinatura JWT ES256 é R||S cru (64 bytes), e não DER, daí o
     // dsaEncoding ieee-p1363, senão o Node rejeita tudo como inválido.
     const ok = verify(
       "sha256",
@@ -173,7 +173,7 @@ async function verifyJwt(token) {
 // Servidor HTTP na frente do WS, por um motivo só: anunciar o AUTH_MODE (#278).
 //
 // Quando o server recusa uma conexão sem token, ele responde 401 no handshake
-// — mas o 401 **não atravessa** até o cliente. A API WebSocket de browser e
+// Só que o 401 **não atravessa** até o cliente. A API WebSocket de browser e
 // React Native não expõe o status HTTP de um handshake que falhou; o app vê
 // só um `close` genérico, indistinguível de queda de rede. Sem isto, o tester
 // sem login veria "sem conexão" e um "Tentar de novo" que nunca funciona.
@@ -196,7 +196,7 @@ const httpServer = createServer((req, res) => {
       "content-type": "application/json",
       "content-length": Buffer.byteLength(corpo),
       // O app é servido de outra origem (e no native não há origem). Só
-      // devolve o modo de auth — nada aqui é segredo.
+      // devolve o modo de auth, e nada aqui é segredo.
       "access-control-allow-origin": "*",
       "cache-control": "no-store",
     });
@@ -224,7 +224,7 @@ const wss = new WebSocketServer({
         );
         return callback(false, 500, "server cannot verify tokens");
       }
-      // verifyJwt é async (JWKS pode precisar de fetch) — o callback do
+      // verifyJwt é async (JWKS pode precisar de fetch), e o callback do
       // verifyClient aceita resolução assíncrona.
       verifyJwt(token)
         .then((payload) => {
@@ -272,6 +272,6 @@ const verifiers = [
 // corrida em que o teste conecta num socket que ainda não existe.
 httpServer.listen(PORT, () => {
   console.log(
-    `[sync] listening on ws://0.0.0.0:${PORT} — data dir: ${DATA_DIR} — auth: ${AUTH_MODE}${verifiers ? ` (${verifiers})` : ""}`,
+    `[sync] listening on ws://0.0.0.0:${PORT} | data dir: ${DATA_DIR} | auth: ${AUTH_MODE}${verifiers ? ` (${verifiers})` : ""}`,
   );
 });

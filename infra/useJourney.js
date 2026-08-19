@@ -10,24 +10,24 @@ import { getGoals, getGrantedHabits, store } from "./database";
 // ⚠️ **Existe por causa de um bug que aconteceu duas vezes.**
 //
 // A derivação vive numa função pura bem testada, mas ela precisa receber
-// vários pedaços do store — metas, pico, concessões. Quando cada tela montava
+// vários pedaços do store: metas, pico, concessões. Quando cada tela montava
 // esses argumentos por conta própria, era questão de tempo até uma esquecer
 // um: a Home ficou sem passar `granted`, e por isso a conferência de
 // histórico (#295) e a previsualização de estabilidade não tinham **nenhum**
 // efeito na tela principal. Os 269 testes seguiram verdes, porque testam a
-// função — não quem a chama.
+// função, e não quem a chama.
 //
 // Com um hook só, existe um lugar pra ligar e um lugar pra errar. Se faltar
 // argumento, falta pra todo mundo ao mesmo tempo, o que é visível na hora.
 //
 // A lição mais geral: teste de função pura não pega "ninguém chamou". Só
-// rodar o app pega — foi o usuário quem viu.
+// rodar o app pega, e foi o usuário quem viu.
 
 /**
  * Estado da jornada, com todos os insumos do store já ligados.
  *
  * @param {{previousLevel?: number|null}} [opts] `previousLevel` explícito
- *   sobrescreve o pico — útil pra previsualização.
+ *   sobrescreve o pico, útil pra previsualização.
  * @returns {{level: number, habits: object, focus: string|null, regressed: boolean}}
  */
 export function useJourney(opts = {}) {

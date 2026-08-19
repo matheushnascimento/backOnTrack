@@ -1,6 +1,6 @@
 // @ts-nocheck -- helper puro; tipos vêm quando constants/ for tipado (ADR-002)
 
-// Tela do hábito estável (#297) — tela 4a·5 do Turno 4.
+// Tela do hábito estável (#297): tela 4a·5 do Turno 4.
 //
 // O que esta tela precisa dizer, e que nenhuma outra diz: o app **parou de
 // usar este hábito pra medir a pessoa**. Não é elogio nem prêmio; é uma
@@ -13,7 +13,7 @@ const MS_DIA = 86_400_000;
 /**
  * Há quantos dias o hábito está estável.
  *
- * `null` quando não há data — o hábito pode estar estável agora sem que a
+ * `null` quando não há data, porque o hábito pode estar estável agora sem que a
  * data tenha sido registrada ainda (primeira abertura depois de graduar).
  * Nesse caso a tela omite o "há N dias" em vez de inventar zero.
  *
@@ -30,7 +30,7 @@ export function stableForDays(desde, agora = Date.now()) {
 /**
  * Rótulo do chip de status.
  *
- * ⚠️ **Cinza, nunca verde** — quem chama isso decide a cor, mas o texto já
+ * ⚠️ **Cinza, nunca verde**: quem chama isso decide a cor, mas o texto já
  * evita vocabulário de prêmio: "estável", não "conquistado" nem "dominado".
  * É status, não medalha.
  */
@@ -46,17 +46,17 @@ export function stableChip(dias) {
  *
  * Três movimentos, nesta ordem, e a ordem importa:
  *
- * 1. **o que mudou pra pessoa** — "não precisa mais do seu esforço ativo".
+ * 1. **o que mudou pra pessoa**: "não precisa mais do seu esforço ativo".
  *    Acerta o mecanismo do modelo: hábito automático deixa de disputar o
  *    recurso de autorregulação (§7). É o benefício real, e vem primeiro.
- * 2. **por que ainda vale registrar** — "manter os dados apurados". Sem isso
+ * 2. **por que ainda vale registrar**: "manter os dados apurados". Sem isso
  *    o registro vira permissão sem propósito, e a pessoa para.
- * 3. **o que deixou de acontecer** — "não pode mais derrubar seu nível".
+ * 3. **o que deixou de acontecer**: "não pode mais derrubar seu nível".
  *
  * A versão anterior abria pelo negativo e dizia que o app parou de "medir
  * você". Era honesta e ficou fria: transformava a pessoa em objeto do app, e
  * a primeira informação era sobre uma punição que sumiu, não sobre o que ela
- * ganhou. Continua sem elogio — reforço sóbrio, não celebração.
+ * ganhou. Continua sem elogio: reforço sóbrio, não celebração.
  */
 export function stableExplanation(metric) {
   const nome = CATEGORY_MAP[metric]?.displayName ?? metric;

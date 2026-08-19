@@ -2,19 +2,19 @@
 
 // Metas por métrica (#285, fatia 0 do modelo de níveis).
 //
-// Antes disto as metas eram texto fixo em `app/ajustes.jsx` — display-only,
+// Antes disto as metas eram texto fixo em `app/ajustes.jsx`: display-only,
 // sem existir como dado. O modelo de níveis não fecha sem elas: o portão de
 // nível compara comportamento contra um alvo, e "8h pra todo mundo" é mentira
 // (tem gente que precisa de 7). Ver `docs/11-modelo-de-niveis.md` §10.
 //
 // Esta fatia só transforma em dado, com os mesmos valores de hoje. Edição
-// pelo usuário é fatia própria — o que importa agora é a forma, pra os sinais
+// pelo usuário é fatia própria, e o que importa agora é a forma, pra os sinais
 // de automaticidade terem contra o que medir.
 
 /** Unidades vêm do `CATEGORY_MAP`; aqui só o alvo diário. */
 export const DEFAULT_GOALS = {
-  water: 2000, // ml — "2,0 L" no Ajustes de hoje
-  sleep: 480, // min — 8h
+  water: 2000, // ml, "2,0 L" no Ajustes de hoje
+  sleep: 480, // min, 8h
   exercise: 30, // min
   feeding: 3, // refeições
   study: 30, // min
@@ -25,11 +25,11 @@ export const DEFAULT_GOALS = {
  * (`docs/11-modelo-de-niveis.md` §6) e, mais pra frente, como o portão lê o
  * hábito.
  *
- * - `sum` — soma do dia contra o alvo (água, exercício, estudo, refeições).
- * - `presence` — houve registro? (a quantidade não decide nada)
+ * - `sum`: soma do dia contra o alvo (água, exercício, estudo, refeições).
+ * - `presence`: houve registro? (a quantidade não decide nada)
  *
  * **Sono é `presence` de propósito.** A §4 do modelo é explícita: o portão é
- * comportamento, nunca desfecho. Ninguém decide dormir 8h — decide deitar às
+ * comportamento, nunca desfecho. Ninguém decide dormir 8h. Decide deitar às
  * 23h30. Somar duração e comparar com 480 min gatearia nível por uma coisa
  * fora do controle da pessoa. A duração segue registrada e exibida; quem
  * avalia o hábito é a regularidade do horário (ver `regularity` em
@@ -44,7 +44,7 @@ export const GOAL_KIND = {
 };
 
 /**
- * Cadência esperada do hábito — define a unidade da regra de quebra (§6).
+ * Cadência esperada do hábito: define a unidade da regra de quebra (§6).
  *
  * Exercício e estudo não são diários (3–5×/semana é o normal). Tratá-los como
  * diários rebaixaria alguém por descansar no fim de semana.
@@ -77,7 +77,7 @@ export function goalFor(goals, metric) {
  * Meta formatada pra exibição, na unidade que a pessoa lê.
  *
  * O alvo é guardado na unidade canônica da métrica (ml, minutos, refeições),
- * mas ninguém lê "2000 ml" nem "480 min" — lê "2,0 L" e "8h". Este é o
+ * mas ninguém lê "2000 ml" nem "480 min". Lê "2,0 L" e "8h". Este é o
  * mesmo texto que estava chumbado em `app/ajustes.jsx` antes da #285.
  *
  * @param {string} metric

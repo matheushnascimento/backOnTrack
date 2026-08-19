@@ -4,7 +4,7 @@
 // "Obter o app" usa, porque o Chrome do Android BLOQUEIA o download direto de
 // APK de URL pública (o Safe Browsing baixa 100% e descarta o arquivo); a
 // página do EAS instala mesmo no Chrome (testado deslogado, em aba anônima).
-// É POR BUILD — trocar a cada build NATIVO novo (raro: o OTA cobre mudanças de
+// É POR BUILD: trocar a cada build NATIVO novo (raro: o OTA cobre mudanças de
 // JS). Ver issue #90.
 //
 // APK_URL: download direto do APK via GitHub Releases (/latest/, estável).

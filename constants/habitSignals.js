@@ -3,13 +3,13 @@
 // Sinais de automaticidade (#285, fatia 0 do modelo de níveis).
 //
 // Lally et al. mediram automaticidade com questionário (SRHI). Não temos isso
-// e não queremos — questionário é fricção, e o app inteiro é construído em
+// e não queremos: questionário é fricção, e o app inteiro é construído em
 // cima de registro rápido. O que temos é registro com timestamp e quantidade.
 //
 // Daqui sai um **proxy comportamental**, não uma medida. Ver
 // `docs/11-modelo-de-niveis.md` §5.
 //
-// ⚠️ Nesta fatia nada consome estes números — nenhum limiar, nenhum nível.
+// ⚠️ Nesta fatia nada consome estes números: nenhum limiar, nenhum nível.
 // São medição silenciosa, pra calibrar os limiares com dado real antes de
 // pendurar consequência neles (§12). O cálculo pode estar errado sem machucar
 // ninguém enquanto isso for verdade.
@@ -18,7 +18,7 @@ import { GOAL_KIND } from "./goals";
 
 const MS_DIA = 86_400_000;
 
-/** Chave de dia-calendário local (não UTC — o dia do usuário é o local). */
+/** Chave de dia-calendário local (não UTC, porque o dia do usuário é o local). */
 function diaLocal(ms) {
   const d = new Date(ms);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -39,7 +39,7 @@ function minutoDoDia(ms) {
  * @param {number} days Tamanho da janela.
  * @param {number} [now] Epoch ms; injetável pra teste.
  * @returns {Array<{dia: string, total: number, hit: boolean}>} Sempre com
- *   `days` posições — dia sem registro entra como `total: 0, hit: false`.
+ *   `days` posições: dia sem registro entra como `total: 0, hit: false`.
  */
 export function dailyVerdicts(records, metric, target, days, now = Date.now()) {
   const kind = GOAL_KIND[metric] ?? "sum";
@@ -65,7 +65,7 @@ export function dailyVerdicts(records, metric, target, days, now = Date.now()) {
     const info = porDia.get(k);
     const total = info?.total ?? 0;
     const n = info?.n ?? 0;
-    // `presence`: houve registro basta. A quantidade não decide (§4 — sono é
+    // `presence`: houve registro basta. A quantidade não decide (§4, sono é
     // desfecho, não comportamento).
     const hit = kind === "presence" ? n > 0 : total >= target;
     out.push({ dia: k, total, hit });
@@ -90,11 +90,11 @@ export function consistency(verdicts) {
  *
  * Comportamento automático é disparado por contexto e acontece em horário
  * parecido; a dispersão cai conforme o hábito assenta. É o sinal menos óbvio
- * dos três e sai de graça — todo registro já tem `createdAt`.
+ * dos três e sai de graça, porque todo registro já tem `createdAt`.
  *
  * ⚠️ **Horário é circular, e desvio-padrão comum erra feio nele.** 23h50 e
  * 00h10 distam 20 minutos, não 23h40. Um `stddev` sobre "minutos desde a
- * meia-noite" trataria essas duas noites como caos absoluto — e o caso que
+ * meia-noite" trataria essas duas noites como caos absoluto, e o caso que
  * mais importa, o horário de deitar, vive exatamente em cima da meia-noite.
  *
  * Por isso a estatística é circular: cada horário vira um ângulo no relógio de
@@ -132,7 +132,7 @@ export function regularity(records, metric, days, now = Date.now()) {
   const resultant = Math.sqrt(sx * sx + sy * sy) / n;
 
   // R=0 seria dispersão total; o log divergiria. Trava num piso pra devolver
-  // número em vez de Infinity — quem lê quer "muito irregular", não NaN.
+  // número em vez de Infinity: quem lê quer "muito irregular", não NaN.
   const R = Math.max(resultant, 1e-6);
   const sdRad = Math.sqrt(-2 * Math.log(R));
   const sdMinutes = (sdRad * 1440) / (2 * Math.PI);
@@ -143,11 +143,11 @@ export function regularity(records, metric, days, now = Date.now()) {
 /**
  * Resiliência: depois de uma falha isolada, voltou no dia seguinte?
  *
- * Hábito automático se recupera sozinho; hábito frágil vira duas faltas — e a
+ * Hábito automático se recupera sozinho; hábito frágil vira duas faltas, e a
  * segunda falta consecutiva é onde o laço quebra (§6). Este sinal mede
  * exatamente a diferença entre um tropeço e o começo de um hábito novo.
  *
- * ⚠️ **Oportunidade é só a falha ISOLADA** — a primeira de uma sequência, a
+ * ⚠️ **Oportunidade é só a falha ISOLADA**: a primeira de uma sequência, a
  * que vem logo depois de um dia no alvo. Contar toda falha faria uma recaída
  * longa pontuar como recuperação quando enfim acabasse: numa sequência
  * `alvo, falha, falha, alvo`, o segundo dia de queda "recuperou" no papel. O
@@ -159,11 +159,11 @@ export function regularity(records, metric, days, now = Date.now()) {
  * Só conta oportunidades em que havia dia seguinte dentro da janela.
  *
  * `doubleMisses` é medida à parte e conta **todo** par de falhas consecutivas
- * — é a regra de quebra da §6, não a de recuperação.
+ * porque essa é a regra de quebra da §6, não a de recuperação.
  *
  * @param {Array<{hit: boolean}>} verdicts Cronológico (saída de `dailyVerdicts`).
  * @returns {{rate: number|null, recovered: number, opportunities: number, doubleMisses: number}}
- *   `rate` é `null` quando não houve falha isolada — não dá pra afirmar nada
+ *   `rate` é `null` quando não houve falha isolada, porque não dá pra afirmar nada
  *   sobre recuperação de quem nunca caiu.
  */
 export function resilience(verdicts) {

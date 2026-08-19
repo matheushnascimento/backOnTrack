@@ -32,7 +32,7 @@ export const store = createMergeableStore()
     },
     // Metas por métrica (#285, fatia 0 do modelo de níveis). rowId = a
     // métrica ("water", "sleep", …). Antes disto as metas eram texto fixo em
-    // Ajustes — não existiam como dado, e o portão de nível não fecha sem
+    // Ajustes: não existiam como dado, e o portão de nível não fecha sem
     // elas. Ver docs/11-modelo-de-niveis.md §10.
     [GOALS]: {
       target: { type: "number" },
@@ -44,19 +44,19 @@ export const store = createMergeableStore()
     // (ver infra/persistence.js). Default vazio = sync ainda não inicializado.
     syncRoomId: { type: "string", default: "" },
     // Como o usuário quer ser chamado no cumprimento da Home. Preferido em
-    // relação à derivação do email — que quando presente cai no primeiro nome
+    // relação à derivação do email, que quando presente cai no primeiro nome
     // (antes do primeiro ponto). Editável em Ajustes.
     displayName: { type: "string", default: "" },
     // Maior nível já alcançado na jornada (#289). É a MEMÓRIA que torna
     // regressão detectável: o nível atual é derivado dos sinais, e olhando só
     // o presente não dá pra distinguir "caiu do lvl 3" de "nunca passou do 2".
-    // Só sobe — cair é justamente o que se quer poder detectar.
+    // Só sobe, porque cair é justamente o que se quer poder detectar.
     journeyPeakLevel: { type: "number", default: 0 },
     // Nível que o usuário já VIU e reconheceu (#293). Diferente do peak:
     // o peak dirige o estado (o que aparece "em pausa" na Home, de forma
     // persistente), o ack dirige o momento (aparece uma vez e some). Se o ack
     // governasse o estado, hábito pausado viraria trancado no instante em que
-    // a pessoa tocasse "Entendi" — e o design mostra "em pausa" DEPOIS disso.
+    // a pessoa tocasse "Entendi", e o design mostra "em pausa" DEPOIS disso.
     // -1 = nunca reconheceu nada, pra distinguir de "reconheceu o lvl 0".
     journeyAckLevel: { type: "number", default: -1 },
     // Nível forçado pra PREVISUALIZAR telas (#293). -1 = desligado.
@@ -67,16 +67,16 @@ export const store = createMergeableStore()
     // mesmo portão. Forçar o nível testa a TELA; o modelo continua sendo
     // testado por `tests/journey.test.js`, com dado sintético.
     //
-    // Enquanto ligado, o peak NÃO sobe — senão sair do demo deixaria o app
+    // Enquanto ligado, o peak NÃO sobe, senão sair do demo deixaria o app
     // permanentemente "regredido".
     journeyDemoLevel: { type: "number", default: -1 },
     // Hábitos graduados por CONFERÊNCIA do histórico (#295), separados por
     // vírgula. Graduar normalmente exige a barra alta e semanas de observação;
-    // pular concede com a evidência do portão — mesma exigência, sem espera.
+    // pular concede com a evidência do portão: mesma exigência, sem espera.
     // Persistido porque a derivação olha só a janela atual e esqueceria.
     journeyGranted: { type: "string", default: "" },
     // Quando cada hábito ficou estável (#297), como `metric:epoch` separado
-    // por vírgula. A graduação é DERIVADA dos sinais — o app sabe que o hábito
+    // por vírgula. A graduação é DERIVADA dos sinais, e o app sabe que o hábito
     // é estável, não desde quando. Sem esta data não dá pra dizer "estável há
     // 24 dias". Some quando o hábito deixa de ser estável, pra recomeçar a
     // contagem se ele for reconquistado.
@@ -166,7 +166,7 @@ export function getByMonth(type, month) {
 
 // Todos os registros de um dia, agrupados por type. Uma passada única na tabela
 // (a "uma query só" da tela hoje), reusando hidratar. Compara ano/mês/dia local
-// de `date` (ISO string) — mesma convenção de getByMonth.
+// de `date` (ISO string), mesma convenção de getByMonth.
 export function getByDate(isoDate) {
   const alvo = new Date(isoDate);
   const linhas = store.getTable(TABLE);
@@ -197,7 +197,7 @@ export function getToday() {
 }
 
 export function clearAll() {
-  // Só os registros — a lista de testers (admin) sobrevive ao "limpar dados".
+  // Só os registros: a lista de testers (admin) sobrevive ao "limpar dados".
   store.delTable(TABLE);
 }
 
@@ -224,7 +224,7 @@ function generateRoomId() {
 
 /**
  * Garante que o store tem um `syncRoomId`. Chamar DEPOIS do startAutoLoad do
- * persister local — senão pode gerar um room, ser sobrescrito pelo load, e o
+ * persister local, senão pode gerar um room, ser sobrescrito pelo load, e o
  * sync tenta se conectar num room que muda no meio do caminho.
  * @returns {string} o roomId (novo ou existente).
  */
@@ -246,7 +246,7 @@ export function ensureSyncRoomId() {
  * semear ANTES do `startAutoLoad` terminar, o load sobrescreve o que acabou
  * de ser escrito. Manter como último passo se alguém mexer na ordem.
  *
- * Não sobrescreve meta existente — o usuário poderá editar em fatia futura, e
+ * Não sobrescreve meta existente, porque o usuário poderá editar em fatia futura, e
  * seed não pode desfazer escolha de ninguém.
  */
 export function ensureGoals() {
@@ -269,7 +269,7 @@ export function getGoals() {
 /**
  * Eleva o pico de nível, se o atual for maior. Nunca abaixa.
  *
- * Chamar de efeito, nunca durante render — é escrita no store.
+ * Chamar de efeito, nunca durante render, porque é escrita no store.
  */
 export function raiseJourneyPeak(level) {
   if (!Number.isFinite(level)) return;
@@ -281,7 +281,7 @@ export function raiseJourneyPeak(level) {
  * Concede/revoga estabilidade a um hábito pra PREVISUALIZAR a tela dele.
  *
  * Reusa `journeyGranted`, que é o mesmo caminho da conferência de histórico
- * (#295) — a tela de detalhe não sabe (nem precisa saber) se a estabilidade
+ * (#295): a tela de detalhe não sabe (nem precisa saber) se a estabilidade
  * veio de mérito ou de previsualização. Revogar limpa a data junto, senão
  * sobraria um "estável há N dias" de um hábito que não é mais estável.
  */
@@ -352,7 +352,7 @@ export function getGraduatedAt() {
  * Sincroniza as datas com quem está estável agora.
  *
  * Marca a data na PRIMEIRA vez que o hábito aparece estável, e apaga quando
- * ele deixa de estar — assim reconquistar recomeça a contagem, em vez de
+ * ele deixa de estar, e assim reconquistar recomeça a contagem, em vez de
  * herdar um "estável há 90 dias" que não é verdade.
  *
  * Chamar de efeito, nunca em render.

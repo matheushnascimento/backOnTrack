@@ -1,6 +1,6 @@
 // @ts-nocheck -- helper puro; tipos vêm quando constants/ for tipado (ADR-002)
 
-// Pular nível com conferência do histórico (#295) — tela 4a·6 do Turno 4.
+// Pular nível com conferência do histórico (#295): tela 4a·6 do Turno 4.
 //
 // ⚠️ **O critério pra pular é o MESMO critério do portão.** Não se pula o
 // portão: entra-se nele já qualificado, com evidência avaliada sobre a mesma
@@ -13,8 +13,8 @@
 //
 // Duas coisas da tela que não são decoração:
 //
-// - **números concretos, não veredito.** O app mostra o que viu — dias com
-//   registro, dispersão do horário — em vez de dar uma nota.
+// - **números concretos, não veredito.** O app mostra o que viu: dias com
+//   registro, dispersão do horário, em vez de dar uma nota.
 // - **antecipa o caso oposto.** Dizer de antemão o que acontece se não bater
 //   é o que impede a tela de virar interrogatório: não confia cego, mas
 //   também não desconfia hostil.
@@ -43,7 +43,7 @@ export function skipQualifies(signals, thresholds) {
  * Os números que o app viu, prontos pra exibir.
  *
  * Cada linha é um fato observável, não uma avaliação. `—` quando não há
- * amostra pra afirmar nada — dizer "0 min de variação" com dois registros
+ * amostra pra afirmar nada: dizer "0 min de variação" com dois registros
  * seria inventar precisão.
  *
  * @param {object} signals

@@ -4,7 +4,7 @@
 // Diferente do smoke-client.js (self round-trip: escreve → desconecta →
 // reconecta → lê próprio valor), aqui abrimos 2 clients SIMULTANEAMENTE no
 // mesmo room e provamos que um vê a escrita do outro via server. É o teste
-// que responde "sync funciona entre dois devices?" — sem depender do app RN.
+// que responde "sync funciona entre dois devices?", sem depender do app RN.
 //
 //   ROOM=<uuid-de-testes> URL=wss://backontrack-sync.mhdn.com.br node smoke-two-clients.js
 //

@@ -2,7 +2,7 @@
 //
 // Antes daqui o único campo era `Platform.OS + Platform.Version`, que produzia
 // "android 36" ou "web 0.0.0". A informação existia, mas exigia saber que
-// `web` = navegador e `android` = app nativo — quem tria a issue não sabe. E no
+// `web` = navegador e `android` = app nativo, e quem tria a issue não sabe. E no
 // navegador o "web 0.0.0" não dizia NADA: nem qual browser, nem qual OS, justo
 // no caso mais difícil de reproduzir.
 //
@@ -28,7 +28,7 @@ function describeEnvironment() {
  */
 function describeBundle() {
   try {
-    // Em dev/web esses campos vêm nulos — degrada sem quebrar.
+    // Em dev/web esses campos vêm nulos, então degrada sem quebrar.
     const { updateId, channel, isEmbeddedLaunch } = Updates;
     if (!updateId) return isEmbeddedLaunch ? "embutido no app" : "";
     const curto = String(updateId).slice(0, 8);
@@ -45,7 +45,7 @@ function describeBundle() {
  * capacidade de validar no BoT Staging.
  *
  * ⚠️ **`__DEV__` sozinho não serve.** O BoT Staging é build de produção
- * (`--environment preview`), então `__DEV__` é `false` lá — e apagaria os
+ * (`--environment preview`), então `__DEV__` é `false` lá, e apagaria os
  * controles justamente no lugar onde a validação acontece, que é a regra do
  * projeto.
  *

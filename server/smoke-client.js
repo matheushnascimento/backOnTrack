@@ -7,7 +7,7 @@
 //   URL=ws://localhost:8787 node smoke-client.js
 //   URL=wss://<sub>.<seu-dominio> node smoke-client.js
 //
-// Não é teste unitário — é um "ping" que dá pra rodar contra dev local ou
+// Em vez de teste unitário, é um "ping" que dá pra rodar contra dev local ou
 // contra o server em produção. Sai 0 se OK, 1 se falhou.
 
 import { createMergeableStore } from "tinybase";

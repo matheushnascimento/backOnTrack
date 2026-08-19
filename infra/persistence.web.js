@@ -8,7 +8,7 @@ import { ensureGoals, ensureSyncRoomId, store } from "./database";
  * O Metro resolve este arquivo (.web.js) no bundle web e usa
  * persistence.js (Expo SQLite) apenas no native. Isso é necessário
  * porque o expo-sqlite depende de um WASM que não é suportado no
- * `expo export` web — arrastá-lo pro bundle quebra o build da Vercel.
+ * `expo export` web, e arrastá-lo pro bundle quebra o build da Vercel.
  *
  * Aqui a persistência usa localStorage via createLocalPersister do
  * TinyBase, mantendo o mesmo comportamento: os dados sobrevivem ao
