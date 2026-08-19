@@ -13,8 +13,8 @@ import { JOURNEY_ORDER } from "@/constants/goals";
 import { BUILDING, GRADUATED, LOCKED, PAUSED } from "@/constants/journey";
 
 // Partes puras da Home da jornada (#291). O que se verifica aqui é o que tem
-// risco de bug: qual ação rápida aparece, qual copy sai, e — o mais
-// importante — que NADA some da tela.
+// risco de bug: qual ação rápida aparece, qual copy sai, e, o mais
+// importante, que NADA some da tela.
 
 const jornada = ({
   level = 2,
@@ -110,7 +110,7 @@ describe("headerCopy", () => {
     expect(c.subtitle).toBe("Sem pressa. Um de cada vez.");
   });
 
-  // Zero culpa, zero vermelho — e o esforço de volta dimensionado como curto.
+  // Zero culpa, zero vermelho, e o esforço de volta dimensionado como curto.
   it("na regressão, a copy é de recomeço e não de falha", () => {
     const c = headerCopy(jornada({ focus: "water", regressed: true }));
     expect(c.title).toBe("Recomeço curto.");
@@ -121,7 +121,7 @@ describe("headerCopy", () => {
 
 describe("splitZones", () => {
   // A decisão central do design: hierarquia, não exclusão.
-  it("NADA some — todas as métricas aparecem em alguma zona", () => {
+  it("NADA some: todas as métricas aparecem em alguma zona", () => {
     const { focus, rest } = splitZones(jornada({ focus: "water" }));
     expect([focus, ...rest].sort()).toEqual([...JOURNEY_ORDER].sort());
   });
@@ -131,7 +131,7 @@ describe("splitZones", () => {
     expect(rest).not.toContain(focus);
   });
 
-  // Sem foco (lvl 0), tudo vai pro resto — nenhuma métrica é escondida.
+  // Sem foco (lvl 0), tudo vai pro resto, e nenhuma métrica é escondida.
   it("sem foco, todas ficam no resto", () => {
     const { focus, rest } = splitZones(jornada({ level: 0, focus: null }));
     expect(focus).toBeNull();
@@ -151,7 +151,7 @@ describe("restBadge", () => {
     expect(restBadge(GRADUATED)).toBe("estável");
   });
 
-  // "em pausa", nunca "perdido" — a palavra importa (tela 4a·2).
+  // "em pausa", nunca "perdido", porque a palavra importa (tela 4a·2).
   it("em pausa para pausado", () => {
     expect(restBadge(PAUSED)).toBe("em pausa");
   });

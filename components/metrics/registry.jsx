@@ -1,7 +1,7 @@
 // Registro de config por métrica.
 //
 // Após o #256 fatia 5 (faxina), cada métrica só declara o componente de
-// histórico, o cardClass opcional e o `renderCustom` — o bespoke assume o
+// histórico, o cardClass opcional e o `renderCustom`: o bespoke assume o
 // fluxo inteiro (criação + edição). Adicionar uma métrica = adicionar um
 // bespoke + entrada aqui.
 
@@ -60,7 +60,7 @@ const REGISTRY = {
   },
 };
 
-/** Config benigna pra métrica desconhecida — nunca quebra a tela. */
+/** Config benigna pra métrica desconhecida, que nunca quebra a tela. */
 const FALLBACK = /** @type {MetricConfig} */ ({
   History: MyHistory,
 });

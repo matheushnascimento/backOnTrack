@@ -1,6 +1,6 @@
 // @ts-nocheck -- teste; globals do jest não são tipados (ADR-002)
 // Testa o helper buildSyncUrl (M6 auth fatia C). É o único pedaço puro de
-// infra/sync.js — a lógica de montagem/encoding da URL onde bug moraria
+// infra/sync.js: a lógica de montagem/encoding da URL onde bug moraria
 // (roomId com espaço, JWT com `+`/`=`, mistura de logado/deslogado).
 
 import { buildHealthzUrl, buildSyncUrl } from "../infra/sync-url";
@@ -35,7 +35,7 @@ describe("buildSyncUrl", () => {
   });
 
   test("encoding: caracteres URL-unsafe no roomId viram %XX", () => {
-    // roomId hipotético com espaço + slash — não deve vazar pra URL.
+    // roomId hipotético com espaço + slash, que não deve vazar pra URL.
     const url = buildSyncUrl(BASE, "a b/c", null);
     // encodeURIComponent transforma " " em "%20" e "/" em "%2F".
     expect(url).toBe(`${BASE}/a%20b%2Fc`);
@@ -51,7 +51,7 @@ describe("buildSyncUrl", () => {
   });
 
   test("roomId numérico é aceito (String() coerção)", () => {
-    // useValue pode retornar tipos diferentes conforme a store — proteja o
+    // useValue pode retornar tipos diferentes conforme a store, então proteja o
     // template string de virar `[object Object]` ou `undefined`.
     expect(buildSyncUrl(BASE, 42, null)).toBe(`${BASE}/42`);
   });
@@ -61,7 +61,7 @@ describe("buildSyncUrl", () => {
 
 // O client consulta o /healthz pra saber se a recusa do WS foi política
 // (AUTH_MODE=required) ou rede. Errar o esquema aqui faz a sondagem falhar
-// sempre, e falha de sondagem é lida como "offline" — ou seja, o app voltaria
+// sempre, e falha de sondagem é lida como "offline", ou seja o app voltaria
 // silenciosamente a mentir pro tester sem login.
 describe("buildHealthzUrl", () => {
   it("converte wss:// em https://", () => {

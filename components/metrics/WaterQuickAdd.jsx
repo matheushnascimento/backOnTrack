@@ -195,7 +195,7 @@ function WaterEdit({ recordId, onAfterSave }) {
   const [quantity, setQuantity] = useState("");
   const [note, setNote] = useState("");
   // Guarda o registro original pra preservar campos legados no update
-  // (score/min/max/ideal). Hidrata uma vez — sem reagir a mudanças pra não
+  // (score/min/max/ideal). Hidrata uma vez, sem reagir a mudanças pra não
   // sobrescrever o que o usuário está editando.
   const [loaded, setLoaded] = useState(/** @type {any} */ (null));
 

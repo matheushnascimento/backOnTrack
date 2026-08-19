@@ -14,7 +14,7 @@ import TimePickerField from "./TimePickerField";
 // opcional → intensidade (leve/ok/forte/puxado) mapeando pra score 2/3/4/5.
 //
 // Fatia do exercício do #256: quando `recordId` chega (edição pelo HistoryCard),
-// o componente troca pra <ExerciseEdit> — hidrata modalidade, duração,
+// o componente troca pra <ExerciseEdit>: hidrata modalidade, duração,
 // trainingTime, intensidade e OBS do registro; salva via `update`. Score fora
 // do range v2 (registros antigos com estrelas 0/1) fica sem pill selecionada e
 // é preservado no save via `intensityTouched=false`.

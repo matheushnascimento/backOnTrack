@@ -17,7 +17,7 @@ const DIA = 86_400_000;
 // Base de tempo FIXA, passada explicitamente como `now` em toda chamada.
 //
 // Sem isso os testes ficam dependentes da hora em que a suíte roda: `em(0, 20)`
-// é "hoje às 20:00", que às 15h ainda está no FUTURO — e as funções descartam
+// é "hoje às 20:00", que às 15h ainda está no FUTURO, e as funções descartam
 // timestamp futuro, então a amostra encolhe e a asserção quebra. Aconteceu de
 // verdade: o mesmo teste passou de manhã e falhou à tarde.
 //
@@ -43,7 +43,7 @@ describe("goalFor", () => {
     expect(goalFor(null, "sleep")).toBe(DEFAULT_GOALS.sleep);
   });
 
-  // Meta zero ou negativa é dado corrompido, não escolha — cair no default é
+  // Meta zero ou negativa é dado corrompido, não escolha, então cair no default é
   // mais seguro que dizer que todo dia bateu a meta.
   it("ignora meta inválida", () => {
     expect(goalFor({ water: 0 }, "water")).toBe(DEFAULT_GOALS.water);
@@ -99,7 +99,7 @@ describe("dailyVerdicts", () => {
   });
 
   // Sono é `presence`: o portão é comportamento, não desfecho (§4). Dormir
-  // pouco não pode contar como falha de hábito — registrar é o hábito.
+  // pouco não pode contar como falha de hábito, porque registrar é o hábito.
   it("sono conta presença, não quantidade", () => {
     const v = dailyVerdicts(
       [reg("sleep", em(0, 23), 60)],
@@ -142,7 +142,7 @@ describe("consistency", () => {
 describe("regularity", () => {
   // ESTE é o teste que justifica a estatística circular. 23h50 e 00h10 distam
   // 20 minutos. Um desvio-padrão sobre "minutos desde a meia-noite" daria
-  // ~700 minutos e diria que a pessoa é caótica — quando ela é quase perfeita.
+  // ~700 minutos e diria que a pessoa é caótica, quando ela é quase perfeita.
   // E é exatamente o caso do horário de deitar, o hábito do lvl 1.
   it("horários em volta da meia-noite são regulares, não caóticos", () => {
     const recs = [
@@ -185,7 +185,7 @@ describe("regularity", () => {
     );
   });
 
-  // Sem amostra não se afirma nada — null é resposta, 0 seria mentira
+  // Sem amostra não se afirma nada: null é resposta, 0 seria mentira
   // ("perfeitamente regular").
   it("menos de 2 registros não produz desvio", () => {
     expect(regularity([], "water", 7, AGORA).sdMinutes).toBeNull();
@@ -231,10 +231,10 @@ describe("resilience", () => {
   });
 
   // Só a falha ISOLADA conta como oportunidade. Nesta sequência:
-  //   idx 0 falha — primeira da janela, sem dia anterior: não conta
-  //   idx 2 falha após alvo — oportunidade, e o dia seguinte falha: não recuperou
-  //   idx 3 falha após falha — não é isolada: não conta
-  //   idx 5 falha após alvo — oportunidade, e o dia seguinte acerta: recuperou
+  //   idx 0 falha: primeira da janela, sem dia anterior: não conta
+  //   idx 2 falha após alvo: oportunidade, e o dia seguinte falha: não recuperou
+  //   idx 3 falha após falha, então não é isolada: não conta
+  //   idx 5 falha após alvo: oportunidade, e o dia seguinte acerta: recuperou
   it("mistura de recuperações e recaídas", () => {
     const r = resilience(v(false, true, false, false, true, false, true));
     expect(r.opportunities).toBe(2);
@@ -243,7 +243,7 @@ describe("resilience", () => {
   });
 
   // Sem esta distinção, uma recaída longa pontuaria como recuperação assim
-  // que acabasse — que é o oposto do que o sinal deve dizer.
+  // que acabasse, que é o oposto do que o sinal deve dizer.
   it("recaída longa não vira recuperação quando enfim acaba", () => {
     const r = resilience(v(true, false, false, false, true));
     expect(r.opportunities).toBe(1);

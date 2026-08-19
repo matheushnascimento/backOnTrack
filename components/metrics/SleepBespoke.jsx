@@ -10,7 +10,7 @@ import { useThemeTokens } from "@/constants/themeTokens";
 import TimePickerField from "./TimePickerField";
 
 // Limita string de dígitos ao intervalo [0, max]. Usado nos inputs separados
-// de hora/minuto do SleepEdit — vazio permanece vazio, valor acima do teto é
+// de hora/minuto do SleepEdit: vazio permanece vazio, valor acima do teto é
 // truncado pro teto (usuário tenta digitar "99" na hora, vira "23").
 function clampNumString(s, max) {
   const digits = String(s ?? "").replace(/\D/g, "");
@@ -37,7 +37,7 @@ function clampNumString(s, max) {
 // Qualidade mapeia pra `score` (2/3/4/5) pra reusar a infra do histórico.
 //
 // Fatia do sono do #256: quando `recordId` chega (edição pelo HistoryCard), o
-// componente troca pra <SleepEdit> — o registro só guarda duração + score, não
+// componente troca pra <SleepEdit>: o registro só guarda duração + score, não
 // bed/wake times, então a edição mostra duração (h/min) + qualidade + OBS.
 // Score fora do range QUALITY (registros antigos com estrelas 0-5) fica sem
 // pill selecionada e o valor original é preservado no save se o usuário não

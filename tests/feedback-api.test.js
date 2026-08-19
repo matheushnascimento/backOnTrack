@@ -1,5 +1,5 @@
 // @ts-nocheck -- teste; globals do jest não são tipados (ADR-002)
-// Testes da função serverless api/feedback.js (M4, #137). Mocka o fetch — nada
+// Testes da função serverless api/feedback.js (M4, #137). Mocka o fetch, então nada
 // de GitHub real nem rede. Exercita validações, montagem do corpo da issue e a
 // compat do #116 (payload legado com `device` vs novo com `environment`).
 import handler from "../api/feedback.js";
@@ -126,7 +126,7 @@ describe("montagem da issue", () => {
     expect(p.body).not.toContain("- Dispositivo:");
   });
 
-  test("payload LEGADO (device) segue renderizando — compat #116", async () => {
+  test("payload LEGADO (device) segue renderizando, compat #116", async () => {
     await call({
       body: {
         title: "antigo",

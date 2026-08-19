@@ -1,6 +1,6 @@
 <!--
   Back on Track · adaptive-icon.png source (M5-B, #228).
-  Foreground do adaptive Android — símbolo com transparência ao redor.
+  Foreground do adaptive Android: símbolo com transparência ao redor.
   Android compõe com `adaptiveIcon.backgroundColor` (definido no app.json).
   Símbolo dentro da safe zone central de 66% (círculo de raio ~336 no centro).
   Cor do símbolo: navy pra contrastar sobre o `#F8F9FA` de fundo do adaptive.

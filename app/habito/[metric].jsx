@@ -25,7 +25,7 @@ import {
 // Detalhe do hábito estável (#297, tela 4a·5 do Turno 4).
 //
 // Onde mora o hábito que virou automático. Chegou aqui porque a linha
-// compacta dele na Home deixou de ir direto pro registro — é um toque a mais
+// compacta dele na Home deixou de ir direto pro registro, porque é um toque a mais
 // pra registrar algo que já não precisa de atenção diária, e é o ponto: a
 // tela existe pra dar lugar ao que saiu do foco sem sumir.
 //
@@ -101,7 +101,7 @@ export default function HabitoEstavel() {
         </Pressable>
 
         {/* Cabeçalho: nome + chip de status. O chip usa cinza de label, NUNCA
-            verde — é status, não medalha. */}
+            verde, porque é status e não medalha. */}
         <View className="flex-row items-center gap-3">
           <View
             className={`items-center justify-center rounded-xl ${METRIC_TINT[metric] ?? ""}`}
@@ -142,7 +142,7 @@ export default function HabitoEstavel() {
         </View>
 
         {/* Últimos 14 dias. Cada dia é um traço: preenchido quando houve
-            registro no alvo. Sem números — a forma já conta a história. */}
+            registro no alvo. Sem números, porque a forma já conta a história. */}
         <View className="gap-2">
           <Text
             className="text-xs uppercase tracking-wider text-label dark:text-label-dark"

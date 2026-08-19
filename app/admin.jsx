@@ -1,7 +1,7 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //
 // Tela de administração de testers (Track A do M3-5, #109). Acesso só por deep
-// link `backontrack://admin` — de propósito NÃO fica linkada nos Utilitários.
+// link `backontrack://admin`, e de propósito NÃO fica linkada nos Utilitários.
 // A lista vive em TinyBase local (por-device), então numa instalação de tester
 // esta tela aparece vazia; só o aparelho do admin popula.
 //#region imports
@@ -31,7 +31,7 @@ export default function Admin() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
 
-  // Assina a tabela: re-renderiza a cada mudança — inclusive quando o
+  // Assina a tabela: re-renderiza a cada mudança, inclusive quando o
   // `startAutoLoad()` da persistência termina. Ler só no foco fazia a lista
   // nascer vazia no primeiro load (mesma causa do #108).
   const testersTable = useTable("testers", store);
@@ -71,7 +71,7 @@ export default function Admin() {
     );
     try {
       // No web o destino é a máquina de dev (colar no scripts/testers.json), e
-      // a Web Share API nem existe em boa parte do desktop — clipboard é o
+      // a Web Share API nem existe em boa parte do desktop, então clipboard é o
       // certo. No native, o share sheet é o caminho natural pra tirar o JSON
       // do device.
       if (Platform.OS === "web") {
@@ -81,7 +81,7 @@ export default function Admin() {
       }
       await Share.share({ message: json });
     } catch (e) {
-      // Erro de share/clipboard não vaza pro usuário — só console.
+      // Erro de share/clipboard não vaza pro usuário, só console.
       console.error("[admin] export falhou:", e);
       notify("Não deu pra exportar", "Tenta de novo em instantes.");
     }

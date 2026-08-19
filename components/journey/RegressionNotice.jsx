@@ -4,16 +4,16 @@ import { Pressable, Text, View } from "react-native";
 // Aviso de regressão (#293, tela 4a·2 do Turno 4).
 //
 // **A tela mais difícil do modelo.** Se ela der vontade de fechar o app, o
-// resto desmorona — foi assim que o briefing a descreveu, e o designer a
+// resto desmorona. Foi assim que o briefing a descreveu, e o designer a
 // tratou como prioridade.
 //
 // Três escolhas que sustentam isso:
 //
 // 1. **Aviso no topo, não modal.** Não bloqueia. A pessoa pode ignorar e
-//    registrar — o app não sequestra a tela pra falar de queda.
+//    registrar, porque o app não sequestra a tela pra falar de queda.
 // 2. **Zero vermelho.** Fundo neutro (`surface-subtle`). O `danger` segue
 //    reservado pro destrutivo, como manda o design v2.
-// 3. **"Ver histórico" ao lado de "Entendi"** — a promessa de que nada sumiu
+// 3. **"Ver histórico" ao lado de "Entendi"**: a promessa de que nada sumiu
 //    vem com um caminho pra conferir. Provar, não afirmar.
 
 /**

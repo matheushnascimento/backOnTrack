@@ -1,7 +1,7 @@
 // @ts-nocheck -- SVG inline, sem tipos exportados
 import Svg, { Circle, Path } from "react-native-svg";
 
-// Símbolo "1c · Linha que sobe" — a marca escolhida pra identidade visual v2.
+// Símbolo "1c · Linha que sobe", a marca escolhida pra identidade visual v2.
 // Curva ascendente + círculo verde no ponto de partida. Reusável pra header,
 // splash e (fatia 6) os 4 assets de app.json (icon/adaptive/splash/favicon).
 //
@@ -9,9 +9,9 @@ import Svg, { Circle, Path } from "react-native-svg";
 // nos assets nativos.
 //
 // Props:
-//   size          — largura/altura em px (default 32)
-//   strokeColor   — cor da curva (default #F8F9FA — over blue bg)
-//   dotColor      — cor do ponto de partida (default #4CAF50)
+//   size          = largura/altura em px (default 32)
+//   strokeColor   = cor da curva (default #F8F9FA, over blue bg)
+//   dotColor      = cor do ponto de partida (default #4CAF50)
 export default function Icon1c({
   size = 32,
   strokeColor = "#F8F9FA",

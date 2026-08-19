@@ -17,7 +17,7 @@ export default defineConfig([
   {
     // O código do app é .jsx (as telas/componentes) + .js (constants/infra).
     // Antes o eslint só cobria **/*.js, e como o app é todo .jsx ele não lintava
-    // NADA — foi por isso que um `setTick` inexistente foi parar em produção
+    // NADA, e foi por isso que um `setTick` inexistente foi parar em produção
     // (#126). Cobrir .jsx com no-undef como erro fecha essa cegueira (#128).
     files: ["**/*.{js,jsx}"],
     plugins: { js, "react-hooks": reactHooks },
@@ -35,7 +35,7 @@ export default defineConfig([
       // Erro (não warn): é o que faz um no-undef como o do #126 quebrar o CI.
       "no-undef": "error",
       // O código já trazia um disable de exhaustive-deps sem o plugin instalado
-      // — a intenção sempre foi ter o react-hooks ligado.
+      // A intenção sempre foi ter o react-hooks ligado.
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "warn",
     },
@@ -67,7 +67,7 @@ export default defineConfig([
     },
   },
   {
-    // Server WS de sync do M6 (server/) — Node ESM, fora do bundle do app.
+    // Server WS de sync do M6 (server/): Node ESM, fora do bundle do app.
     files: ["server/**/*.js"],
     languageOptions: {
       sourceType: "module",

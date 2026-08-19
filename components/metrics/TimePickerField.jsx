@@ -9,7 +9,7 @@ import { useThemeTokens } from "@/constants/themeTokens";
 // (bed/wake, duração, hora de início). Toque no display abre um modal com o
 // relógio: anel externo é 1-12, interno é 13-00; minutos aparecem em 5-em-5
 // depois que o usuário escolhe a hora. Fallback textual embaixo cobre entrada
-// precisa (minuto 07, por exemplo) — texto aceito mas não é a primeira opção.
+// precisa (minuto 07, por exemplo): texto aceito mas não é a primeira opção.
 //
 // Sem dep nativa nova: puro SVG + Pressable. Continua chegando via OTA.
 
@@ -29,7 +29,7 @@ function pad2(n) {
   return String(n).padStart(2, "0");
 }
 
-// Máscara HH:MM suave pro fallback textual — mesmo comportamento do fatia
+// Máscara HH:MM suave pro fallback textual, mesmo comportamento do fatia
 // anterior: digits only, colon automático, clamp 23/59.
 function maskHHMM(text) {
   const digits = String(text ?? "")

@@ -4,7 +4,7 @@
 // tinybase só publica build ESM, e o jest precisa transpilá-lo. Em vez de
 // reescrever o transformIgnorePatterns do jest-expo (e arriscar deixar de fora
 // algo como expo-modules-core), pegamos o default dele e injetamos `tinybase`
-// como 1ª exceção — robusto a mudanças futuras na lista.
+// como 1ª exceção, robusto a mudanças futuras na lista.
 const expoPreset = require("jest-expo/jest-preset");
 
 const transformIgnorePatterns = expoPreset.transformIgnorePatterns.map((p) =>

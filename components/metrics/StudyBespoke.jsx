@@ -15,11 +15,11 @@ import TimePickerField from "./TimePickerField";
 // pill de foco single-select (leitura/curso/prática/revisão/outro, opcional) →
 // info card sereno → Registrar.
 //
-// `focus` é campo novo no modelo (opcional, string) — não quebra registros
+// `focus` é campo novo no modelo (opcional, string), e não quebra registros
 // antigos porque o bespoke lê direto e o path legado sumiu com o #256.
 //
 // Fatia do estudo do #256: quando `recordId` chega (edição pelo HistoryCard), o
-// componente troca pra <StudyEdit> — hidrata Feito/duração/foco/OBS do
+// componente troca pra <StudyEdit>: hidrata Feito/duração/foco/OBS do
 // registro; salva via `update`. Score do registro é preservado (v2 create não
 // define, v1 shell definia).
 

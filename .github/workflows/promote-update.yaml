@@ -1,6 +1,6 @@
 name: Promote Update
 
-# Promove o último OTA de `release` pra `preview` — libera pros 6 testers.
+# Promove o último OTA de `release` pra `preview`, liberando pros 6 testers.
 #
 # ## Por que a fonte é `release` e não `staging`
 #
@@ -9,14 +9,14 @@ name: Promote Update
 # merge. Promover de lá poderia mandar código não-mergeado pros testers.
 #
 # `release` só é alimentada por push na main. Promover de lá é barreira
-# ESTRUTURAL contra isso — não depende de ninguém lembrar da regra.
+# ESTRUTURAL contra isso, e não depende de ninguém lembrar da regra.
 #
 # Roda só sob demanda (`workflow_dispatch`) de propósito: o gate existe pra
 # VOCÊ escolher o momento e o lote. Merges na main se acumulam em release até
 # alguém rodar isto aqui.
 #
 # Mecanismo: `eas update:republish` copia um grupo de update de uma branch pra
-# outra. O APK dos testers não muda — ele é assado com o CANAL `preview`, e o
+# outra. O APK dos testers não muda: ele é assado com o CANAL `preview`, e o
 # canal aponta pra branch `preview`. Ninguém reinstala nada.
 #
 # Ver docs/10-canais-e-promocao.md.
@@ -57,7 +57,7 @@ jobs:
           GROUP=$(echo "$JSON" | jq -r '.currentPage[0].group // empty')
           DESC=$(echo "$JSON" | jq -r '.currentPage[0].message // "(sem mensagem)"')
           if [ -z "$GROUP" ]; then
-            echo "Nenhum update na branch release — nada a promover." >&2
+            echo "Nenhum update na branch release, nada a promover." >&2
             exit 1
           fi
           echo "group=$GROUP" >> "$GITHUB_OUTPUT"
@@ -94,5 +94,5 @@ jobs:
             echo "${DESC}"
             echo '```'
             echo ""
-            echo "Os 6 testers recebem na próxima abertura do app. Se algo der errado, rode esta workflow de novo apontando pro grupo bom anterior — ou use \`eas update:roll-back-to-embedded\`."
+            echo "Os 6 testers recebem na próxima abertura do app. Se algo der errado, rode esta workflow de novo apontando pro grupo bom anterior, ou use \`eas update:roll-back-to-embedded\`."
           } >> "$GITHUB_STEP_SUMMARY"

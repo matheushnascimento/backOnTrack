@@ -2,7 +2,7 @@
 import Svg, { Path } from "react-native-svg";
 
 // SVGs por métrica extraídos das mockups do Turno 2 (Claude Design).
-// 24x24 viewBox, stroke 2, round caps — pattern do design.
+// 24x24 viewBox, stroke 2, round caps, pattern do design.
 // Cor do stroke é controlada pela cor passada (default = brand-blue).
 const PATHS = {
   water: ["M12 2.5c-3 4-6 7-6 11a6 6 0 0 0 12 0c0-4-3-7-6-11z"],

@@ -53,7 +53,7 @@ describe("stableChip", () => {
     expect(stableChip(null)).toBe("estável");
   });
 
-  // Status, não medalha — a palavra escolhida importa.
+  // Status, não medalha, e a palavra escolhida importa.
   it("não usa vocabulário de prêmio", () => {
     for (const d of [null, 0, 1, 24]) {
       expect(stableChip(d)).not.toMatch(
@@ -73,7 +73,7 @@ describe("stableExplanation", () => {
     expect(e.body).toMatch(/não precisa mais do seu esforço ativo/);
   });
 
-  // Sem um motivo, registrar vira permissão sem propósito — e a pessoa para.
+  // Sem um motivo, registrar vira permissão sem propósito, e a pessoa para.
   it("dá um motivo pra continuar registrando", () => {
     expect(e.body).toMatch(/manter os dados apurados/);
   });

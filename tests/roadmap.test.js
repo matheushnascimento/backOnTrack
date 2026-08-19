@@ -1,8 +1,13 @@
 // @ts-nocheck -- teste; globals do jest não são tipados (ADR-002)
 // Parser do roadmap (M4, #140). É ele que alimenta a tela /roadmap a partir do
-// docs/04-roadmap-milestones.md — se quebrar, a tela mente ou some.
+// docs/04-roadmap-milestones.md. Se quebrar, a tela mente ou some.
 import { parseRoadmap, cleanText, getDigest } from "../constants/roadmap";
 
+// ⚠️ O M0 usa dois-pontos e o M1 usa travessão, de propósito. O MILESTONE_RE
+// aceita os dois na classe `[:\s—–-]`, e o doc real migrou pra dois-pontos na
+// #307. Este fixture é o que garante que o ramo do travessão continua
+// funcionando, então a varredura da #302 deixou essa linha intacta. Trocar
+// aqui apagaria a cobertura em silêncio.
 const MD = `
 ## M0: Fundamentos ✅ concluído
 

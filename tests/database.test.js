@@ -1,5 +1,5 @@
 // @ts-nocheck -- teste; globals do jest não são tipados (ADR-002)
-// Testes das funções de domínio da store (M4, #134). Puros — sem React.
+// Testes das funções de domínio da store (M4, #134). Puros, sem React.
 // A store é um singleton de módulo; zeramos entre os testes.
 import {
   store,

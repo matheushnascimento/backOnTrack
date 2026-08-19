@@ -2,7 +2,7 @@
 //
 // Rótulo de seção (SECTION LABEL). Aparece como cabeçalho de bloco dentro
 // dos cards ("MÉTRICAS DE HOJE", "UTILITÁRIOS", "HISTÓRICO"…). Papel
-// tipográfico diferente do FieldLabel — ver docs/08-design-tokens.md.
+// tipográfico diferente do FieldLabel. Ver docs/08-design-tokens.md.
 
 import { Text } from "react-native";
 

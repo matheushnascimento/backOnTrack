@@ -18,10 +18,10 @@ import { useThemeTokens } from "@/constants/themeTokens";
 // vêm em fatias 2a-2c e usam este cabeçalho por cima.
 //
 // Props:
-//   metric    — key da métrica ("water" | ...) — usada pro SVG.
-//   title     — displayName capitalizado ("Água").
-//   subtitle  — string curta. Se omitida, some.
-//   label     — mono uppercase à direita. Default: "HOJE".
+//   metric    = key da métrica ("water" | ...), usada pro SVG.
+//   title     = displayName capitalizado ("Água").
+//   subtitle  = string curta. Se omitida, some.
+//   label     = mono uppercase à direita. Default: "HOJE".
 export default function MetricRegisterHeader({
   metric,
   title,

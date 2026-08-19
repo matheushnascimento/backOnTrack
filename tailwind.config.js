@@ -14,7 +14,7 @@ module.exports = {
         light: Colors.light,
         dark: Colors.dark,
         // Tokens semânticos do design v2 (M5-B). Ver docs/09-design-v2.md.
-        // Adicionados sem remover nada do M5 — telas antigas seguem com o
+        // Adicionados sem remover nada do M5, e telas antigas seguem com o
         // baseline; telas novas nascem consumindo estes.
         ink: "#0F1419",
         label: "#6B7280",
@@ -51,10 +51,10 @@ module.exports = {
         "on-primary-dark": "#0F1419",
         "secondary-dark": "#5FC463",
       },
-      // Escala de tipografia canônica do M5 — px direto (não rem) pra não
+      // Escala de tipografia canônica do M5: px direto (não rem) pra não
       // depender de font-size base do html, que no bundle web tinha um truque
       // 62.5% inconsistente (§4 da auditoria) já removido. Valores mercado
-      // (iOS body: 17pt) — ver docs/08-design-tokens.md.
+      // (iOS body: 17pt). Ver docs/08-design-tokens.md.
       fontSize: {
         xs: "13px",
         sm: "15px",
