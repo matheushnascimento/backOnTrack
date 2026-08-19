@@ -28,7 +28,10 @@ describe("registros", () => {
     const today = getToday();
     expect(today.water).toHaveLength(2);
     expect(today.sleep).toHaveLength(1);
-    expect(today.water[0].quantity).toBe(500);
+    // Mais recente primeiro (#314): o 300 entrou depois do 500, então vem
+    // antes. Este teste afirmava o contrário, porque a ordem era a de
+    // inserção da tabela e ninguém tinha decidido nada sobre ela.
+    expect(today.water.map((r) => r.quantity)).toEqual([300, 500]);
   });
 
   test("getByDate isola o dia (não mistura com hoje)", () => {

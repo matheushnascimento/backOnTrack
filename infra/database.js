@@ -2,6 +2,7 @@
 import { createMergeableStore } from "tinybase";
 
 import { DEFAULT_GOALS } from "@/constants/goals";
+import { maisRecentesPrimeiro } from "@/constants/recordOrder";
 
 const TABLE = "records";
 const TESTERS = "testers";
@@ -181,6 +182,12 @@ export function getByDate(isoDate) {
       if (!porTipo[linha.type]) porTipo[linha.type] = [];
       porTipo[linha.type].push(hidratar(id, linha));
     }
+  }
+  // Mais recente primeiro (#314). A ordem natural aqui é a de iteração da
+  // tabela, que na prática é ordem de inserção, e a tela de histórico mostrava
+  // o registro mais velho do dia no topo.
+  for (const tipo of Object.keys(porTipo)) {
+    porTipo[tipo] = maisRecentesPrimeiro(porTipo[tipo]);
   }
   return porTipo;
 }
