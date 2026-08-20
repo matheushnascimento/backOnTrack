@@ -9,12 +9,12 @@ import { useThemeTokens } from "@/constants/themeTokens";
 // Estado "retomada" da Home (M5-B fatia 5, mockup 2a·9).
 //
 // Aparece quando a Home ia mostrar 5 cards vazios: usuário sem registro há N
-// dias (ou nunca). Substitui a Home inteira por um convite calmo — símbolo
+// dias (ou nunca). Substitui a Home inteira por um convite calmo: símbolo
 // grande, copy sem cobrança, 3 atalhos pra métricas mais fáceis. Tom canônico
 // do design v2: "Sem pressa", "quando puder", "que bom te ver de volta".
 //
 // Dismissal é in-memory (via prop `onDismiss`): sessão atual passa a mostrar a
-// Home normal. Próximo launch volta pra cá se o critério persistir — é o
+// Home normal. Próximo launch volta pra cá se o critério persistir, e é o
 // desejado (o objetivo é convidar até a pessoa registrar, não esconder pra
 // sempre).
 
@@ -35,7 +35,7 @@ export default function RetomadaState({ daysSinceLast, onDismiss }) {
 
   return (
     <View className="flex-1 gap-6 p-6">
-      {/* Símbolo grande — mesmo brand-blue tinted container do resto do app */}
+      {/* Símbolo grande, mesmo brand-blue tinted container do resto do app */}
       <View
         className="items-center justify-center rounded-2xl bg-primary dark:bg-primary-dark"
         style={{ width: 84, height: 84 }}
@@ -98,7 +98,7 @@ export default function RetomadaState({ daysSinceLast, onDismiss }) {
           O texto centraliza por `text-center`, NÃO por `items-center` no
           container. Parece a mesma coisa e não é: `alignItems: center` faz o
           filho encolher pra própria largura, e aí quem decide o tamanho da
-          caixa é a medição de texto do Android — que erra com a Inter e come
+          caixa é a medição de texto do Android, que erra com a Inter e come
           a última letra ("Depoi"). Com o Text ocupando a largura do pai, a
           caixa vem do layout e a medição não decide nada. */}
       <Pressable
@@ -142,7 +142,7 @@ function ShortcutButton({ metric, label, dim, onPress }) {
       )}
       {/* flex-1 força o Text a preencher o espaço restante do Pressable
           (flex-row) em vez de depender da intrinsic width medida do
-          NativeText — Android + Inter custom estava truncando labels no
+          NativeText: Android + Inter custom estava truncando labels no
           meio ("Um copo" em vez de "Um copo d'água"). */}
       <Text
         className={`flex-1 text-sm ${dim ? "text-body-secondary dark:text-body-secondary-dark" : "text-ink dark:text-ink-dark"}`}

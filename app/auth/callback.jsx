@@ -16,7 +16,7 @@ import { useThemeTokens } from "@/constants/themeTokens";
 
 // Callback do magic link do Supabase (M6 auth fatia A, #207, ADR-010).
 // Deep link `backontrack://auth/callback?code=...` (native) OU
-// `https://<host>/auth/callback?code=...` (web) cai aqui — troca o code por
+// `https://<host>/auth/callback?code=...` (web) cai aqui e troca o code por
 // sessão via PKCE, redireciona pra /.
 
 export default function AuthCallback() {
@@ -26,7 +26,7 @@ export default function AuthCallback() {
 
   useEffect(() => {
     // Supabase pode redirecionar com `?error=...` em vez de `?code=...`
-    // (ex: link expirado, config errada) — vira status error; detalhe fica
+    // (ex: link expirado, config errada): vira status error; detalhe fica
     // no console pra debug sem vazar shape do backend pro usuário.
     if (error) {
       console.error("[callback] supabase error:", error, error_description);
@@ -38,7 +38,7 @@ export default function AuthCallback() {
       setStatus("error");
       return;
     }
-    // Caminho A (PKCE): magic link veio com `?code=` — troca por sessão.
+    // Caminho A (PKCE): magic link veio com `?code=`, então troca por sessão.
     if (code) {
       supabase.auth
         .exchangeCodeForSession(String(code))

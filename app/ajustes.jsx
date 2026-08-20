@@ -67,15 +67,15 @@ const DEV_SURFACE = isDevSurface();
 // full-height + rolagem lê pior que uma tela dedicada.
 //
 // Seções:
-//   - METAS DO DIA  — display-only por ora (valor por-usuário é feature futura).
-//   - NAVEGAÇÃO     — Semana / Histórico.
-//   - APP           — Tema switch inline, Feedback, Roadmap, Exportar, Sobre.
-//   - CONTA         — só se logado (Logado como… + Sair).
-//   - AVANÇADO      — Limpar todos os dados (destrutivo, confirm modal).
+//   - METAS DO DIA  = display-only por ora (valor por-usuário é feature futura).
+//   - NAVEGAÇÃO     = Semana / Histórico.
+//   - APP           = Tema switch inline, Feedback, Roadmap, Exportar, Sobre.
+//   - CONTA         = só se logado (Logado como… + Sair).
+//   - AVANÇADO      = Limpar todos os dados (destrutivo, confirm modal).
 //
 // Lembretes da mockup ficaram fora (dependem de expo-notifications, escopo M7).
 
-// Rótulos das metas. Os VALORES vêm do store desde a #285 — antes eram texto
+// Rótulos das metas. Os VALORES vêm do store desde a #285. Antes eram texto
 // fixo aqui, e o modelo de níveis não fecha sem meta como dado. Edição pelo
 // usuário é fatia própria; por ora o store guarda os mesmos defaults.
 const METAS_LABEL = {
@@ -86,7 +86,7 @@ const METAS_LABEL = {
   study: "Estudo",
 };
 
-// Rótulo humano dos status da jornada. Descritivo, nunca elogioso — é
+// Rótulo humano dos status da jornada. Descritivo, nunca elogioso, porque é
 // diagnóstico, não reforço (docs/11-modelo-de-niveis.md §1.5).
 const STATUS_LABEL = {
   [BUILDING]: "construindo",
@@ -114,7 +114,7 @@ export default function Ajustes() {
   const goals = useMemo(() => getGoals(), [goalsTable]);
 
   // Pular nível (#295): a pessoa declara que já tem o hábito, o app confere o
-  // histórico com o MESMO critério do portão e concede — ou diz que observa.
+  // histórico com o MESMO critério do portão e concede, ou diz que observa.
   const [skipMetric, setSkipMetric] = useState(null);
   const recordsTable = useTable("records", store);
   const grantedValue = useValue("journeyGranted", store);
@@ -282,7 +282,7 @@ export default function Ajustes() {
         </Section>
 
         {/* Conta: sempre visível quando auth tá configurada. Concentra o
-            fluxo de entrar/sair — a Home não tem mais botão Entrar isolado
+            fluxo de entrar/sair, e a Home não tem mais botão Entrar isolado
             (era redundante e piscava durante o auto-load da sessão). */}
         {AUTH_ENABLED && (
           <Section title="Conta">
@@ -301,7 +301,7 @@ export default function Ajustes() {
           </Section>
         )}
 
-        {/* Já tenho esse hábito — pular nível com conferência (#295). */}
+        {/* Já tenho esse hábito: pular nível com conferência (#295). */}
         <Section title="Já tenho esse hábito">
           {JOURNEY_ORDER.map((metric) => (
             <Row
@@ -504,12 +504,12 @@ function NameEditModal({ current, onClose }) {
 /** @param {{ title: string, children: any }} props */
 // Estado do sync, em linguagem de gente. Fecha o item "UI de status de sync"
 // do M6: o auto-reconnect (#263) resolveu a queda silenciosa, mas o usuário
-// ainda não tinha ONDE conferir se estava sincronizando — e a quebra do ES256
+// ainda não tinha ONDE conferir se estava sincronizando, e a quebra do ES256
 // mostrou que "não aparece no outro aparelho" pode passar semanas invisível.
 //
 // Estar offline NÃO é erro aqui: o app é local-first, os registros ficam
 // salvos no aparelho e sobem quando a conexão volta. Por isso nada de
-// vermelho — o `danger` fica reservado pro destrutivo (regra 2 do Turno 3).
+// vermelho: o `danger` fica reservado pro destrutivo (regra 2 do Turno 3).
 // Offline usa cinza de label e a copy tranquiliza em vez de cobrar.
 const SYNC_UI = {
   [SYNC_ONLINE]: {
@@ -535,7 +535,7 @@ const SYNC_UI = {
   // Recusado por falta de login (#278). Antes isto caía em `offline`, e as
   // três coisas ficavam falsas ao mesmo tempo: não era falta de conexão, nada
   // ia "subir quando voltar", e o "Tentar de novo" nunca funcionaria. Copy
-  // sem cobrança, como o resto — o registro local segue intacto.
+  // sem cobrança, como o resto, porque o registro local segue intacto.
   [SYNC_NEEDS_AUTH]: {
     dot: "bg-border-strong dark:bg-border-strong-dark",
     text: "precisa entrar",
@@ -548,7 +548,7 @@ function SyncRow() {
   const ui = SYNC_UI[status] ?? SYNC_UI[SYNC_OFF];
   // Só oferece "tentar de novo" quando há o que retentar. Em `off` não há
   // servidor configurado; em `connecting`/`online` já está acontecendo; em
-  // `needs-auth` retentar é justamente o que não resolve — a ação é entrar.
+  // `needs-auth` retentar é justamente o que não resolve, porque a ação é entrar.
   const canRetry = status === SYNC_OFFLINE;
   const precisaEntrar = status === SYNC_NEEDS_AUTH;
 
@@ -617,7 +617,7 @@ function SyncRow() {
  * Sinais de automaticidade por métrica (#285, fatia 0).
  *
  * Medição silenciosa: nada aqui decide nada. Nenhum limiar, nenhum nível,
- * nenhum "bom/ruim" — só os números crus, pra calibrar os limiares do modelo
+ * nenhum "bom/ruim", só os números crus, pra calibrar os limiares do modelo
  * com dado real antes de pendurar consequência neles
  * (docs/11-modelo-de-niveis.md §12).
  *
@@ -715,12 +715,12 @@ function SignalsBlock({ goals }) {
         ))}
       </View>
 
-      {/* Controles de desenvolvimento — NÃO aparecem no app dos testers.
+      {/* Controles de desenvolvimento. NÃO aparecem no app dos testers.
           Ver `isDevSurface`: só em dev e no canal `staging`. */}
       {DEV_SURFACE ? (
         <>
           {/* Previsualização de nível: força o nível pra ver as telas que o
-          histórico curto não alcança. Afrouxar limiar não resolveria — com
+          histórico curto não alcança. Afrouxar limiar não resolveria, porque com
           21% de consistência o portão teria que cair tão fundo que deixaria
           de ser o mesmo portão. Isto testa a TELA; o modelo continua coberto
           por tests/journey.test.js com dado sintético. */}
@@ -768,7 +768,7 @@ function SignalsBlock({ goals }) {
 
           {/* Forçar estabilidade (#297): a tela do hábito estável é inalcançável
           sem um hábito estável, e nenhum passa o portão com histórico curto.
-          Reusa o mesmo caminho da conferência (#295) — a tela de detalhe não
+          Reusa o mesmo caminho da conferência (#295), e a tela de detalhe não
           sabe se a estabilidade veio de mérito ou daqui. */}
           <View className="mt-2 flex-row flex-wrap items-center gap-1.5">
             <Text
@@ -804,8 +804,8 @@ function SignalsBlock({ goals }) {
 
           {/* Controles de simulação (#293).
           Os dois momentos são inobserváveis com histórico curto: nada sobe,
-          nada cai. Estes botões só mexem no `journeyAckLevel` — o nível que a
-          pessoa "já viu" — pra forçar a comparação a dar subida ou queda.
+          nada cai. Estes botões só mexem no `journeyAckLevel`, o nível que a
+          pessoa "já viu", pra forçar a comparação a dar subida ou queda.
           Nenhum registro é tocado, e dispensar o momento devolve o ack ao
           nível real. É o equivalente ao server em `required` que usamos pra
           ver o estado de "precisa entrar". */}
@@ -913,7 +913,7 @@ function Row({
       }`}
     >
       {/* Sem flex/shrink explícito, RN não encolhe ninguém por padrão (ao
-          contrário do CSS web) — label + value longos (ex: "Logado como" +
+          contrário do CSS web), porque label + value longos (ex: "Logado como" +
           email, ou o nome customizado do usuário) podiam somar mais que a
           largura da row e cortar sem reticências no Android. `label` fica no
           tamanho natural (são strings curtas e fixas do app); `value` é o

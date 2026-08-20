@@ -10,7 +10,7 @@ import {
 
 // Momentos da jornada (#293). Duas coisas com risco de bug aqui: um momento
 // aparecer mais de uma vez (ou nunca), e a copy escorregar pro vocabulário
-// que o projeto rejeita — culpa na regressão, jogo na subida.
+// que o projeto rejeita: culpa na regressão, jogo na subida.
 
 describe("pendingMoment", () => {
   it("nível acima do reconhecido = subiu", () => {
@@ -41,7 +41,7 @@ describe("pendingMoment", () => {
     expect(pendingMoment(undefined, 1)).toBeNull();
   });
 
-  // Reconhecer o lvl 0 é diferente de nunca ter reconhecido nada — por isso o
+  // Reconhecer o lvl 0 é diferente de nunca ter reconhecido nada, e por isso o
   // default é -1 e não 0.
   it("reconhecer o lvl 0 e subir dispara momento", () => {
     expect(pendingMoment(1, 0)).toBe(MOMENT_LEVEL_UP);
@@ -123,7 +123,7 @@ describe("regressionCopy", () => {
     expect(c.body).toMatch(/retoma/);
   });
 
-  // A dúvida que a regressão levanta, respondida em voz alta — e com um botão
+  // A dúvida que a regressão levanta, respondida em voz alta, e com um botão
   // pro histórico, pra provar em vez de afirmar.
   it("diz que nada foi perdido e oferece o histórico", () => {
     expect(c.preserved).toMatch(/nada.*foi perdido/i);
@@ -138,7 +138,7 @@ describe("regressionCopy", () => {
     );
   });
 
-  // "em pausa", nunca "perdido" — e o texto não pode contradizer o badge.
+  // "em pausa", nunca "perdido", e o texto não pode contradizer o badge.
   it("não chama o hábito de perdido", () => {
     expect(c.body).not.toMatch(/perdid/i);
   });

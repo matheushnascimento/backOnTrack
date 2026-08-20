@@ -4,21 +4,21 @@
 //
 // Quatro estados, em ordem de prioridade (só um aparece):
 //
-//   1. NATIVE_OUTDATED  — versão do APK em execução é MENOR que a última
+//   1. NATIVE_OUTDATED  = versão do APK em execução é MENOR que a última
 //      publicada. Nesses casos o OTA não cobre (`runtimeVersion.policy:
-//      "appVersion"` — publicação nova sai em runtime N+1, o device em N
+//      "appVersion"`: publicação nova sai em runtime N+1, o device em N
 //      ignora silenciosamente). Único jeito é reinstalar o APK. Banner
 //      prioritário porque tudo mais é sintoma disso.
 //
-//   2. DOWNLOADING      — expo-updates tá baixando bundle novo em background.
+//   2. DOWNLOADING      = expo-updates tá baixando bundle novo em background.
 //      Sem progresso real (a API pública não expõe bytes), então usamos uma
-//      ProgressBar indeterminada — sinaliza "atividade em andamento" sem
+//      ProgressBar indeterminada, que sinaliza "atividade em andamento" sem
 //      mentir sobre percentual.
 //
-//   3. UPDATE_PENDING   — bundle baixado, esperando reload. Toque aplica.
+//   3. UPDATE_PENDING   = bundle baixado, esperando reload. Toque aplica.
 //      Comportamento original do #131.
 //
-//   4. NEEDS_AUTH       — o sync foi recusado por falta de login (#281). Vem
+//   4. NEEDS_AUTH       = o sync foi recusado por falta de login (#281). Vem
 //      por último de propósito: os três de cima são transitórios e se
 //      resolvem sozinhos, este persiste até a pessoa entrar. Se disputassem,
 //      o permanente esconderia os passageiros.
@@ -28,7 +28,7 @@
 //      vale só pra sessão (mesmo critério do `RetomadaState` da Home) —
 //      próxima abertura convida de novo, que é o objetivo.
 //
-// Em dev/web/native sem update mecanismo os hooks retornam false — banner
+// Em dev/web/native sem update mecanismo os hooks retornam false, e o banner
 // não aparece. Fetch da última APK version só tenta em native com rede;
 // falha silenciosa mantém o banner desligado.
 
@@ -47,14 +47,14 @@ import { useThemeTokens } from "@/constants/themeTokens";
 // Fonte remota da última versão do APK cortada, atualizada manualmente no repo
 // quando um build novo é distribuído. Preferi raw.githubusercontent.com em vez
 // de embed no bundle porque o cliente numa versão VELHA precisa saber de uma
-// versão MAIS NOVA que ele — o bundle dele nunca vai ter esse valor por
+// versão MAIS NOVA que ele, porque o bundle dele nunca vai ter esse valor por
 // definição. Cache do GitHub CDN é ~5min, suficiente pro caso de uso.
 const LATEST_APK_URL =
   "https://raw.githubusercontent.com/matheushnascimento/backOnTrack/main/assets/latest-apk-version.json";
 
 /**
  * "1.1.1" vs "1.2.0" → true se `current < latest`. Assume semver simples
- * (major.minor.patch numérico) — o que app.json.version segue.
+ * (major.minor.patch numérico), que é o que app.json.version segue.
  */
 function isBehind(current, latest) {
   if (!current || !latest) return false;
@@ -74,10 +74,10 @@ export default function UpdateBanner() {
   const insets = useSafeAreaInsets();
   const t = useThemeTokens();
   const { status: syncStatus } = useSyncStatus();
-  // Dispensa só a sessão atual — ver a nota de prioridade no topo do arquivo.
+  // Dispensa só a sessão atual. Ver a nota de prioridade no topo do arquivo.
   const [authDismissed, setAuthDismissed] = useState(false);
 
-  // Última APK conhecida — carrega em background, sem bloquear render.
+  // Última APK conhecida: carrega em background, sem bloquear render.
   const [latestApk, setLatestApk] = useState(
     /** @type {{version: string, installUrl?: string} | null} */ (null),
   );
@@ -92,7 +92,7 @@ export default function UpdateBanner() {
         if (d?.version) setLatestApk(d);
       })
       .catch(() => {
-        /* falha silenciosa — banner de native update só aparece se der certo */
+        /* falha silenciosa: banner de native update só aparece se der certo */
       });
     return () => ctrl.abort();
   }, []);
@@ -165,7 +165,7 @@ export default function UpdateBanner() {
           className="text-center text-white"
           style={{ fontFamily: "Inter_600SemiBold", fontSize: 14 }}
         >
-          Atualização pronta — toque para reiniciar
+          Atualização pronta. Toque para reiniciar
         </Text>
       </BannerBase>
     );
@@ -207,7 +207,7 @@ export default function UpdateBanner() {
  * cada tela já monta o próprio safe-area (MyView safe) e o app é edge-to-edge;
  * absoluto flutua sem mexer no layout de ninguém.
  *
- * `onDismiss` é opcional e só o banner de login usa (#281) — os de
+ * `onDismiss` é opcional e só o banner de login usa (#281), e os de
  * atualização não fecham porque somem sozinhos quando a causa passa.
  *
  * @param {{
@@ -231,7 +231,7 @@ function BannerBase({
   //
   // Aninhar quebra no web: o `accessibilityRole="button"` faz o
   // react-native-web renderizar um `<button>` de verdade, e `<button>` dentro
-  // de `<button>` é aninhamento inválido — o React DOM recusa e derruba a
+  // de `<button>` é aninhamento inválido, e o React DOM recusa e derruba a
   // árvore. Só apareceu quando o banner de login passou `onPress` e
   // `onDismiss` juntos; os três de atualização nunca tiveram botão de fechar.
   //

@@ -14,7 +14,7 @@ import { JOURNEY_ORDER } from "@/constants/goals";
 
 // Estado da jornada (#289). Os testes usam dado SINTÉTICO de propósito: os
 // limiares são provisórios e sem calibração, então o que se verifica aqui é o
-// mecanismo — transições, ordem, semântica de pausa — não os valores.
+// mecanismo (transições, ordem, semântica de pausa), e não os valores.
 
 const DIA = 86_400_000;
 // Base fixa: sem isso os testes dependem da hora em que a suíte roda (lição
@@ -61,7 +61,7 @@ describe("passesGate", () => {
     expect(passesGate(sinais({ sd: 400 }))).toBe(false);
   });
 
-  // Duas faltas seguidas é o laço quebrado (§6) — não é "perto de automático".
+  // Duas faltas seguidas é o laço quebrado (§6), e não "perto de automático".
   it("falta dupla na janela não passa", () => {
     expect(passesGate(sinais({ doubleMisses: 1 }))).toBe(false);
   });
@@ -164,7 +164,7 @@ describe("deriveJourney", () => {
   });
 
   // Quem nunca começou não está quebrado. Sem isto, um usuário novo abriria o
-  // app já "regredido" — 28 dias de janela vazia viram 28 faltas.
+  // app já "regredido": 28 dias de janela vazia viram 28 faltas.
   it("hábito sem nenhum acerto não é reportado como quebrado", () => {
     const j = deriveJourney({ records: [], ...base });
     expect(j.habits.sleep.broken).toBe(false);
@@ -214,7 +214,7 @@ describe("deriveJourney", () => {
   });
 
   // A decisão da #289: quem pausa é o TOPO, não quem quebrou.
-  it("na regressão, pausa o topo — os hábitos entre o nível atual e o antigo", () => {
+  it("na regressão, pausa o topo, os hábitos entre o nível atual e o antigo", () => {
     const j = deriveJourney({
       records: serieCheia("sleep", 480),
       previousLevel: 4,

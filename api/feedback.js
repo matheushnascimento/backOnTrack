@@ -1,6 +1,6 @@
 // @ts-nocheck -- handler serverless (req/res do Vercel não tipados); ADR-002
 // Função serverless (Vercel) que cria uma issue de feedback no GitHub em nome do
-// tester — assim quem não tem conta ou familiaridade com o GitHub reporta direto
+// tester, então quem não tem conta ou familiaridade com o GitHub reporta direto
 // do app. O PAT fica SÓ aqui (env GITHUB_ISSUE_TOKEN), nunca no cliente.
 //
 // Env necessárias na Vercel:

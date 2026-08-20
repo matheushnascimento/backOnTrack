@@ -1,6 +1,6 @@
 // @ts-nocheck -- teste; globals do jest não são tipados (ADR-002)
 // Testes do server WS de sync (M6, fatia 2, #198). Sobe o server em subprocess
-// com porta aleatória + tmpdir isolado — testa o CÓDIGO do server (não a infra
+// com porta aleatória + tmpdir isolado: testa o CÓDIGO do server (não a infra
 // do túnel Cloudflare, que é outra classe de coisa). Roda in-process no CI,
 // sem depender de rede externa nem gerar lixo no server público.
 
@@ -14,7 +14,7 @@ import { WebSocket } from "ws";
 
 const SERVER_JS = resolve(__dirname, "..", "server", "server.js");
 
-// Porta alta aleatória — evita colisão com serviços conhecidos. 1-em-milhares
+// Porta alta aleatória, o que evita colisão com serviços conhecidos. 1-em-milhares
 // de chance de conflito com outro processo local; se acontecer, re-roda.
 const PORT = 40000 + Math.floor(Math.random() * 10000);
 
@@ -29,7 +29,7 @@ beforeAll(async () => {
     stdio: ["ignore", "pipe", "pipe"],
   });
 
-  // Espera o log "listening on ..." — indica que o WebSocketServer já bindou.
+  // Espera o log "listening on ...", que indica que o WebSocketServer já bindou.
   await new Promise((resolveReady, rejectReady) => {
     const timer = setTimeout(
       () => rejectReady(new Error("server didn't come up in 5s")),
@@ -84,7 +84,7 @@ test("round-trip: valor escrito volta em nova conexão (fatia 2 do M6)", async (
   await new Promise((r) => setTimeout(r, 1500));
   await sync1.destroy();
 
-  // Round 2: reconecta com store limpa — valor deve voltar do server.
+  // Round 2: reconecta com store limpa: valor deve voltar do server.
   const [s2, sync2] = await connect("round-trip");
   await new Promise((r) => setTimeout(r, 1500));
   const got = s2.getCell("ping", "row1", "value");
@@ -108,7 +108,7 @@ test("persistência: arquivo JSON por sala é criado no DATA_DIR", async () => {
 test("path traversal: pathId malicioso não escapa do DATA_DIR", async () => {
   // safeFilename troca qualquer coisa fora de [A-Za-z0-9_-] por hífen. Se
   // alguém tentar `../../etc/passwd`, deve virar algo tipo `etc-passwd.json`
-  // dentro do DATA_DIR — não escrever fora.
+  // dentro do DATA_DIR, sem escrever fora.
   const [store, sync] = await connect("..%2F..%2Fetc%2Fpasswd");
   store.setCell("x", "y", "z", "1");
   await new Promise((r) => setTimeout(r, 1500));

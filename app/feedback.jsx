@@ -58,7 +58,7 @@ export default function Feedback() {
       setResult(data);
       setStatus("ok");
     } catch (e) {
-      // Detalhe técnico só no console (mesma regra do login #216) — evita
+      // Detalhe técnico só no console (mesma regra do login #216), o que evita
       // vazar shape do backend pro usuário e não ajuda quem tá vendo.
       console.error("feedback send failed:", e);
       setStatus("error");
@@ -126,7 +126,7 @@ export default function Feedback() {
                 className="text-sm text-body-secondary dark:text-body-secondary-dark"
                 style={{ fontFamily: "Inter_400Regular", marginTop: 2 }}
               >
-                Achou um problema ou tem uma sugestão? Conta aqui — abrimos o
+                Achou um problema ou tem uma sugestão? Conta aqui, e abrimos o
                 chamado pra você automaticamente.
               </Text>
             </View>

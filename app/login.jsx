@@ -13,7 +13,7 @@ import { AUTH_ENABLED, supabase } from "@/infra/supabase";
 import { useThemeTokens } from "@/constants/themeTokens";
 
 // Login por magic link (M6 auth fatia A, #207, ADR-010).
-// Sync continua anônimo por baixo — só a fatia B passa a usar o JWT.
+// Sync continua anônimo por baixo, e só a fatia B passa a usar o JWT.
 
 export default function Login() {
   const t = useThemeTokens();
@@ -37,7 +37,7 @@ export default function Login() {
       if (error) throw error;
       setStatus("sent");
     } catch (e) {
-      // Detalhes técnicos ficam no console — UI mostra só mensagem genérica.
+      // Detalhes técnicos ficam no console, e a UI mostra só mensagem genérica.
       // "Invalid API key", HTTP status, stack trace: infra interna que só
       // atrapalha usuário final e pode vazar shape do backend.
       console.error("[login] signInWithOtp falhou:", e);

@@ -11,7 +11,7 @@ describe("firstName", () => {
     expect(firstName("Matheus Henrique Nascimento")).toBe("Matheus");
   });
 
-  it("preserva acento — a regra é letra Unicode, não [a-z]", () => {
+  it("preserva acento: a regra é letra Unicode, não [a-z]", () => {
     expect(firstName("João da Silva")).toBe("João");
     expect(firstName("Ângela Souza")).toBe("Ângela");
   });
@@ -50,7 +50,7 @@ describe("pickName", () => {
     expect(pickName({ email: "outro@x.com" }, "Ana")).toBe("Ana");
   });
 
-  it("aplica primeiro-nome no displayName — era o bug do #268", () => {
+  it("aplica primeiro-nome no displayName, era o bug do #268", () => {
     expect(pickName(null, "Matheus Henrique Nascimento")).toBe("Matheus");
   });
 

@@ -1,4 +1,4 @@
-// Card "Obter o app" — versão web (Ciclo 3, #74; distribuição via EAS #90).
+// Card "Obter o app": versão web (Ciclo 3, #74; distribuição via EAS #90).
 //
 // Só existe no bundle web (o Metro resolve este .web.jsx na web e o
 // InstallApp.jsx no nativo). Detecta o navegador:

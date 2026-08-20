@@ -70,7 +70,7 @@ function computeDaysSinceLast(records) {
   if (maxCreatedAt === 0) return null;
   const now = new Date();
   const last = new Date(maxCreatedAt);
-  // Compara dias-de-calendário local, não 24h corridas — pra "faz 1 dia" só
+  // Compara dias-de-calendário local, não 24h corridas, pra "faz 1 dia" só
   // acontecer na virada do dia, não 24h depois do registro.
   const todayMid = new Date(
     now.getFullYear(),
@@ -101,7 +101,7 @@ export default function Home() {
   const { user } = useSession();
   const t = useThemeTokens();
   // Dismissal in-memory do estado de retomada (M5-B fatia 5). Persistir viraria
-  // sub-tarefa; hoje "Depois" dura só a sessão — próximo launch com o critério
+  // sub-tarefa; hoje "Depois" dura só a sessão, e o próximo launch com o critério
   // ainda válido volta a mostrar, que é o objetivo (convidar até registrar).
   const [retomadaDismissed, setRetomadaDismissed] = useState(false);
 
@@ -114,7 +114,7 @@ export default function Home() {
   const displayName = useValue("displayName", store);
   // `records` é gatilho de propósito: muda quando a tabela muda (inclui o fim do
   // autoLoad) e força o getToday a reler. O exhaustive-deps não vê que os dois
-  // olham os mesmos dados e sugere remover — o que reintroduziria o #108.
+  // olham os mesmos dados e sugere remover, o que reintroduziria o #108.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = useMemo(() => getToday(), [records]);
   const daysSinceLast = useMemo(() => computeDaysSinceLast(records), [records]);
@@ -122,11 +122,11 @@ export default function Home() {
   const totalRecords = METRICS.reduce((s, m) => s + (today[m]?.length ?? 0), 0);
 
   // Origem única da derivação (#297). Antes cada tela montava os argumentos
-  // por conta própria, e a Home esquecia `granted` — a conferência da #295 e
+  // por conta própria, e a Home esquecia `granted`, e a conferência da #295 e
   // a previsualização não tinham efeito aqui, com os testes todos verdes.
   const journeyReal = useJourney();
 
-  // Previsualização de nível (#293). Substitui só o nível e o foco — o resto
+  // Previsualização de nível (#293). Substitui só o nível e o foco, e o resto
   // do estado segue real. Testa a TELA, não o modelo.
   const demoLevel = useValue("journeyDemoLevel", store);
   const emDemo = Number(demoLevel ?? -1) >= 0;
@@ -146,7 +146,7 @@ export default function Home() {
 
   // Data de estabilidade (#297). A graduação é derivada, então sem registrar
   // a data o app não saberia dizer "estável há N dias". Some quando o hábito
-  // deixa de estar estável — reconquistar recomeça a contagem.
+  // deixa de estar estável, e reconquistar recomeça a contagem.
   const estaveis = JOURNEY_ORDER.filter(
     (m) => journey.habits[m]?.status === GRADUATED,
   );
@@ -248,7 +248,7 @@ export default function Home() {
         contentContainerStyle={{ padding: 20, gap: 20 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Trigger de Ajustes — hamburger à esquerda navega pra tela dedicada
+        {/* Trigger de Ajustes: hamburger à esquerda navega pra tela dedicada
             (M5-B fatia 4). Substituiu o MenuModal antigo. */}
         <View className="w-full flex-row justify-start">
           <Pressable
@@ -266,7 +266,7 @@ export default function Home() {
         {/* Header: data · greeting · mini-ícone 1c · subtitle. Padrão da mockup
             2a·1 do design v2. */}
         <View className="gap-1 px-1">
-          {/* Data + chip de nível. O nível é CONTEXTO, não pontuação — por
+          {/* Data + chip de nível. O nível é CONTEXTO, não pontuação, e por
               isso vive num chip discreto ao lado da data, e nunca como número
               grande (docs/11-modelo-de-niveis.md §1.5). */}
           <View className="flex-row items-center justify-between gap-2">
@@ -286,7 +286,7 @@ export default function Home() {
             </View>
           </View>
           <View className="flex-row items-center justify-between gap-3">
-            {/* `flex-1` dá largura limitada pro Text — sem isso ele não tem
+            {/* `flex-1` dá largura limitada pro Text, e sem isso ele não tem
                 onde quebrar e o nome longo vaza. Com a largura definida, a
                 quebra natural cai no espaço depois da vírgula: "Bom dia," na
                 primeira linha, nome na segunda. `numberOfLines={2}` fecha o
@@ -326,7 +326,7 @@ export default function Home() {
         </View>
 
         {/* Aviso de regressão: no topo, acima de tudo. Não é modal de
-            propósito — não bloqueia, e a pessoa pode ignorar e registrar. */}
+            propósito: não bloqueia, e a pessoa pode ignorar e registrar. */}
         {moment === MOMENT_REGRESSION ? (
           <RegressionNotice
             copy={regressionCopy({ focus: focus ?? "sleep", paused: pausados })}
@@ -336,7 +336,7 @@ export default function Home() {
         ) : null}
 
         {/* Zona de foco: o hábito do nível, com número grande e ação rápida.
-            É o único com essa altura — a hierarquia mora aqui. */}
+            É o único com essa altura, e a hierarquia mora aqui. */}
         {focus ? (
           <FocusCard
             metric={focus}
@@ -371,7 +371,7 @@ export default function Home() {
               value={porMetrica[metric].value}
               badge={restBadge(journey.habits[metric]?.status)}
               // Hábito estável abre o DETALHE, não o registro (#297). É um
-              // toque a mais pra registrar algo que já é automático — e é o
+              // toque a mais pra registrar algo que já é automático, e é o
               // ponto: a tela existe pra dar lugar ao que saiu do foco sem
               // sumir. Registrar continua a um toque de lá.
               onPress={() =>
@@ -396,7 +396,7 @@ export default function Home() {
 
         {/* Login/logout ficam TODOS em Ajustes → Conta (Entrar quando !user,
             Sair quando user). Ter um botão Entrar aqui na Home também era
-            redundante — e como useSession pode devolver `user: null` durante
+            redundante, e como useSession pode devolver `user: null` durante
             o auto-load da sessão, o gate `!user` piscava o botão logo depois
             de logar. Concentrar em Ajustes elimina o flicker e centraliza. */}
       </ScrollView>

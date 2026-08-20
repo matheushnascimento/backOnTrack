@@ -1,6 +1,6 @@
 // @ts-nocheck -- teste; globals do jest não são tipados (ADR-002)
 // Testa o backoff do reconnect do sync WS. É o pedaço puro da correção do
-// auto-reconnect — a parte onde bug moraria (crescimento errado, teto que
+// auto-reconnect, a parte onde bug moraria (crescimento errado, teto que
 // não segura, jitter que sincroniza todo mundo, entrada negativa/absurda).
 //
 // Contexto: sem reconexão, uma queda de WS deixava o app sem sync até o
@@ -27,7 +27,7 @@ describe("retryDelay", () => {
     expect(d(3)).toBe(BASE_RETRY_DELAY_MS * 8); // 8s
   });
 
-  test("respeita o teto — queda longa não vira espera de minutos", () => {
+  test("respeita o teto: queda longa não vira espera de minutos", () => {
     const d = (n) => retryDelay(n, { random: noJitter });
     expect(d(10)).toBe(MAX_RETRY_DELAY_MS);
     expect(d(50)).toBe(MAX_RETRY_DELAY_MS);
@@ -36,7 +36,7 @@ describe("retryDelay", () => {
     expect(d(1000)).toBe(MAX_RETRY_DELAY_MS);
   });
 
-  test("jitter mantém o delay em [metade, cheio] — nunca zero", () => {
+  test("jitter mantém o delay em [metade, cheio], nunca zero", () => {
     for (const n of [0, 1, 5, 99]) {
       const cheio = retryDelay(n, { random: noJitter });
       const piso = retryDelay(n, { random: minJitter });
@@ -51,7 +51,7 @@ describe("retryDelay", () => {
     }
   });
 
-  test("jitter de fato espalha — clientes não voltam todos juntos", () => {
+  test("jitter de fato espalha: clientes não voltam todos juntos", () => {
     // 200 "clientes" caindo na mesma tentativa devem produzir delays variados.
     // Sem jitter, todos retornariam o mesmo valor e derrubariam o server de novo.
     const amostras = new Set();

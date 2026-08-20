@@ -36,7 +36,7 @@ yarn-error.*
 # typescript
 *.tsbuildinfo
 
-# Lista de testers exportada do app (PII) — nunca versionar.
+# Lista de testers exportada do app (PII). Nunca versionar.
 scripts/testers.json
 
 # Rascunho local da mensagem do sender (notify-testers.mjs --text-file).
@@ -50,7 +50,7 @@ convite.txt
 server/data/
 
 # Fonte visual do design v2 (Claude Design bundle, M5-B). ~600KB, referência
-# local — os tokens extraídos vivem em docs/09-design-v2.md.
+# local, e os tokens extraídos vivem em docs/09-design-v2.md.
 Back on Track - Icon Directions.html
 
 

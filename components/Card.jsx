@@ -1,6 +1,6 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 //
-// Componente-base "card" — outer container das telas topo-nível.
+// Componente-base "card": outer container das telas topo-nível.
 // Encapsula os tokens do M5: raio lg (papel "card"), bg surface por tema,
 // max-w 640 (o único breakpoint do app), padding p-4 canônico e a sombra
 // padrão (regra "top-level card → shadow"). Ver docs/08-design-tokens.md.

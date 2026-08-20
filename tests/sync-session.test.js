@@ -6,7 +6,7 @@ import {
 } from "@/infra/sync-session";
 
 // Cobre os dois defeitos da #275. Os dois eram "tratar 'ainda não sei' como se
-// fosse resposta" — os testes abaixo travam justamente esse instante.
+// fosse resposta". Os testes abaixo travam justamente esse instante.
 
 describe("resolveRoomId", () => {
   const USER = { id: "00c5fe3b-9dc7-4428-a4e8-1c9f5e426b33" };
@@ -32,7 +32,7 @@ describe("resolveRoomId", () => {
   });
 
   // syncRoomId vem do disco pelo persister, também async. Sem ele não há sala
-  // — o caller trata null como "não abre WebSocket".
+  // O caller trata null como "não abre WebSocket".
   it("devolve null quando resolveu, sem login e sem anon carregado", () => {
     expect(resolveRoomId(true, null, undefined)).toBeNull();
   });
@@ -60,7 +60,7 @@ describe("isTokenExpired", () => {
   });
 
   // O round-trip até o server leva tempo: um token que vence em 2s chega lá
-  // vencido. Por isso a margem — evita a rejeição por milissegundos.
+  // vencido. Por isso a margem, que evita a rejeição por milissegundos.
   it("token prestes a vencer conta como vencido (margem de 5s)", () => {
     expect(isTokenExpired(sessao(AGORA + 2_000), AGORA)).toBe(true);
   });
@@ -74,7 +74,7 @@ describe("isTokenExpired", () => {
     expect(isTokenExpired(s, AGORA, 30_000)).toBe(true);
   });
 
-  // Anônimo não tem o que renovar — dizer "vencido" bloquearia o reconnect
+  // Anônimo não tem o que renovar, e dizer "vencido" bloquearia o reconnect
   // de quem nem usa auth.
   it("sessão ausente nunca está vencida", () => {
     expect(isTokenExpired(null, AGORA)).toBe(false);
@@ -100,7 +100,7 @@ describe("isTokenExpired", () => {
   });
 
   // Regressão específica: `expires_at` do Supabase é em SEGUNDOS. Tratar como
-  // ms daria uma data em 1970 e todo token pareceria vencido — o sync nunca
+  // ms daria uma data em 1970 e todo token pareceria vencido, e o sync nunca
   // reconectaria depois de voltar do background.
   it("interpreta expires_at em segundos, não milissegundos", () => {
     const daquiUmaHora = sessao(AGORA + 3_600_000);
@@ -122,7 +122,7 @@ describe("needsLogin", () => {
   });
 
   // Server inalcançável: o /healthz não respondeu, então o modo é null. Isso
-  // É problema de rede — cair em "sem conexão" está certo.
+  // É problema de rede, e cair em "sem conexão" está certo.
   it("modo desconhecido nunca vira 'precisa entrar'", () => {
     expect(needsLogin(false, null)).toBe(false);
     expect(needsLogin(false, undefined)).toBe(false);

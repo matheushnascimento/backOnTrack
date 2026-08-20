@@ -11,13 +11,13 @@ import { METRIC_TINT } from "@/constants/journeyHome";
 // a subida como interrupção solene; sheet trata como recado. É reconhecimento,
 // não cerimônia.
 //
-// Sem confete, sem verde de vitória, sem "🎉" — reforço sóbrio
+// Sem confete, sem verde de vitória, sem "🎉": reforço sóbrio
 // (docs/11-modelo-de-niveis.md §1.5). O reconhecimento vem em prosa: "Sono
 // virou seu".
 //
 // A peça mais importante é a última: `reassurance` antecipa a queda ("sem
 // drama") antes que ela aconteça. Reconhecimento que não antecipa a queda
-// vira dívida — a pessoa passa a ter algo a perder.
+// vira dívida, porque a pessoa passa a ter algo a perder.
 
 /**
  * @param {{

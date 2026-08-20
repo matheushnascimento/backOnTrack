@@ -2,7 +2,7 @@
 //
 // O APK do perfil `preview` era "universal": empacotava libs nativas de 4
 // arquiteturas (arm64-v8a + armeabi-v7a + x86 + x86_64 = 114 MB). x86/x86_64 só
-// servem emulador e armeabi-v7a só celular 32-bit antigo — peso morto que fazia
+// servem emulador e armeabi-v7a só celular 32-bit antigo, peso morto que fazia
 // o download travar no celular dos testers.
 //
 // Fixar `reactNativeArchitectures=arm64-v8a` no gradle.properties faz o

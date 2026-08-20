@@ -58,7 +58,7 @@ jobs:
       # (banner NATIVE_OUTDATED do UpdateBanner) pro build recém-criado. Não
       # commita na main (ruleset exige PR) nem abre PR via API (PR do
       # GITHUB_TOKEN não dispara `on: pull_request`, travando os checks).
-      # Empurra a branch e deixa link pro humano abrir o PR — aí o CI roda.
+      # Empurra a branch e deixa link pro humano abrir o PR, e aí o CI roda.
       # Ver [[repo-ci-constraints]].
       - name: Atualiza EAS_INSTALL_URL + latest-apk-version.json (branch + link de PR)
         env:
@@ -68,10 +68,10 @@ jobs:
           EAS_URL="https://expo.dev/accounts/matheushnascimento/projects/backOnTrack/builds/${BUILD_ID}"
           APP_VERSION=$(jq -r '.expo.version' app.json)
 
-          # constants/distribution.js — card "Obter o app"
+          # constants/distribution.js: card "Obter o app"
           sed -i -E "s#(projects/backOnTrack/builds/)[a-f0-9-]+#\1${BUILD_ID}#" constants/distribution.js
 
-          # assets/latest-apk-version.json — banner NATIVE_OUTDATED (dispara
+          # assets/latest-apk-version.json: banner NATIVE_OUTDATED (dispara
           # nos testers em versão anterior). Reescreve o arquivo inteiro pra
           # garantir schema estável (jq -n em vez de sed).
           jq -n --arg v "$APP_VERSION" --arg u "$EAS_URL" \
@@ -79,7 +79,7 @@ jobs:
             > assets/latest-apk-version.json
 
           if git diff --quiet constants/distribution.js assets/latest-apk-version.json; then
-            echo "Distribuição já aponta pro build atual — nada a fazer." >> "$GITHUB_STEP_SUMMARY"
+            echo "Distribuição já aponta pro build atual, nada a fazer." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
 

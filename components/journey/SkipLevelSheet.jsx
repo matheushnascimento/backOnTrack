@@ -11,7 +11,7 @@ import { METRIC_TINT } from "@/constants/journeyHome";
 // resolve com dois movimentos, e os dois estão aqui:
 //
 // 1. **Números concretos, não veredito.** O bloco do meio lista o que o app
-//    viu — dias com registro, dispersão do horário — sem dar nota.
+//    viu: dias com registro e dispersão do horário, sem dar nota.
 // 2. **O caso oposto vem antecipado.** Dizer de antemão o que aconteceria se
 //    não batesse deixa claro que o app não confia cego, mas também não
 //    desconfia hostil.

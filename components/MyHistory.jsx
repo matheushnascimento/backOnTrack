@@ -23,7 +23,7 @@ function formatDate(date) {
 
 // Valor principal do registro. Registros novos guardam `quantity` como
 // número (minutos, quando unit === "min"); registros antigos podem trazer
-// `quantity`/`duration` já como "HH:MM" string — daí o fallback.
+// `quantity`/`duration` já como "HH:MM" string, daí o fallback.
 function formatQuantity(obj, unit) {
   const raw = obj.quantity ?? obj.duration;
   if (raw == null || raw === "") return "";
@@ -40,7 +40,7 @@ function formatQuantity(obj, unit) {
  *
  * Props preservadas do formato antigo pra continuar plug-and-play na tela de
  * registro (`MetricScreen`, via `MyHistory`) e no `/history`. `cardStyle`
- * aceito mas não usado — mantido pra compat visual.
+ * aceito mas não usado, mantido pra compat visual.
  */
 export function HistoryCard({
   obj,

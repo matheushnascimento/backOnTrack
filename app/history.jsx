@@ -17,7 +17,7 @@ import { useThemeTokens } from "@/constants/themeTokens";
 // Ordem canônica das métricas (mesma da tela "hoje").
 const METRICS = Object.keys(CATEGORY_MAP);
 
-// Zera a hora pra comparar/derivar dias sem ruído de fuso — getByDate compara
+// Zera a hora pra comparar/derivar dias sem ruído de fuso. O getByDate compara
 // ano/mês/dia local, então o dia "cheio" é o suficiente.
 function startOfDay(input) {
   const d = new Date(input);
@@ -35,7 +35,7 @@ function isSameDay(a, b) {
   return startOfDay(a).getTime() === startOfDay(b).getTime();
 }
 
-// "SEG · 04 AGO 2026" — label mono do card de navegação.
+// "SEG · 04 AGO 2026": label mono do card de navegação.
 function formatMonoDate(d) {
   const weekday = d
     .toLocaleDateString("pt-BR", { weekday: "short" })
@@ -54,7 +54,7 @@ export default function History() {
 
   // Assina a tabela: re-renderiza a cada mudança nos registros (edição, exclusão
   // e também o fim do `startAutoLoad()` da persistência). Ler só no foco perdia
-  // a carga inicial assíncrona — ver #108.
+  // a carga inicial assíncrona. Ver #108.
   const records = useTable("records", store);
 
   // Registros do dia agrupados por type (uma passada só, via getByDate).

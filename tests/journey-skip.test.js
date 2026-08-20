@@ -104,7 +104,7 @@ describe("concessão no deriveJourney", () => {
     expect(comGrant.level).toBeGreaterThan(semGrant.level);
   });
 
-  // Graduado não derruba ninguém — e concedido é graduado.
+  // Graduado não derruba ninguém, e concedido é graduado.
   it("hábito concedido não é reportado como quebrado", () => {
     const j = deriveJourney({ ...base, granted: ["sleep"] });
     expect(j.habits.sleep.broken).toBe(false);

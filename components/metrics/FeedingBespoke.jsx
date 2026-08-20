@@ -19,7 +19,7 @@ import { useThemeTokens } from "@/constants/themeTokens";
 //
 // Diferente do modelo antigo (uma linha por dia com quantity=count), o bespoke
 // segue o padrão da água: cada [+] cria um registro com quantity=1 e [−]
-// deleta o mais recente do dia. O total exibido é o `sum(quantity)` — a agrega-
+// deleta o mais recente do dia. O total exibido é o `sum(quantity)`, e a agrega-
 // ção Home usa o mesmo reduce, então registros antigos (quantity=N) continuam
 // somando corretamente.
 //
@@ -29,7 +29,7 @@ import { useThemeTokens } from "@/constants/themeTokens";
 // Notas + score ficam intencionalmente fora do create (mockup não tem).
 //
 // Fatia da alimentação do #256: quando `recordId` chega (edição pelo History-
-// Card), o componente troca pra <FeedingEdit> — Quantidade + OBS. Score do
+// Card), o componente troca pra <FeedingEdit>: Quantidade + OBS. Score do
 // registro antigo é preservado no save (o create v2 não define, mas o v1 sim).
 
 function mealLabel(hourNumber) {
@@ -195,7 +195,7 @@ function FeedingCreate({ onAfterAdd }) {
         </Text>
       </View>
 
-      {/* Concluir — só volta pra Home. Cada +/- já persistiu. */}
+      {/* Concluir: só volta pra Home. Cada +/- já persistiu. */}
       <Pressable
         accessibilityRole="button"
         accessibilityLabel="Concluir e voltar"

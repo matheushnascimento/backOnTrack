@@ -151,7 +151,7 @@ async function stopServer({ child, dataDir }) {
  * Tenta abrir a conexão WS. Resolve com:
  *   { open: true }               → handshake aceito
  *   { open: false, code: <n> }   → server rejeitou (unexpected-response)
- * Não faz TinyBase sync — só checa o handshake, que é onde a auth vive.
+ * Não faz TinyBase sync: só checa o handshake, que é onde a auth vive.
  */
 function tryConnect(port, room, token, timeoutMs = 3000) {
   return new Promise((resolveResult) => {
@@ -177,7 +177,7 @@ function tryConnect(port, room, token, timeoutMs = 3000) {
       resolveResult({ open: false, code: res.statusCode });
     });
     ws.once("error", () => {
-      // Silenciar — o close/unexpected-response já resolve o resultado.
+      // Silenciar, porque o close/unexpected-response já resolve o resultado.
     });
     ws.once("close", (code) => {
       clearTimeout(timer);
@@ -196,7 +196,7 @@ function tryConnect(port, room, token, timeoutMs = 3000) {
 // "sem conexão" pra quem na verdade precisa entrar.
 
 // `fetch` global aqui é o do ambiente jest-expo (React Native), não o do
-// Node — `res.status` vem undefined. Usa http.request direto, como o resto
+// Node: `res.status` vem undefined. Usa http.request direto, como o resto
 // deste arquivo já faz com o cliente `ws`.
 function httpGet(port, path) {
   return new Promise((resolveGet, rejectGet) => {
@@ -249,7 +249,7 @@ describe("GET /healthz", () => {
 
   // Regressão: o WS precisa continuar funcionando com o http.createServer na
   // frente. Trocar `port:` por `server:` no WebSocketServer faz ele parar de
-  // bindar sozinho — sem o listen explícito, nada escuta.
+  // bindar sozinho, e sem o listen explícito nada escuta.
   test("o WebSocket continua de pé com o HTTP na frente", async () => {
     const server = await startServer({
       AUTH_MODE: "optional",
@@ -365,7 +365,7 @@ describe("AUTH_MODE=required (fase final, após migração)", () => {
 //
 // Regressão do bug real: o Supabase migrou pra chaves assimétricas e passou a
 // assinar com ES256+kid. O server só aceitava HS256, então rejeitava TODO
-// cliente logado com 401 — sync silenciosamente morto em web e mobile.
+// cliente logado com 401, com sync silenciosamente morto em web e mobile.
 
 describe("ES256 via JWKS", () => {
   let server;
@@ -411,7 +411,7 @@ describe("ES256 via JWKS", () => {
   });
 
   test("ES256 assinado por chave fora do JWKS: rejeita com 401", async () => {
-    // kid conhecido, chave privada errada — assinatura não confere.
+    // kid conhecido, chave privada errada, então a assinatura não confere.
     const token = signEs256({
       payload: { sub: "alice", exp: futureExp() },
       kid: key.kid,

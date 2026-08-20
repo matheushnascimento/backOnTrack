@@ -1,12 +1,12 @@
 name: Test PR on Staging
 
-# TODO PR publica na branch `staging` — é o que o BoT staging consome. Serve
+# TODO PR publica na branch `staging`, que é o que o BoT staging consome. Serve
 # pra validar no aparelho ANTES do merge.
 #
 # ## Por que sem label
 #
 # O #269 exigia a label `staging` no PR. Como a regra virou "toda feature
-# branch vai pro staging", a label passaria a estar em todo PR — e uma marca
+# branch vai pro staging", a label passaria a estar em todo PR, e uma marca
 # que está em tudo não marca nada. Pior: dava a impressão de escolher qual PR
 # está carregado, o que ela nunca fez. Existe UM canal `staging` e UM app no
 # aparelho, então é sempre um PR por vez: **o staging mostra o push mais
@@ -15,9 +15,9 @@ name: Test PR on Staging
 #
 # ## Quem NÃO publica
 #
-# - **Draft** — trabalho em andamento não precisa ocupar a bancada.
-# - **Label `skip-staging`** — escape hatch manual.
-# - **PR de fork** — não recebe `EXPO_TOKEN`, falharia com erro confuso.
+# - **Draft**: trabalho em andamento não precisa ocupar a bancada.
+# - **Label `skip-staging`**: escape hatch manual.
+# - **PR de fork**: não recebe `EXPO_TOKEN`, falharia com erro confuso.
 # - **Mudança só de doc ou de workflow**, pelo filtro `paths` abaixo. Não
 #   altera o bundle, e publicar seria gasto de update à toa.
 #
@@ -34,7 +34,7 @@ name: Test PR on Staging
 #
 # ## O que garante que isto não vaze pros testers
 #
-# A promoção (`promote-update.yaml`) NÃO sai de `staging` — sai de `release`,
+# A promoção (`promote-update.yaml`) NÃO sai de `staging`. Sai de `release`,
 # que só a main alimenta. Código não-mergeado não tem caminho até o canal
 # `preview`. Ver docs/10-canais-e-promocao.md.
 
@@ -73,7 +73,7 @@ jobs:
           NUM: ${{ github.event_name == 'workflow_dispatch' && inputs.pr || github.event.pull_request.number }}
         run: echo "num=$NUM" >> "$GITHUB_OUTPUT"
 
-      # `refs/pull/N/merge` é o PR JÁ MESCLADO com a main — é o que a main vai
+      # `refs/pull/N/merge` é o PR JÁ MESCLADO com a main, que é o que a main vai
       # virar depois do merge. Testar o head puro esconderia conflito
       # semântico com o que entrou na main enquanto o PR estava aberto.
       - uses: actions/checkout@v4
@@ -109,7 +109,7 @@ jobs:
             echo ""
             echo "Abra o **BoT staging** no aparelho pra validar (pode precisar fechar e reabrir)."
             echo ""
-            echo "Se você tinha outro PR carregado, ele foi substituído — a bancada é um slot só, sempre com o push mais recente."
+            echo "Se você tinha outro PR carregado, ele foi substituído: a bancada é um slot só, sempre com o push mais recente."
             echo ""
             echo "Isto **não** chega nos testers: a promoção sai da branch \`release\`, que só a main alimenta."
           } >> "$GITHUB_STEP_SUMMARY"

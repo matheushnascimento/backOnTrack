@@ -12,7 +12,7 @@ import {
 
 // Card do hábito em construção (#291, tela 4a·1 do Turno 4).
 //
-// É o único card com número grande e botões visíveis — é isso que cria a
+// É o único card com número grande e botões visíveis, e é isso que cria a
 // hierarquia sem esconder nada. As demais métricas viram linhas compactas de
 // metade da altura, mas seguem tapáveis (`CompactRow`).
 //
@@ -66,7 +66,7 @@ export default function FocusCard({
             {count === 1 ? "1 registro hoje" : `${count} registros hoje`}
           </Text>
         </View>
-        {/* Número grande — o único da tela. Alinhado à direita pra não
+        {/* Número grande, o único da tela. Alinhado à direita pra não
             competir com o nome. */}
         <View className="flex-row items-baseline gap-1">
           <Text
@@ -87,7 +87,7 @@ export default function FocusCard({
       </View>
 
       {/* Ação rápida. Métrica sem incremento natural (sono) cai num botão
-          único que abre a tela — ver QUICK_ADD. */}
+          único que abre a tela. Ver QUICK_ADD. */}
       <View className="mt-3.5 flex-row gap-2">
         {hasQuickAdd(metric) ? (
           <>

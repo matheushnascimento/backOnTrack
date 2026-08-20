@@ -1,6 +1,6 @@
 <!--
   Back on Track · splash-icon.png source (M5-B, #228).
-  Símbolo isolado com transparência ao redor — Expo centraliza sobre o
+  Símbolo isolado com transparência ao redor. O Expo centraliza sobre o
   splash backgroundColor (`#F8F9FA` no app.json). Cor navy pra contrastar
   sobre esse fundo claro.
 -->

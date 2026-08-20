@@ -7,7 +7,7 @@ import { METRIC_TINT } from "@/constants/journeyHome";
 
 // Linha da zona "resto do dia" (#291, tela 4a·1 do Turno 4).
 //
-// Metade da altura do card de foco, sem número grande e sem botões — mas
+// Metade da altura do card de foco, sem número grande e sem botões, mas
 // **tapável**, abrindo o registro completo. É o que sustenta a promessa do
 // rodapé ("Tudo continua registrável"): a hierarquia organiza a atenção, não
 // restringe o acesso.
@@ -40,7 +40,7 @@ export default function CompactRow({ metric, name, value, badge, onPress }) {
 
       {/* `flex-1` dá largura ao Text pelo layout. Sem isso ele encolhe ao
           conteúdo e a caixa passa a vir da medição do Android, que erra com a
-          Inter e come a última letra — ver docs e o histórico do #274. */}
+          Inter e come a última letra. Ver docs e o histórico do #274. */}
       <Text
         className="flex-1 text-sm text-ink dark:text-ink-dark"
         style={{ fontFamily: "Inter_400Regular" }}

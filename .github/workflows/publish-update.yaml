@@ -1,27 +1,27 @@
 name: Publish Update
 
-# Todo merge na main publica OTA na branch `release` — e SÓ nela.
+# Todo merge na main publica OTA na branch `release`, e SÓ nela.
 #
-#   release  — linhagem só-main. Única fonte da promoção pros testers.
-#   staging  — bancada de validação, alimentada SÓ por PR. Não é tocada aqui.
+#   release  = linhagem só-main. Única fonte da promoção pros testers.
+#   staging  = bancada de validação, alimentada SÓ por PR. Não é tocada aqui.
 #
 # ## Por que a main não publica mais em staging
 #
 # Publicava, com a ideia de manter o BoT staging refletindo a main quando não
 # havia PR em teste. O efeito prático foi outro: como `staging` é um slot só,
 # todo merge SOBRESCREVIA em silêncio o PR que estava sendo validado no
-# aparelho. Aconteceu três vezes seguidas — o #268 e o #270 foram reportados
+# aparelho. Aconteceu três vezes seguidas: o #268 e o #270 foram reportados
 # como "não funciona" quando o código deles nem estava no aparelho.
 #
 # Agora a bancada é exclusiva de PR: um merge nunca rouba o teste em curso.
 # Pra ver a main no aparelho, é só rodar `Test PR on Staging` sem PR aberto
-# ou esperar o próximo PR — o custo é bem menor que o da confusão.
+# ou esperar o próximo PR, e o custo é bem menor que o da confusão.
 #
 # A `release` segue sendo a única fonte da promoção, o que impede código
 # não-mergeado de chegar nos 6 testers. Barreira estrutural, não disciplina.
 #
 # `--environment preview` é o conjunto de env vars do EAS (Supabase etc.), não
-# o canal — todos os ambientes compartilham o mesmo backend de propósito.
+# o canal, e todos os ambientes compartilham o mesmo backend de propósito.
 #
 # Ver docs/10-canais-e-promocao.md.
 
@@ -57,7 +57,7 @@ jobs:
           {
             echo "## OTA publicada em \`release\`"
             echo ""
-            echo "Os testers **não** recebem ainda — a branch \`preview\` só muda por promoção manual."
+            echo "Os testers **não** recebem ainda: a branch \`preview\` só muda por promoção manual."
             echo ""
             echo "O **BoT staging** não foi tocado: a bancada é exclusiva de PR, pra um merge nunca sobrescrever o que você está testando."
             echo ""

@@ -1,6 +1,6 @@
 <!--
   Back on Track · favicon.png source (M5-B, #228).
-  Browser tab (48-96px) — fundo navy + curva branca pra contraste alto em
+  Browser tab (48-96px): fundo navy + curva branca pra contraste alto em
   tamanhos pequenos. Ponto verde mantém o ancoramento visual, mas em stroke
   mais grosso pra sobreviver ao downscale.
 -->
