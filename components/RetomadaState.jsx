@@ -5,6 +5,10 @@ import { router } from "expo-router";
 import Icon1c from "./Icon1c";
 import MetricIcon from "./MetricIcon";
 import { useThemeTokens } from "@/constants/themeTokens";
+import {
+  retomadaRegressionLine,
+  retomadaShortcuts,
+} from "@/constants/retomada";
 
 // Estado "retomada" da Home (M5-B fatia 5, mockup 2a·9).
 //
@@ -17,16 +21,32 @@ import { useThemeTokens } from "@/constants/themeTokens";
 // Home normal. Próximo launch volta pra cá se o critério persistir, e é o
 // desejado (o objetivo é convidar até a pessoa registrar, não esconder pra
 // sempre).
+//
+// Desde a #320 esta tela sabe da jornada. Ela é um early return na Home, então
+// enquanto aparecia escondia o aviso de regressão de quem tinha acabado de
+// cair de nível, e o aviso só saía depois, quando a pessoa registrava algo.
+// Agora o atalho principal é o hábito em foco e a queda é dita aqui, numa
+// linha, antes dos atalhos.
 
 /**
  * @param {{
  *   daysSinceLast: number | null,  // null = nunca registrou
  *   onDismiss: () => void,
+ *   focus?: string | null,         // hábito do nível atual
+ *   regressed?: boolean,           // caiu de nível e ainda não foi avisada
  * }} props
  */
-export default function RetomadaState({ daysSinceLast, onDismiss }) {
+export default function RetomadaState({
+  daysSinceLast,
+  onDismiss,
+  focus,
+  regressed,
+}) {
   const t = useThemeTokens();
   const isFirstTime = daysSinceLast === null;
+
+  const atalhos = retomadaShortcuts(focus);
+  const linhaQueda = regressed ? retomadaRegressionLine(focus) : null;
 
   const title = isFirstTime ? "Bem-vindo." : "Que bom te ver de volta.";
   const subtitle = isFirstTime
@@ -67,7 +87,24 @@ export default function RetomadaState({ daysSinceLast, onDismiss }) {
         </Text>
       </View>
 
-      {/* Card com os 3 atalhos */}
+      {/* A queda, quando houve. Fica entre a copy e os atalhos: depois do
+          acolhimento e antes do convite, pra que o texto não termine na
+          notícia ruim. Sem botão, porque um terceiro controle competiria com
+          o convite, que é a razão de existir da tela. */}
+      {linhaQueda ? (
+        <Text
+          className="text-body-secondary dark:text-body-secondary-dark"
+          style={{
+            fontFamily: "Inter_400Regular",
+            fontSize: 13,
+            lineHeight: 20,
+          }}
+        >
+          {linhaQueda}
+        </Text>
+      ) : null}
+
+      {/* Card com os atalhos */}
       <View className="rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark p-5">
         <Text
           className="mb-3 text-xs uppercase tracking-wider text-label dark:text-label-dark"
@@ -76,16 +113,14 @@ export default function RetomadaState({ daysSinceLast, onDismiss }) {
           Quer começar por
         </Text>
         <View className="gap-2.5">
-          <ShortcutButton
-            metric="water"
-            label="Um copo d'água"
-            onPress={() => router.navigate("/(metrics)/water")}
-          />
-          <ShortcutButton
-            metric="sleep"
-            label="Como foi a última noite"
-            onPress={() => router.navigate("/(metrics)/sleep")}
-          />
+          {atalhos.map((a) => (
+            <ShortcutButton
+              key={a.metric}
+              metric={a.metric}
+              label={a.label}
+              onPress={() => router.navigate(`/(metrics)/${a.metric}`)}
+            />
+          ))}
           <ShortcutButton
             label="Ver todas as métricas"
             dim

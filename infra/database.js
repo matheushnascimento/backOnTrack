@@ -81,6 +81,14 @@ export const store = createMergeableStore()
     // 24 dias". Some quando o hábito deixa de ser estável, pra recomeçar a
     // contagem se ele for reconquistado.
     journeyGraduatedAt: { type: "string", default: "" },
+    // Força a tela de retomada a aparecer, pra previsualização (#320).
+    //
+    // Ela depende de 3+ dias sem nenhum registro, condição que quem usa o app
+    // diariamente não consegue produzir sem apagar os próprios dados. Sem isto
+    // a mudança da #320 seria mergeada sem ninguém ter visto a tela.
+    //
+    // Como os outros controles de demo, só existe em superfície de dev.
+    retomadaDemo: { type: "boolean", default: false },
   });
 
 // Espalha `details` (JSON) de volta pro topo. É espalhado por último de
@@ -310,6 +318,17 @@ export function toggleDemoStable(metric) {
  * Ao sair do demo, devolve peak e ack ao nível real pra não deixar resíduo —
  * sem isso o app mostraria um aviso de regressão que nunca aconteceu.
  */
+/**
+ * Liga e desliga a previsualização da retomada (#320).
+ *
+ * @returns {boolean} o estado novo.
+ */
+export function toggleRetomadaDemo() {
+  const novo = !store.getValue("retomadaDemo");
+  store.setValue("retomadaDemo", novo);
+  return novo;
+}
+
 export function setJourneyDemoLevel(level, realLevel) {
   const alvo = Number.isFinite(level) ? level : -1;
   store.setValue("journeyDemoLevel", alvo);

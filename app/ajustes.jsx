@@ -27,6 +27,7 @@ import {
   raiseJourneyPeak,
   setJourneyDemoLevel,
   toggleDemoStable,
+  toggleRetomadaDemo,
   setDisplayName,
   store,
 } from "@/infra/database";
@@ -630,6 +631,7 @@ function SignalsBlock({ goals }) {
   const peak = useValue("journeyPeakLevel", store);
   const demo = Number(useValue("journeyDemoLevel", store) ?? -1);
   const emDemo = demo >= 0;
+  const retomadaDemo = useValue("retomadaDemo", store);
 
   const jornada = useMemo(
     () =>
@@ -837,6 +839,31 @@ function SignalsBlock({ goals }) {
               </Text>
             </Pressable>
           </View>
+
+          {/* Forçar retomada (#320). A tela depende de 3+ dias sem nenhum
+          registro, condição que quem usa o app todo dia não produz sem apagar
+          os próprios dados. Combinado com "simular regressão" acima, mostra a
+          retomada já com a linha da queda e o atalho apontando pro foco. */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Alternar previsualização da retomada"
+            accessibilityState={{ selected: !!retomadaDemo }}
+            onPress={() => toggleRetomadaDemo()}
+            className={`mt-2 rounded-xl border py-2 active:opacity-70 ${
+              retomadaDemo
+                ? "border-primary dark:border-primary-dark bg-tint-blue dark:bg-tint-blue-dark"
+                : "border-border-subtle dark:border-border-subtle-dark"
+            }`}
+          >
+            <Text
+              className={`text-center text-xs ${retomadaDemo ? "text-primary dark:text-primary-dark" : "text-body-secondary dark:text-body-secondary-dark"}`}
+              style={{ fontFamily: "JetBrainsMono_400Regular" }}
+            >
+              {retomadaDemo
+                ? "retomada forçada (toca pra sair)"
+                : "forçar retomada"}
+            </Text>
+          </Pressable>
         </>
       ) : null}
 
