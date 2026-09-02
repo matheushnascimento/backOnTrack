@@ -178,10 +178,25 @@ export default function Home() {
   // Retomada aparece quando: (a) nunca registrou, ou (b) 3+ dias corridos sem
   // registro em nenhuma métrica. Dismissal in-memory desliga só nesta sessão.
   // Registrar hoje (totalRecords>0) desliga automaticamente pelo critério (a).
+  // Previsualização (#320): a retomada exige 3+ dias sem registro, condição
+  // que quem usa o app diariamente não produz sem apagar os próprios dados.
+  // O value só é ligável pela superfície de dev, então não alcança tester.
+  const retomadaDemo = useValue("retomadaDemo", store);
+
   const showRetomada =
     !retomadaDismissed &&
-    totalRecords === 0 &&
-    (daysSinceLast === null || daysSinceLast >= 3);
+    (retomadaDemo ||
+      (totalRecords === 0 && (daysSinceLast === null || daysSinceLast >= 3)));
+
+  // A retomada é um early return, e o RegressionNotice fica depois dele. Sem
+  // isto, quem caiu de nível por sumir 3+ dias não via o aviso enquanto a
+  // retomada aparecia, e levava o sheet logo depois de voltar e registrar,
+  // que é o pior momento possível pra cobrar (#320). A retomada diz a queda
+  // na própria tela, e o ack aqui garante que ela seja dita uma vez só.
+  const quedaNaRetomada = showRetomada && moment === MOMENT_REGRESSION;
+  useEffect(() => {
+    if (quedaNaRetomada) acknowledgeJourneyLevel(journey.level);
+  }, [quedaNaRetomada, journey.level]);
 
   const porMetrica = Object.fromEntries(
     METRICS.map((type) => {
@@ -236,6 +251,8 @@ export default function Home() {
           <RetomadaState
             daysSinceLast={daysSinceLast}
             onDismiss={() => setRetomadaDismissed(true)}
+            focus={focus}
+            regressed={quedaNaRetomada}
           />
         </ScrollView>
       </MyView>

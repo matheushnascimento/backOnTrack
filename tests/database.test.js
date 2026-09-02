@@ -2,6 +2,7 @@
 // Testes das funções de domínio da store (M4, #134). Puros, sem React.
 // A store é um singleton de módulo; zeramos entre os testes.
 import {
+  toggleRetomadaDemo,
   store,
   add,
   remove,
@@ -88,5 +89,15 @@ describe("testers", () => {
     const restantes = getTesters();
     expect(restantes).toHaveLength(1);
     expect(restantes[0].name).toBe("B");
+  });
+});
+
+describe("previsualização da retomada (#320)", () => {
+  test("toggleRetomadaDemo alterna e devolve o estado novo", () => {
+    // A tela de retomada exige 3+ dias sem registro, condição que quem usa o
+    // app diariamente não produz sem apagar os próprios dados. Sem este
+    // interruptor a mudança da #320 seria mergeada sem ninguém ter visto.
+    expect(toggleRetomadaDemo()).toBe(true);
+    expect(toggleRetomadaDemo()).toBe(false);
   });
 });
