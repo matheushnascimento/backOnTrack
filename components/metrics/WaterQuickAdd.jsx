@@ -5,6 +5,7 @@ import { useTable } from "tinybase/ui-react";
 
 import { add, getById, getToday, store, update } from "@/infra/database";
 import getDate from "@/constants/getDate";
+import { maskMl, parseMl } from "@/constants/waterAmount";
 import { useThemeTokens } from "@/constants/themeTokens";
 
 // UI bespoke da tela de água (M5-B fatia 2a, mockup 2a·2 do Claude Design).
@@ -23,8 +24,12 @@ import { useThemeTokens } from "@/constants/themeTokens";
 //   ...
 //
 // Cada chip cria um registro imediatamente (sem staging). Snackbar do
-// MetricScreen (via onAfterAdd) confirma. "outro…" custom amount fica pra
-// sub-fatia futura.
+// MetricScreen (via onAfterAdd) confirma.
+//
+// O quarto chip é "outro…", que abre um campo pra valor livre (#324). Ele
+// existia como TODO desde o M5-B e ficou visível com a jornada: o card da
+// Home tem um botão "outro" que abre esta tela, então a pessoa tocava nele
+// esperando digitar um valor e encontrava as mesmas três medidas.
 //
 // Fatia da água do #256: quando `recordId` chega (edição pelo HistoryCard), o
 // componente troca pra um formulário de edição minimalista (quantidade + OBS),
@@ -57,12 +62,19 @@ export default function WaterQuickAdd({ onAfterAdd, recordId }) {
  * @param {{ onAfterAdd?: () => void }} props
  */
 function WaterQuickLog({ onAfterAdd }) {
+  const t = useThemeTokens();
   // Assina a tabela pra re-renderizar quando um novo registro chega (inclusive
   // pós-startAutoLoad da persistência). Mesmo padrão da Home.
   const records = useTable("records", store);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const today = useMemo(() => getToday(), [records]);
   const waterToday = today.water ?? [];
+
+  // Campo de valor livre. Fechado por padrão pra não competir com os chips,
+  // que continuam sendo o caminho de um toque.
+  const [custom, setCustom] = useState("");
+  const [customAberto, setCustomAberto] = useState(false);
+  const customMl = parseMl(custom);
 
   const totalMl = waterToday.reduce((s, r) => s + (Number(r.quantity) || 0), 0);
   const totalL = totalMl / 1000;
@@ -75,6 +87,13 @@ function WaterQuickLog({ onAfterAdd }) {
       quantity: amount,
     });
     onAfterAdd?.();
+  }
+
+  function adicionarCustom() {
+    if (customMl == null) return;
+    handleAdd(customMl);
+    setCustom("");
+    setCustomAberto(false);
   }
 
   return (
@@ -148,7 +167,77 @@ function WaterQuickLog({ onAfterAdd }) {
               </Pressable>
             </View>
           ))}
+          {/* Quarto chip: com três medidas o grid de 2 colunas ficava com meia
+              vaga vazia, então o valor livre cai exatamente onde já havia
+              espaço. */}
+          <View className="w-1/2 p-1">
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Adicionar outro valor"
+              accessibilityState={{ expanded: customAberto }}
+              onPress={() => setCustomAberto((v) => !v)}
+              className={`gap-0.5 rounded-2xl border p-4 active:opacity-70 ${
+                customAberto
+                  ? "border-primary dark:border-primary-dark bg-tint-blue dark:bg-tint-blue-dark"
+                  : "border-border-strong dark:border-border-strong-dark bg-white dark:bg-card-dark"
+              }`}
+            >
+              <Text
+                className={`text-base ${customAberto ? "text-primary dark:text-primary-dark" : "text-ink dark:text-ink-dark"}`}
+                style={{ fontFamily: "Inter_500Medium" }}
+              >
+                outro…
+              </Text>
+              <Text
+                className="text-xs text-label dark:text-label-dark"
+                style={{ fontFamily: "Inter_400Regular" }}
+              >
+                valor livre
+              </Text>
+            </Pressable>
+          </View>
         </View>
+
+        {customAberto ? (
+          <View className="mt-2 flex-row items-center gap-2">
+            <TextInput
+              value={custom}
+              onChangeText={(v) => setCustom(maskMl(v))}
+              placeholder="ml"
+              placeholderTextColor={t.iconDim}
+              keyboardType="number-pad"
+              autoFocus
+              accessibilityLabel="Quantidade em mililitros"
+              onSubmitEditing={adicionarCustom}
+              className="flex-1 rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark px-4"
+              style={{
+                fontFamily: "JetBrainsMono_500Medium",
+                fontSize: 18,
+                color: t.ink,
+                paddingVertical: 12,
+              }}
+            />
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Adicionar valor digitado"
+              accessibilityState={{ disabled: customMl == null }}
+              disabled={customMl == null}
+              onPress={adicionarCustom}
+              className={`rounded-2xl px-5 py-3.5 ${
+                customMl == null
+                  ? "bg-border-strong dark:bg-border-strong-dark"
+                  : "bg-primary dark:bg-primary-dark active:opacity-70"
+              }`}
+            >
+              <Text
+                className="text-white dark:text-on-primary-dark"
+                style={{ fontFamily: "Inter_600SemiBold", fontSize: 14 }}
+              >
+                Adicionar
+              </Text>
+            </Pressable>
+          </View>
+        ) : null}
       </View>
 
       {/* Today's entries */}
