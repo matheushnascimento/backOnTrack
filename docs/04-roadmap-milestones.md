@@ -144,12 +144,16 @@ A referência declarada é o Fabulous, com uma recusa explícita: a progressão 
 - ✅ **Fatia 3c: tela do hábito estável** (#298): onde mora o que virou automático. Chip cinza, nunca verde: status, não medalha
 - ✅ **Promovido pros testers** em 17/08/2026 (canal `preview`, 1.2.0, por OTA, sem reinstalação)
 
+**Correções depois da promoção:**
+
+- ✅ **Histórico do mais recente pro mais antigo** (#314, PR #315). Nenhuma lista ordenava, e o que aparecia era a ordem de iteração da tabela, ou seja, ordem de inserção. Ordena por `date` com `createdAt` de desempate, os dois estáveis na edição, com teste travando esse contrato
+
 **Fora de escopo, consciente:** os controles de previsualização de nível/estabilidade existem só em superfície de dev (`isDevSurface()`, ou seja `__DEV__` ou canal `staging`) e **não chegam ao APK dos testers**.
 
 **Dívida reconhecida, aberta:**
 
 - 🟡 **Limiares ainda provisórios.** `THRESHOLDS` está marcado como tal no código: os números saíram da literatura e de uma passada no histórico existente, não de medição do app rodando. A medição começou em 15/08/2026 e ainda não voltou número pra calibrar
-- 🟡 **`RetomadaState` × lvl 0 se sobrepõem.** Quem passa 3+ dias sem registrar cai na tela de retomada em vez da Home nova. Foi deliberado deixar pra decidir vendo as duas rodando, só que agora isso atinge tester de verdade
+- ✅ **`RetomadaState` × lvl 0, resolvido** (#320, PR #321). A sobreposição escondia mais do que uma tela: a retomada é um early return na Home, então quem caía de nível por sumir 3+ dias não via o aviso de regressão, e levava o sheet logo depois de voltar e registrar. A decisão foi a retomada **absorver** a jornada: o atalho principal passa a ser o hábito em foco, a queda é dita ali numa linha, e o nível é reconhecido nesse momento. Custo assumido: o `RegressionNotice` completo, que **prova** com botão pro histórico que nada sumiu, não aparece por esse caminho, e a linha afirma em vez de provar
 - ⬜ **Deixar o usuário escolher o registro de reforço** (#286, sóbrio ou lúdico). Ideia registrada, depende de investimento, fora do escopo atual
 
 **Sobre a ordem:** o M9 passou na frente do M7 e do M8, que seguem abertos. A causa foi a mudança de premissa registrada na nota do topo. O que o M9 entrega não estava previsto em milestone nenhum.
