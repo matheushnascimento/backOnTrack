@@ -24,16 +24,24 @@ describe("registros", () => {
   const hoje = () => new Date().toISOString();
 
   test("add grava e getToday agrupa por tipo", () => {
-    add("water", { date: hoje(), quantity: 500, unit: "ml" });
-    add("water", { date: hoje(), quantity: 300, unit: "ml" });
-    add("sleep", { date: hoje(), quantity: 480, unit: "min" });
+    // Horários EXPLÍCITOS e distintos, os dois de hoje. A versão anterior
+    // usava `hoje()` nos dois e dependia de os dois `add` caírem em
+    // milissegundos diferentes: quando caíam no mesmo, `date` e `createdAt`
+    // empatavam, o comparador não tinha como desempatar, e a ordem de
+    // inserção sobrevivia. Passava por sorte de temporização.
+    const asHoras = (h) => {
+      const d = new Date();
+      d.setHours(h, 0, 0, 0);
+      return d.toISOString();
+    };
+    add("water", { date: asHoras(9), quantity: 500, unit: "ml" });
+    add("water", { date: asHoras(15), quantity: 300, unit: "ml" });
+    add("sleep", { date: asHoras(7), quantity: 480, unit: "min" });
 
     const today = getToday();
     expect(today.water).toHaveLength(2);
     expect(today.sleep).toHaveLength(1);
-    // Mais recente primeiro (#314): o 300 entrou depois do 500, então vem
-    // antes. Este teste afirmava o contrário, porque a ordem era a de
-    // inserção da tabela e ninguém tinha decidido nada sobre ela.
+    // Mais recente primeiro (#314): o das 15h vem antes do das 9h.
     expect(today.water.map((r) => r.quantity)).toEqual([300, 500]);
   });
 
@@ -145,5 +153,43 @@ describe("sono guarda os horários (#328)", () => {
     expect(r.quantity).toBe(420);
     expect(r.wake).toBe("06:40");
     expect(r.note).toBe("acordei antes");
+  });
+});
+
+describe("refeição escolhida sobrevive à edição (#332)", () => {
+  test("update preserva o meal quando ele é repassado", () => {
+    add("feeding", {
+      date: new Date().toISOString(),
+      unit: "refeição",
+      quantity: 1,
+      meal: "café",
+    });
+    const id = getAll("feeding")[0].id;
+    expect(getById(id).meal).toBe("café");
+
+    update(id, {
+      unit: "refeição",
+      quantity: 2,
+      note: "reforçado",
+      meal: getById(id).meal,
+    });
+    expect(getById(id).meal).toBe("café");
+    expect(getById(id).quantity).toBe(2);
+  });
+
+  test("update APAGA o meal quando ele não é repassado", () => {
+    // Este é o risco que a #332 introduz: o update reconstrói o `details`
+    // inteiro a partir do que recebe. O teste existe pra que quem mexer no
+    // FeedingEdit veja a consequência de esquecer o campo, em vez de descobrir
+    // pelo rótulo voltando sozinho pro palpite do horário.
+    add("feeding", {
+      date: new Date().toISOString(),
+      unit: "refeição",
+      quantity: 1,
+      meal: "café",
+    });
+    const id = getAll("feeding")[0].id;
+    update(id, { unit: "refeição", quantity: 2, note: "" });
+    expect(getById(id).meal).toBeUndefined();
   });
 });

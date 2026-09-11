@@ -13,6 +13,7 @@ import {
 } from "@/infra/database";
 import { goBack } from "@/constants/navigation";
 import getDate from "@/constants/getDate";
+import { MEALS, isMealChosen, mealOf } from "@/constants/meals";
 import { useThemeTokens } from "@/constants/themeTokens";
 
 // UI bespoke da tela de alimentação (M5-B fatia 2c, mockup 2a·5).
@@ -23,21 +24,21 @@ import { useThemeTokens } from "@/constants/themeTokens";
 // ção Home usa o mesmo reduce, então registros antigos (quantity=N) continuam
 // somando corretamente.
 //
-// Cada refeição ganha um rótulo automático pelo horário (café/almoço/lanche/
-// jantar). O botão "Concluir" só volta pra Home; os +/- já persistem.
+// Cada refeição ganha um rótulo pelo horário (café/almoço/lanche/jantar), e
+// desde a #332 esse rótulo é **editável**: tocar nele abre as quatro opções, e
+// a escolha vai pro `details`. O horário só preenche quando não houve escolha.
+//
+// O motivo é o preenchimento em lote: três refeições lançadas às 22h viravam
+// três jantares, e não havia o que corrigir, porque o rótulo era derivado na
+// hora de renderizar e nunca chegava a ser gravado.
+//
+// O botão "Concluir" só volta pra Home; os +/- já persistem.
 //
 // Notas + score ficam intencionalmente fora do create (mockup não tem).
 //
 // Fatia da alimentação do #256: quando `recordId` chega (edição pelo History-
 // Card), o componente troca pra <FeedingEdit>: Quantidade + OBS. Score do
 // registro antigo é preservado no save (o create v2 não define, mas o v1 sim).
-
-function mealLabel(hourNumber) {
-  if (hourNumber < 11) return "café";
-  if (hourNumber < 15) return "almoço";
-  if (hourNumber < 18) return "lanche";
-  return "jantar";
-}
 
 function formatTime(ts) {
   const d = new Date(ts);
@@ -69,6 +70,24 @@ function FeedingCreate({ onAfterAdd }) {
     (s, r) => s + (Number(r.quantity) || 0),
     0,
   );
+
+  // Qual linha está com as opções abertas. Uma por vez: a lista é curta e
+  // abrir várias viraria ruído.
+  const [editando, setEditando] = useState(null);
+
+  function escolherRefeicao(registro, refeicao) {
+    // O update reconstrói o `details` a partir do que recebe, então os campos
+    // que não vêm aqui somem. Por isso quantity, unit, note e score são
+    // repassados, e não só o meal.
+    update(registro.id, {
+      unit: registro.unit || "refeição",
+      quantity: registro.quantity,
+      note: registro.note ?? "",
+      score: registro.score,
+      meal: refeicao,
+    });
+    setEditando(null);
+  }
 
   function handleAdd() {
     add("feeding", {
@@ -165,22 +184,66 @@ function FeedingCreate({ onAfterAdd }) {
             {[...feedingToday]
               .sort((a, b) => (a.createdAt ?? 0) - (b.createdAt ?? 0))
               .map((r) => {
-                const time = formatTime(r.createdAt);
-                const hour = new Date(r.createdAt ?? 0).getHours();
+                const aberto = editando === r.id;
                 return (
-                  <View key={r.id} className="flex-row justify-between">
-                    <Text
-                      className="text-xs text-body-secondary dark:text-body-secondary-dark"
-                      style={{ fontFamily: "Inter_400Regular" }}
-                    >
-                      {time}
-                    </Text>
-                    <Text
-                      className="text-xs text-ink dark:text-ink-dark"
-                      style={{ fontFamily: "JetBrainsMono_400Regular" }}
-                    >
-                      {mealLabel(hour)}
-                    </Text>
+                  <View key={r.id} className="gap-2">
+                    <View className="flex-row items-center justify-between">
+                      <Text
+                        className="text-xs text-body-secondary dark:text-body-secondary-dark"
+                        style={{ fontFamily: "Inter_400Regular" }}
+                      >
+                        {formatTime(r.createdAt)}
+                      </Text>
+                      {/* O rótulo é o controle. Sem ícone extra: a lista tem
+                          uma linha por refeição e um alvo de toque por linha
+                          já basta. */}
+                      <Pressable
+                        accessibilityRole="button"
+                        accessibilityState={{ expanded: aberto }}
+                        accessibilityLabel={`Refeição: ${mealOf(r)}. Tocar para trocar`}
+                        onPress={() => setEditando(aberto ? null : r.id)}
+                        className="rounded-lg px-2 py-1 active:opacity-70"
+                      >
+                        <Text
+                          className={`text-xs ${
+                            isMealChosen(r)
+                              ? "text-ink dark:text-ink-dark"
+                              : "text-body-secondary dark:text-body-secondary-dark"
+                          }`}
+                          style={{ fontFamily: "JetBrainsMono_400Regular" }}
+                        >
+                          {mealOf(r)}
+                        </Text>
+                      </Pressable>
+                    </View>
+                    {aberto ? (
+                      <View className="flex-row flex-wrap justify-end gap-1.5">
+                        {MEALS.map((m) => {
+                          const atual = mealOf(r) === m;
+                          return (
+                            <Pressable
+                              key={m}
+                              accessibilityRole="button"
+                              accessibilityState={{ selected: atual }}
+                              accessibilityLabel={`Marcar como ${m}`}
+                              onPress={() => escolherRefeicao(r, m)}
+                              className={`rounded-full border px-3 py-1.5 active:opacity-70 ${
+                                atual
+                                  ? "border-primary dark:border-primary-dark bg-tint-blue dark:bg-tint-blue-dark"
+                                  : "border-border-strong dark:border-border-strong-dark"
+                              }`}
+                            >
+                              <Text
+                                className={`text-xs ${atual ? "text-primary dark:text-primary-dark" : "text-body-secondary dark:text-body-secondary-dark"}`}
+                                style={{ fontFamily: "Inter_400Regular" }}
+                              >
+                                {m}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    ) : null}
                   </View>
                 );
               })}
@@ -247,6 +310,9 @@ function FeedingEdit({ recordId, onAfterSave }) {
       quantity: parsedQty,
       note,
       score: loaded.score,
+      // Sem isto, editar a quantidade apagaria a refeição escolhida (#332):
+      // o update reconstrói o `details` inteiro a partir do que recebe.
+      meal: loaded.meal,
     });
     onAfterSave?.();
   }
