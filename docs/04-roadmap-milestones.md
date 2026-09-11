@@ -142,7 +142,7 @@ A referência declarada é o Fabulous, com uma recusa explícita: a progressão 
 - ✅ **Fatia 3a: momentos de subir de nível e de regressão** (#294): as duas telas que o modelo exige, com o texto da queda sem drama e sem cobrança
 - ✅ **Fatia 3b: pular nível quando o histórico já sustenta** (#296): quem já resolveu sono não é obrigado a "provar" de novo. Pular **concede graduação**, então o hábito pulado entra no acumulado como qualquer outro
 - ✅ **Fatia 3c: tela do hábito estável** (#298): onde mora o que virou automático. Chip cinza, nunca verde: status, não medalha
-- ✅ **Promovido pros testers** em 17/08/2026 (canal `preview`, 1.2.0, por OTA, sem reinstalação)
+- ✅ **Promovido pros testers** duas vezes, sempre por OTA no canal `preview` e runtime 1.2.0, sem reinstalação: **17/08/2026** com a jornada, e **11/09/2026** com 18 commits acumulados, incluindo as correções abaixo
 
 **Correções depois da promoção.** Nenhuma estava prevista em milestone: todas vieram de uso diário. Quatro das cinco contam a mesma história, e ela vale mais que a lista: a jornada pôs telas antigas sob uso real e expôs buracos que o desenho original tinha deixado conscientemente pra depois. O "outro" da água e os horários do sono estavam escritos como TODO no próprio código.
 
@@ -151,6 +151,9 @@ A referência declarada é o Fabulous, com uma recusa explícita: a progressão 
 - ✅ **Sono guarda os horários, e a pergunta bate com as opções** (#328, PR #329). Deitar e acordar serviam pra calcular a duração e eram descartados, então a edição só conseguia oferecer duração. Agora vão pro `details`, e registro antigo continua caindo no formulário de duração, porque é o formato de todo o histórico existente. Junto saiu "pouco" da pergunta "como se sente hoje"
 - ✅ **Home deriva do `records` assinado** (#330, PR #331). A tela assinava a tabela pelo `useTable` e mesmo assim relia a store dentro do memo, então o que aparecia dependia de quando a leitura acontecia. Editar um sono de hoje não mudava o valor até sair da tela e voltar. Mesma família do #108
 - ✅ **Rótulo da refeição editável** (#332, PR #333). O rótulo vinha do horário e não era gravado, então três refeições lançadas às 22h viravam três jantares sem como corrigir. O horário agora sugere, e a escolha manda
+- ✅ **Horário da refeição editável** (#336, PR #337). Corrigir só o rótulo deixava os registros carimbados no mesmo minuto, e isso é **integridade de sinal**, não higiene: a `regularity` calcula dispersão sobre `createdAt`, então o lote fingia regularidade perfeita e empurrava o hábito a passar no portão por um motivo falso. A edição muda só hora e minuto, mantendo o dia, porque `getByDate` agrupa por `date` e `dailyVerdicts` agrupa por `createdAt`, e atravessar a meia-noite faria o registro aparecer num dia e contar em outro
+
+**Defasagem conhecida:** a promoção de 11/09 saiu antes do PR #337, então os testers têm o rótulo editável sem o horário editável. Quem lançar em lote ainda distorce o próprio sinal até a próxima promoção.
 
 **Fora de escopo, consciente:** os controles de previsualização de nível/estabilidade existem só em superfície de dev (`isDevSurface()`, ou seja `__DEV__` ou canal `staging`) e **não chegam ao APK dos testers**.
 
