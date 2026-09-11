@@ -6,7 +6,7 @@ import { useTable } from "tinybase/ui-react";
 import {
   add,
   getById,
-  getToday,
+  groupByDate,
   remove,
   store,
   update,
@@ -58,8 +58,11 @@ export default function FeedingBespoke({ onAfterAdd, recordId }) {
  */
 function FeedingCreate({ onAfterAdd }) {
   const records = useTable("records", store);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const today = useMemo(() => getToday(), [records]);
+  // Deriva do `records` assinado, sem reler a store (#330).
+  const today = useMemo(
+    () => groupByDate(records ?? {}, new Date().toISOString()),
+    [records],
+  );
   const feedingToday = today.feeding ?? [];
 
   const totalCount = feedingToday.reduce(
@@ -78,7 +81,7 @@ function FeedingCreate({ onAfterAdd }) {
 
   function handleRemove() {
     if (feedingToday.length === 0) return;
-    // Deleta o mais recente do dia. Ordena por createdAt desc (getToday não
+    // Deleta o mais recente do dia. Ordena por createdAt desc (groupByDate não
     // garante ordem).
     const sorted = [...feedingToday].sort(
       (a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0),

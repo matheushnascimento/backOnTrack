@@ -17,7 +17,7 @@ import CompactRow from "@/components/journey/CompactRow";
 import {
   acknowledgeJourneyLevel,
   add,
-  getToday,
+  groupByDate,
   raiseJourneyPeak,
   store,
   syncGraduatedAt,
@@ -112,11 +112,14 @@ export default function Home() {
   // então a Home só mostrava algo depois de ir a outra tela e voltar (#108).
   const records = useTable("records", store);
   const displayName = useValue("displayName", store);
-  // `records` é gatilho de propósito: muda quando a tabela muda (inclui o fim do
-  // autoLoad) e força o getToday a reler. O exhaustive-deps não vê que os dois
-  // olham os mesmos dados e sugere remover, o que reintroduziria o #108.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const today = useMemo(() => getToday(), [records]);
+  // Deriva do `records` que a tela ASSINOU, em vez de reler a store (#330).
+  // Antes isto era `getToday()` dentro do memo, e o que aparecia dependia de
+  // quando a leitura acontecia em relação à assinatura: editar a duração de um
+  // sono de hoje não mudava o valor aqui, e sair da tela e voltar corrigia.
+  const today = useMemo(
+    () => groupByDate(records ?? {}, new Date().toISOString()),
+    [records],
+  );
   const daysSinceLast = useMemo(() => computeDaysSinceLast(records), [records]);
 
   const totalRecords = METRICS.reduce((s, m) => s + (today[m]?.length ?? 0), 0);
