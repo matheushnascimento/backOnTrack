@@ -144,9 +144,13 @@ A referência declarada é o Fabulous, com uma recusa explícita: a progressão 
 - ✅ **Fatia 3c: tela do hábito estável** (#298): onde mora o que virou automático. Chip cinza, nunca verde: status, não medalha
 - ✅ **Promovido pros testers** em 17/08/2026 (canal `preview`, 1.2.0, por OTA, sem reinstalação)
 
-**Correções depois da promoção:**
+**Correções depois da promoção.** Nenhuma estava prevista em milestone: todas vieram de uso diário. Quatro das cinco contam a mesma história, e ela vale mais que a lista: a jornada pôs telas antigas sob uso real e expôs buracos que o desenho original tinha deixado conscientemente pra depois. O "outro" da água e os horários do sono estavam escritos como TODO no próprio código.
 
 - ✅ **Histórico do mais recente pro mais antigo** (#314, PR #315). Nenhuma lista ordenava, e o que aparecia era a ordem de iteração da tabela, ou seja, ordem de inserção. Ordena por `date` com `createdAt` de desempate, os dois estáveis na edição, com teste travando esse contrato
+- ✅ **Água com valor livre** (#324, PR #325). O card de foco da Home tem um botão "outro" que abre a tela de água, e lá havia só três medidas fixas. O botão prometia o que a tela não entregava
+- ✅ **Sono guarda os horários, e a pergunta bate com as opções** (#328, PR #329). Deitar e acordar serviam pra calcular a duração e eram descartados, então a edição só conseguia oferecer duração. Agora vão pro `details`, e registro antigo continua caindo no formulário de duração, porque é o formato de todo o histórico existente. Junto saiu "pouco" da pergunta "como se sente hoje"
+- ✅ **Home deriva do `records` assinado** (#330, PR #331). A tela assinava a tabela pelo `useTable` e mesmo assim relia a store dentro do memo, então o que aparecia dependia de quando a leitura acontecia. Editar um sono de hoje não mudava o valor até sair da tela e voltar. Mesma família do #108
+- ✅ **Rótulo da refeição editável** (#332, PR #333). O rótulo vinha do horário e não era gravado, então três refeições lançadas às 22h viravam três jantares sem como corrigir. O horário agora sugere, e a escolha manda
 
 **Fora de escopo, consciente:** os controles de previsualização de nível/estabilidade existem só em superfície de dev (`isDevSurface()`, ou seja `__DEV__` ou canal `staging`) e **não chegam ao APK dos testers**.
 
