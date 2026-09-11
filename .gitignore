@@ -45,6 +45,13 @@ convite.txt
 # .env solto na raiz (setup local do Evolution API sender e afins).
 .env
 
+# Qualquer variante de .env, inclusive backup com data (`.env.bak-20260904`),
+# que o server ganha ao trocar o AUTH_MODE. A regra acima cobria só o nome
+# exato, então um backup com sufixo ficava rastreável e levava junto o
+# CLOUDFLARE_TUNNEL_TOKEN. O `.env.example` é a exceção: é template versionado.
+.env.*
+!.env.example
+
 # Dados persistidos localmente pelo server WS de sync (M6, server/README.md).
 # Bind-mount do docker compose vira `server/data/` no host de dev.
 server/data/
