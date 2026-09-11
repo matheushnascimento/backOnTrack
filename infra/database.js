@@ -3,6 +3,7 @@ import { createMergeableStore } from "tinybase";
 
 import { DEFAULT_GOALS } from "@/constants/goals";
 import { maisRecentesPrimeiro } from "@/constants/recordOrder";
+import { withTimeOfDay } from "@/constants/recordTime";
 
 const TABLE = "records";
 const TESTERS = "testers";
@@ -137,6 +138,30 @@ export function update(id, data) {
     note: note ?? "",
     details: JSON.stringify(extras),
   });
+}
+
+/**
+ * Corrige a HORA de um registro, mantendo o dia (#336).
+ *
+ * Caminho próprio de propósito. O `update` não toca em timestamp, e essa
+ * guarda existe pra que editar um registro antigo não o traga pra hoje. Aqui
+ * o objetivo é justamente mexer no tempo, então a operação fica explícita e
+ * estreita: só hora e minuto, só no dia que o registro já tinha.
+ *
+ * O `createdAt` é o campo certo porque é o que todo consumidor já trata como
+ * hora do evento, inclusive o sinal de regularidade da jornada.
+ *
+ * @param {string} id
+ * @param {string} hhmm "HH:MM"
+ * @returns {boolean} `false` quando a hora não lê, e nada é gravado.
+ */
+export function setRecordTime(id, hhmm) {
+  if (!store.hasRow(TABLE, id)) return false;
+  const atual = Number(store.getCell(TABLE, id, "createdAt")) || 0;
+  const novo = withTimeOfDay(atual, hhmm);
+  if (novo == null) return false;
+  store.setCell(TABLE, id, "createdAt", novo);
+  return true;
 }
 
 export function remove(id) {

@@ -2,6 +2,7 @@
 // Testes das funções de domínio da store (M4, #134). Puros, sem React.
 // A store é um singleton de módulo; zeramos entre os testes.
 import {
+  setRecordTime,
   update,
   getById,
   toggleRetomadaDemo,
@@ -191,5 +192,57 @@ describe("refeição escolhida sobrevive à edição (#332)", () => {
     const id = getAll("feeding")[0].id;
     update(id, { unit: "refeição", quantity: 2, note: "" });
     expect(getById(id).meal).toBeUndefined();
+  });
+});
+
+describe("corrigir a hora de um registro (#336)", () => {
+  test("setRecordTime muda a hora e mantém o dia", () => {
+    add("feeding", {
+      date: new Date().toISOString(),
+      unit: "refeição",
+      quantity: 1,
+    });
+    const id = getAll("feeding")[0].id;
+    const diaAntes = new Date(getById(id).createdAt).getDate();
+
+    expect(setRecordTime(id, "12:30")).toBe(true);
+
+    const depois = new Date(getById(id).createdAt);
+    expect(depois.getHours()).toBe(12);
+    expect(depois.getMinutes()).toBe(30);
+    expect(depois.getDate()).toBe(diaAntes);
+  });
+
+  test("hora ilegível não grava nada", () => {
+    add("feeding", {
+      date: new Date().toISOString(),
+      unit: "refeição",
+      quantity: 1,
+    });
+    const id = getAll("feeding")[0].id;
+    const antes = getById(id).createdAt;
+
+    expect(setRecordTime(id, "25:99")).toBe(false);
+    expect(getById(id).createdAt).toBe(antes);
+  });
+
+  test("corrigir a hora não mexe no resto do registro", () => {
+    // O setRecordTime existe separado do update justamente pra ser estreito.
+    add("feeding", {
+      date: new Date().toISOString(),
+      unit: "refeição",
+      quantity: 1,
+      meal: "café",
+    });
+    const id = getAll("feeding")[0].id;
+    setRecordTime(id, "08:15");
+    const r = getById(id);
+    expect(r.meal).toBe("café");
+    expect(r.quantity).toBe(1);
+    expect(r.unit).toBe("refeição");
+  });
+
+  test("id inexistente devolve false", () => {
+    expect(setRecordTime("nao-existe", "12:30")).toBe(false);
   });
 });

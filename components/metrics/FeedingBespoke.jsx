@@ -8,13 +8,17 @@ import {
   getById,
   groupByDate,
   remove,
+  setRecordTime,
   store,
   update,
 } from "@/infra/database";
 import { goBack } from "@/constants/navigation";
 import getDate from "@/constants/getDate";
 import { MEALS, isMealChosen, mealOf } from "@/constants/meals";
+import { timeOf } from "@/constants/recordTime";
 import { useThemeTokens } from "@/constants/themeTokens";
+
+import TimePickerField from "./TimePickerField";
 
 // UI bespoke da tela de alimentação (M5-B fatia 2c, mockup 2a·5).
 //
@@ -27,6 +31,12 @@ import { useThemeTokens } from "@/constants/themeTokens";
 // Cada refeição ganha um rótulo pelo horário (café/almoço/lanche/jantar), e
 // desde a #332 esse rótulo é **editável**: tocar nele abre as quatro opções, e
 // a escolha vai pro `details`. O horário só preenche quando não houve escolha.
+//
+// Desde a #336 o HORÁRIO também é editável ali. Corrigir só o rótulo deixava
+// os quatro registros carimbados no mesmo minuto, e isso não era só histórico
+// sujo: a `regularity` calcula dispersão sobre `createdAt`, então o lote fingia
+// regularidade perfeita e empurrava o hábito a passar no portão da jornada por
+// um motivo falso.
 //
 // O motivo é o preenchimento em lote: três refeições lançadas às 22h viravam
 // três jantares, e não havia o que corrigir, porque o rótulo era derivado na
@@ -58,6 +68,7 @@ export default function FeedingBespoke({ onAfterAdd, recordId }) {
  * @param {{ onAfterAdd?: () => void }} props
  */
 function FeedingCreate({ onAfterAdd }) {
+  const t = useThemeTokens();
   const records = useTable("records", store);
   // Deriva do `records` assinado, sem reler a store (#330).
   const today = useMemo(
@@ -87,6 +98,10 @@ function FeedingCreate({ onAfterAdd }) {
       meal: refeicao,
     });
     setEditando(null);
+  }
+
+  function corrigirHorario(registro, hhmm) {
+    setRecordTime(registro.id, hhmm);
   }
 
   function handleAdd() {
@@ -194,6 +209,7 @@ function FeedingCreate({ onAfterAdd }) {
                       >
                         {formatTime(r.createdAt)}
                       </Text>
+                      {/* o rótulo fica à direita, junto do controle */}
                       {/* O rótulo é o controle. Sem ícone extra: a lista tem
                           uma linha por refeição e um alvo de toque por linha
                           já basta. */}
@@ -217,32 +233,57 @@ function FeedingCreate({ onAfterAdd }) {
                       </Pressable>
                     </View>
                     {aberto ? (
-                      <View className="flex-row flex-wrap justify-end gap-1.5">
-                        {MEALS.map((m) => {
-                          const atual = mealOf(r) === m;
-                          return (
-                            <Pressable
-                              key={m}
-                              accessibilityRole="button"
-                              accessibilityState={{ selected: atual }}
-                              accessibilityLabel={`Marcar como ${m}`}
-                              onPress={() => escolherRefeicao(r, m)}
-                              className={`rounded-full border px-3 py-1.5 active:opacity-70 ${
-                                atual
-                                  ? "border-primary dark:border-primary-dark bg-tint-blue dark:bg-tint-blue-dark"
-                                  : "border-border-strong dark:border-border-strong-dark"
-                              }`}
-                            >
-                              <Text
-                                className={`text-xs ${atual ? "text-primary dark:text-primary-dark" : "text-body-secondary dark:text-body-secondary-dark"}`}
-                                style={{ fontFamily: "Inter_400Regular" }}
+                      <>
+                        {/* Horário primeiro: é ele que alimenta a
+                            regularidade, e corrigir o rótulo sem corrigir a
+                            hora deixa o sinal mentindo. */}
+                        <View className="flex-row items-center justify-end gap-2">
+                          <Text
+                            className="text-xs text-label dark:text-label-dark"
+                            style={{ fontFamily: "JetBrainsMono_400Regular" }}
+                          >
+                            horário
+                          </Text>
+                          <TimePickerField
+                            value={timeOf(r.createdAt)}
+                            onChangeText={(v) => corrigirHorario(r, v)}
+                            accessibilityLabel={`Horário da refeição: ${timeOf(r.createdAt)}`}
+                            style={{
+                              fontFamily: "JetBrainsMono_500Medium",
+                              fontSize: 16,
+                              color: t.ink,
+                              padding: 0,
+                              minWidth: 56,
+                            }}
+                          />
+                        </View>
+                        <View className="flex-row flex-wrap justify-end gap-1.5">
+                          {MEALS.map((m) => {
+                            const atual = mealOf(r) === m;
+                            return (
+                              <Pressable
+                                key={m}
+                                accessibilityRole="button"
+                                accessibilityState={{ selected: atual }}
+                                accessibilityLabel={`Marcar como ${m}`}
+                                onPress={() => escolherRefeicao(r, m)}
+                                className={`rounded-full border px-3 py-1.5 active:opacity-70 ${
+                                  atual
+                                    ? "border-primary dark:border-primary-dark bg-tint-blue dark:bg-tint-blue-dark"
+                                    : "border-border-strong dark:border-border-strong-dark"
+                                }`}
                               >
-                                {m}
-                              </Text>
-                            </Pressable>
-                          );
-                        })}
-                      </View>
+                                <Text
+                                  className={`text-xs ${atual ? "text-primary dark:text-primary-dark" : "text-body-secondary dark:text-body-secondary-dark"}`}
+                                  style={{ fontFamily: "Inter_400Regular" }}
+                                >
+                                  {m}
+                                </Text>
+                              </Pressable>
+                            );
+                          })}
+                        </View>
+                      </>
                     ) : null}
                   </View>
                 );
