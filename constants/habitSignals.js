@@ -18,6 +18,24 @@ import { GOAL_KIND } from "./goals";
 
 const MS_DIA = 86_400_000;
 
+/**
+ * Minuto do dia do EVENTO, quando o registro guarda o próprio horário.
+ *
+ * `null` quando não guarda, e aí quem chama decide o que fazer. Hoje só o sono
+ * tem (`bed`, desde o #328); as outras métricas seguem sem horário de evento.
+ *
+ * @param {{bed?: string}} registro
+ * @returns {number|null}
+ */
+function minutoDoEvento(registro) {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(String(registro?.bed ?? "").trim());
+  if (!m) return null;
+  const h = Number(m[1]);
+  const min = Number(m[2]);
+  if (h > 23 || min > 59) return null;
+  return h * 60 + min;
+}
+
 /** Chave de dia-calendário local (não UTC, porque o dia do usuário é o local). */
 function diaLocal(ms) {
   const d = new Date(ms);
@@ -111,14 +129,32 @@ export function consistency(verdicts) {
  */
 export function regularity(records, metric, days, now = Date.now()) {
   const limite = now - days * MS_DIA;
-  const angulos = [];
 
-  for (const r of records ?? []) {
-    if (r?.type !== metric) continue;
+  // Registros do tipo, dentro da janela. O `createdAt` decide a JANELA mesmo
+  // quando não decide o horário: é ele que diz a que dia o registro pertence.
+  const naJanela = (records ?? []).filter((r) => {
+    if (r?.type !== metric) return false;
     const ts = Number(r.createdAt);
-    if (!Number.isFinite(ts) || ts < limite || ts > now) continue;
-    angulos.push((2 * Math.PI * minutoDoDia(ts)) / 1440);
-  }
+    return Number.isFinite(ts) && ts >= limite && ts <= now;
+  });
+
+  // Horário do EVENTO quando o registro tem, e não a hora de abrir o app
+  // (#343). O §5 mede quando o comportamento acontece, e no sono isso é a
+  // hora de deitar, que o #328 passou a gravar.
+  const comEvento = naJanela.filter((r) => minutoDoEvento(r) != null);
+
+  // ⚠️ **Não misturar.** Somar a variação do horário de deitar com a do
+  // horário de registrar dá um número pior que qualquer um dos dois puros.
+  // Então basta UM registro com horário próprio pra que só eles contem.
+  //
+  // O efeito na virada é desconfortável e correto: o `n` despenca e a
+  // regularidade volta a "sem amostra suficiente" até acumular de novo. Dizer
+  // "ainda não tenho a medida certa" é melhor que responder com a errada.
+  const base = comEvento.length > 0 ? comEvento : naJanela;
+  const angulos = base.map((r) => {
+    const min = minutoDoEvento(r) ?? minutoDoDia(Number(r.createdAt));
+    return (2 * Math.PI * min) / 1440;
+  });
 
   const n = angulos.length;
   if (n < 2) return { resultant: n === 1 ? 1 : 0, sdMinutes: null, n };
@@ -133,7 +169,14 @@ export function regularity(records, metric, days, now = Date.now()) {
 
   // R=0 seria dispersão total; o log divergiria. Trava num piso pra devolver
   // número em vez de Infinity: quem lê quer "muito irregular", não NaN.
-  const R = Math.max(resultant, 1e-6);
+  //
+  // ⚠️ E trava num TETO de 1 (#343). Com dispersão exatamente zero, a soma dos
+  // quadrados estoura 1 por arredondamento, `log(R)` fica positivo, e a raiz de
+  // negativo vira NaN. Como o portão faz `sdMinutes <= max`, e NaN reprova
+  // qualquer comparação, **quem tivesse regularidade perfeita seria barrado**.
+  // Era improvável com `createdAt`, porque timestamp real quase nunca cai no
+  // mesmo minuto. Com `bed` em "HH:MM", quem deita sempre às 23:30 cai direto.
+  const R = Math.min(Math.max(resultant, 1e-6), 1);
   const sdRad = Math.sqrt(-2 * Math.log(R));
   const sdMinutes = (sdRad * 1440) / (2 * Math.PI);
 
