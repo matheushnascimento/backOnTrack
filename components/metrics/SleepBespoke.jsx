@@ -5,6 +5,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import { add, getById, update } from "@/infra/database";
 import getDate from "@/constants/getDate";
 import { minutesToHHMM } from "@/constants/duration";
+import { durationFromTimes, timesFrom } from "@/constants/sleepTimes";
 import { useThemeTokens } from "@/constants/themeTokens";
 
 import TimePickerField from "./TimePickerField";
@@ -29,7 +30,7 @@ function clampNumString(s, max) {
 //   [Duração              7h 20min]  (tint azul)
 //
 //   COMO SE SENTE HOJE
-//   [pouco] [ok] [bem] [ótimo]
+//   [mal] [ok] [bem] [ótimo]
 //
 //   [Registrar]
 //
@@ -37,29 +38,24 @@ function clampNumString(s, max) {
 // Qualidade mapeia pra `score` (2/3/4/5) pra reusar a infra do histórico.
 //
 // Fatia do sono do #256: quando `recordId` chega (edição pelo HistoryCard), o
-// componente troca pra <SleepEdit>: o registro só guarda duração + score, não
-// bed/wake times, então a edição mostra duração (h/min) + qualidade + OBS.
+// componente troca pra <SleepEdit>.
+//
+// Desde a #328 o registro guarda `bed` e `wake` no `details`, e a edição mostra
+// os mesmos dois campos de horário da criação. Registro gravado ANTES disso não
+// tem os campos, e aí a edição cai no formulário de duração. Quem decide é o
+// `timesFrom`, e os dois caminhos coexistem porque todo histórico existente é
+// do formato antigo.
+//
 // Score fora do range QUALITY (registros antigos com estrelas 0-5) fica sem
 // pill selecionada e o valor original é preservado no save se o usuário não
 // tocar. Legacy min/max/ideal também são preservados.
 
 const QUALITY = [
-  { key: "pouco", label: "pouco", score: 2 },
+  { key: "mal", label: "mal", score: 2 },
   { key: "ok", label: "ok", score: 3 },
   { key: "bem", label: "bem", score: 4 },
   { key: "otimo", label: "ótimo", score: 5 },
 ];
-
-// "23:40" (string livre) -> minutos, ou null se inválido.
-function parseHHMM(s) {
-  if (!s) return null;
-  const m = /^(\d{1,2}):(\d{2})$/.exec(s.trim());
-  if (!m) return null;
-  const h = Number(m[1]);
-  const min = Number(m[2]);
-  if (h > 23 || min > 59) return null;
-  return h * 60 + min;
-}
 
 function formatDuration(min) {
   if (min == null) return "--";
@@ -98,12 +94,10 @@ function SleepCreate({ onAfterAdd }) {
   const [wakeTime, setWakeTime] = useState("");
   const [quality, setQuality] = useState(/** @type {number|null} */ (null));
 
-  const durationMin = useMemo(() => {
-    const bed = parseHHMM(bedTime);
-    const wake = parseHHMM(wakeTime);
-    if (bed == null || wake == null) return null;
-    return (wake - bed + 1440) % 1440;
-  }, [bedTime, wakeTime]);
+  const durationMin = useMemo(
+    () => durationFromTimes(bedTime, wakeTime),
+    [bedTime, wakeTime],
+  );
 
   const canSave = durationMin != null && durationMin > 0 && quality != null;
 
@@ -114,6 +108,10 @@ function SleepCreate({ onAfterAdd }) {
       unit: "min",
       quantity: durationMin,
       score: quality,
+      // Os horários vão junto (#328). Antes morriam aqui, e a edição só
+      // conseguia oferecer duração porque o dado não existia.
+      bed: bedTime,
+      wake: wakeTime,
     });
     setBedTime("");
     setWakeTime("");
@@ -183,8 +181,12 @@ function SleepCreate({ onAfterAdd }) {
 }
 
 /**
- * Edição de um registro de sono pelo HistoryCard. O registro só guarda duração
- * + score, então a edição opera nesses campos (não em bed/wake times).
+ * Edição de um registro de sono pelo HistoryCard.
+ *
+ * Dois modos, decididos pelo dado e não por preferência: registro com `bed` e
+ * `wake` edita horário, e a duração acompanha; registro antigo edita duração
+ * direto, porque os horários dele nunca foram gravados.
+ *
  * Score fora do range QUALITY (registros antigos) preserva-se se a pill não
  * for tocada. Legacy min/max/ideal também são preservados.
  * @param {{ recordId: string, onAfterSave?: () => void }} props
@@ -192,6 +194,9 @@ function SleepCreate({ onAfterAdd }) {
 function SleepEdit({ recordId, onAfterSave }) {
   const [hour, setHour] = useState("");
   const [minute, setMinute] = useState("");
+  const [bedTime, setBedTime] = useState("");
+  const [wakeTime, setWakeTime] = useState("");
+  const [porHorario, setPorHorario] = useState(false);
   const [note, setNote] = useState("");
   const [quality, setQuality] = useState(/** @type {number|null} */ (null));
   const [qualityTouched, setQualityTouched] = useState(false);
@@ -201,6 +206,14 @@ function SleepEdit({ recordId, onAfterSave }) {
     const r = getById(recordId);
     if (!r) return;
     setLoaded(r);
+    // O dado decide o formulário. Registro sem horário é o histórico inteiro
+    // anterior à #328, então este ramo não é exceção rara.
+    const horarios = timesFrom(r);
+    if (horarios) {
+      setPorHorario(true);
+      setBedTime(horarios.bed);
+      setWakeTime(horarios.wake);
+    }
     const [h, m] = minutesToHHMM(r.quantity).split(":");
     setHour(h);
     setMinute(m);
@@ -215,13 +228,14 @@ function SleepEdit({ recordId, onAfterSave }) {
 
   const parsedH = Number(hour) || 0;
   const parsedM = Number(minute) || 0;
-  const totalMin = parsedH * 60 + parsedM;
+  const duracaoPorHorario = durationFromTimes(bedTime, wakeTime);
+  const totalMin = porHorario
+    ? (duracaoPorHorario ?? 0)
+    : parsedH * 60 + parsedM;
   const canSave =
     loaded != null &&
     totalMin > 0 &&
-    parsedH >= 0 &&
-    parsedM >= 0 &&
-    parsedM < 60;
+    (porHorario || (parsedH >= 0 && parsedM >= 0 && parsedM < 60));
 
   function handlePickQuality(score) {
     setQuality(score);
@@ -238,37 +252,77 @@ function SleepEdit({ recordId, onAfterSave }) {
       min: loaded.min,
       max: loaded.max,
       ideal: loaded.ideal,
+      // Só reescreve os horários no modo que os edita. No modo duração eles
+      // não existem, e gravar string vazia faria o `timesFrom` continuar
+      // devolvendo null sem motivo aparente.
+      ...(porHorario ? { bed: bedTime, wake: wakeTime } : {}),
     });
     onAfterSave?.();
   }
 
   return (
     <View className="gap-4">
-      {/* Duração */}
-      <View className="gap-2 rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark px-5 py-4">
-        <Text
-          className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
-          style={{ fontFamily: "JetBrainsMono_500Medium" }}
-        >
-          Duração
-        </Text>
-        <View className="flex-row items-baseline gap-2">
-          <DurationInput
-            value={hour}
-            onChange={(v) => setHour(clampNumString(v, 23))}
-            accessibilityLabel="Horas"
-            maxLength={2}
+      {porHorario ? (
+        <>
+          {/* Mesmos campos da criação: corrigir "acordei 07:10" é o que a
+              pessoa quer fazer, em vez de recalcular a duração de cabeça. */}
+          <TimeRow
+            label="dormiu"
+            value={bedTime}
+            onChange={setBedTime}
+            dayLabel=""
+            placeholder="23:00"
           />
-          <UnitLabel>h</UnitLabel>
-          <DurationInput
-            value={minute}
-            onChange={(v) => setMinute(clampNumString(v, 59))}
-            accessibilityLabel="Minutos"
-            maxLength={2}
+          <TimeRow
+            label="acordou"
+            value={wakeTime}
+            onChange={setWakeTime}
+            dayLabel=""
+            placeholder="07:00"
           />
-          <UnitLabel>min</UnitLabel>
+          <View className="flex-row items-center justify-between rounded-2xl bg-tint-blue dark:bg-tint-blue-dark px-5 py-4">
+            <Text
+              className="text-sm text-primary dark:text-primary-dark"
+              style={{ fontFamily: "Inter_500Medium" }}
+            >
+              Duração
+            </Text>
+            <Text
+              className="text-primary dark:text-primary-dark"
+              style={{ fontFamily: "JetBrainsMono_500Medium", fontSize: 22 }}
+            >
+              {formatDuration(duracaoPorHorario)}
+            </Text>
+          </View>
+        </>
+      ) : (
+        /* Registro anterior à #328: os horários nunca foram gravados, então
+           editar duração direto é o único formulário honesto. */
+        <View className="gap-2 rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark px-5 py-4">
+          <Text
+            className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
+            style={{ fontFamily: "JetBrainsMono_500Medium" }}
+          >
+            Duração
+          </Text>
+          <View className="flex-row items-baseline gap-2">
+            <DurationInput
+              value={hour}
+              onChange={(v) => setHour(clampNumString(v, 23))}
+              accessibilityLabel="Horas"
+              maxLength={2}
+            />
+            <UnitLabel>h</UnitLabel>
+            <DurationInput
+              value={minute}
+              onChange={(v) => setMinute(clampNumString(v, 59))}
+              accessibilityLabel="Minutos"
+              maxLength={2}
+            />
+            <UnitLabel>min</UnitLabel>
+          </View>
         </View>
-      </View>
+      )}
 
       {/* Qualidade */}
       <View>
