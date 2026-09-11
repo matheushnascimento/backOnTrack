@@ -260,6 +260,38 @@ Levantamento do histórico do dono do projeto em 14/08/2026 (sala autenticada no
 
 Com 6 registros de sono em 10 dias não se fecha nem a janela de 28 dias do portão, muito menos se observa uma curva de formação. Qualquer limiar derivado daqui seria chute com aparência de análise.
 
+### Levantamento de 11/09/2026: 108 registros, 38 dias
+
+Rodado com o código de produção sobre a mesma sala, e não com uma reimplementação:
+
+| métrica     | n   | consistência | regularidade           | passa no portão |
+| ----------- | --- | ------------ | ---------------------- | --------------- |
+| sono        | 26  | 0,71         | 20 amostras, sd 139min | não             |
+| água        | 60  | **0,00**     | 37, sd 213min          | não             |
+| alimentação | 19  | 0,07         | 15, sd 433min          | não             |
+| exercício   | 1   | 0,04         | sem amostra            | não             |
+| estudo      | 2   | 0,00         | sem amostra            | não             |
+
+**Três achados, que valem mais que os números.**
+
+**1. Em métrica `sum`, consistência mede o quanto foi REGISTRADO.** Água tem alvo de 2000ml. Em 15 dias com registro, nenhum chegou lá: melhor dia 1600, mediana 800. Ninguém bebe 800ml por dia. "Não fiz" e "não registrei" são indistinguíveis, e o dado diz que o segundo domina.
+
+Isso colide com o §4, que fixou o portão em comportamento e nunca em resultado. Foi por isso que o sono virou `presence`; as outras quatro seguem `sum` e reintroduzem o problema por outra porta. **Calibrar limiar não resolve: com consistência zero, nenhum número separa nada.**
+
+**2. O portão está acima do melhor observado.** O usuário mais ativo do projeto, depois de 38 dias, não passa em sono: 0,71 contra os 0,80 exigidos, e 139min contra os 120 de dispersão máxima.
+
+A consistência ali é defensável: `presence` significa "registrou naquele dia", e 0,80 são 22 de 28 dias, um padrão honesto pra hábito em formação. O número diz que o hábito não fechou, e não que a régua está torta.
+
+**3. A regularidade media a hora de ABRIR O APP.** O sinal lia `createdAt`, então quem deitava sempre às 23h30 e registrava em horários variados aparecia irregular. Corrigido no #343, que passou a usar `bed` (gravado desde o #328). O mesmo PR revelou um bug que já existia: com dispersão exatamente zero a raiz virava `NaN`, e como o portão compara `sdMinutes <= max`, **quem fosse perfeito era reprovado por isso**.
+
+### Onde a calibração parou
+
+Duas mudanças saíram do levantamento: o sono passou a exibir **faixa de suficiência** em vez de 8h cravado (#341), e a regularidade passou a medir a hora de deitar (#343).
+
+**Os limiares seguem provisórios**, agora por um motivo diferente do de agosto: a série de dado correto **começou em 11/09**. A anterior media a coisa errada, e não dá pra calibrar contra ela.
+
+**Decisão de modelo ainda pendente:** o que "consistência" deve significar numa métrica de soma. As opções levantadas foram contar o dia em que houve qualquer registro, como no sono, ou baixar as metas ao que é de fato registrado, que ajusta o alvo ao instrumento e por isso parece pior.
+
 (Só o que sincronizou está visível. Registros que nunca subiram do aparelho não entram nessa conta.)
 
 ### O caminho: medir primeiro, pendurar consequência depois

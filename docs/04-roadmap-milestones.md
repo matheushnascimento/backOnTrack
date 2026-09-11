@@ -159,7 +159,7 @@ A referência declarada é o Fabulous, com uma recusa explícita: a progressão 
 
 **Dívida reconhecida, aberta:**
 
-- 🟡 **Limiares ainda provisórios.** `THRESHOLDS` está marcado como tal no código: os números saíram da literatura e de uma passada no histórico existente, não de medição do app rodando. A medição começou em 15/08/2026 e ainda não voltou número pra calibrar
+- 🟡 **Limiares ainda provisórios.** O levantamento de 11/09 (108 registros, 38 dias) foi feito e está no §12 do modelo. Ele não fechou a calibração: revelou que em métrica `sum` a consistência mede o quanto foi registrado, e que a regularidade media a hora de abrir o app. Saíram dele a faixa de suficiência do sono (#341) e a regularidade por hora de deitar (#343). A série de dado correto começa em 11/09, e os limiares esperam por ela
 - ✅ **`RetomadaState` × lvl 0, resolvido** (#320, PR #321). A sobreposição escondia mais do que uma tela: a retomada é um early return na Home, então quem caía de nível por sumir 3+ dias não via o aviso de regressão, e levava o sheet logo depois de voltar e registrar. A decisão foi a retomada **absorver** a jornada: o atalho principal passa a ser o hábito em foco, a queda é dita ali numa linha, e o nível é reconhecido nesse momento. Custo assumido: o `RegressionNotice` completo, que **prova** com botão pro histórico que nada sumiu, não aparece por esse caminho, e a linha afirma em vez de provar
 - ⬜ **Deixar o usuário escolher o registro de reforço** (#286, sóbrio ou lúdico). Ideia registrada, depende de investimento, fora do escopo atual
 
