@@ -272,3 +272,97 @@ describe("habitSignals", () => {
     expect(s.resilience).toHaveProperty("doubleMisses");
   });
 });
+
+describe("regularidade usa o horário de deitar (#343)", () => {
+  const noite = (dia, horaRegistro, bed) => ({
+    type: "sleep",
+    quantity: 480,
+    createdAt: new Date(2026, 8, dia, horaRegistro, 0, 0).getTime(),
+    ...(bed ? { bed } : {}),
+  });
+  const AGORA = new Date(2026, 8, 20, 12, 0, 0).getTime();
+
+  it("mede o deitar, não a hora de abrir o app", () => {
+    // Deita sempre 23h30 e registra a hora que dá. Pela hora de registro isso
+    // parece caótico; pelo horário de deitar é quase perfeito.
+    const recs = [
+      noite(10, 7, "23:30"),
+      noite(11, 22, "23:30"),
+      noite(12, 9, "23:30"),
+      noite(13, 15, "23:30"),
+    ];
+    const r = regularity(recs, "sleep", 28, AGORA);
+    expect(r.n).toBe(4);
+    expect(r.sdMinutes).toBeLessThan(5);
+  });
+
+  it("sem horário próprio, segue no createdAt", () => {
+    // Todo o histórico anterior ao #328 é assim.
+    const recs = [noite(10, 7), noite(11, 7), noite(12, 7)];
+    const r = regularity(recs, "sleep", 28, AGORA);
+    expect(r.n).toBe(3);
+    expect(r.sdMinutes).toBeLessThan(5);
+  });
+
+  it("NÃO mistura: um registro com horário próprio exclui os sem", () => {
+    // Misturar somaria a variação do deitar com a do registrar, e daria um
+    // número pior que qualquer um dos dois puros.
+    const recs = [
+      noite(10, 7),
+      noite(11, 8),
+      noite(12, 9),
+      noite(13, 20, "23:30"),
+    ];
+    const r = regularity(recs, "sleep", 28, AGORA);
+    expect(r.n).toBe(1);
+  });
+
+  it("horário inválido no campo não conta como evento", () => {
+    // Protege contra dado vindo do sync de uma versão futura, ou typo.
+    const recs = [noite(10, 7, "25:99"), noite(11, 7, "")];
+    const r = regularity(recs, "sleep", 28, AGORA);
+    expect(r.n).toBe(2);
+  });
+
+  it("atravessa a meia-noite sem virar caos", () => {
+    // O caso que a estatística circular existe pra resolver: 23h50 e 00h10
+    // distam 20 minutos, não 23h40. É exatamente onde vive o horário de deitar.
+    const recs = [
+      noite(10, 7, "23:50"),
+      noite(11, 7, "00:10"),
+      noite(12, 7, "23:55"),
+      noite(13, 7, "00:05"),
+    ];
+    const r = regularity(recs, "sleep", 28, AGORA);
+    expect(r.sdMinutes).toBeLessThan(30);
+  });
+});
+
+describe("dispersão exatamente zero não vira NaN (#343)", () => {
+  const noite = (dia, bed) => ({
+    type: "sleep",
+    quantity: 480,
+    createdAt: new Date(2026, 8, dia, 7, 0, 0).getTime(),
+    bed,
+  });
+  const AGORA = new Date(2026, 8, 20, 12, 0, 0).getTime();
+
+  it("regularidade perfeita devolve zero, e não NaN", () => {
+    // Sem o teto em R, a soma dos quadrados estoura 1 por arredondamento e a
+    // raiz de negativo vira NaN. Como o portão faz `sdMinutes <= max`, e NaN
+    // reprova qualquer comparação, quem deita sempre no mesmo minuto seria
+    // barrado JUSTAMENTE por ser perfeito.
+    const recs = [10, 11, 12, 13].map((d) => noite(d, "23:30"));
+    const r = regularity(recs, "sleep", 28, AGORA);
+    expect(Number.isNaN(r.sdMinutes)).toBe(false);
+    expect(r.sdMinutes).toBeGreaterThanOrEqual(0);
+    expect(r.sdMinutes).toBeLessThan(1);
+  });
+
+  it("e passa no limiar do portão, em vez de reprovar", () => {
+    const recs = [10, 11, 12, 13, 14, 15, 16, 17].map((d) => noite(d, "23:30"));
+    const r = regularity(recs, "sleep", 28, AGORA);
+    expect(r.n).toBe(8);
+    expect(r.sdMinutes <= 120).toBe(true);
+  });
+});
