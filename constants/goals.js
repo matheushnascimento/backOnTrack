@@ -35,6 +35,26 @@ export const DEFAULT_GOALS = {
  * avalia o hábito é a regularidade do horário (ver `regularity` em
  * `habitSignals.js`).
  */
+/**
+ * Faixa de suficiência, pra métrica cujo alvo honesto não é um ponto (#340).
+ *
+ * O sono é o caso: a literatura trata 7 a 8 horas como suficiente pra adulto,
+ * e este arquivo já dizia isso num comentário enquanto a tela exibia "8h"
+ * cravado. Quem dorme 7h15 lia o próprio registro como falha.
+ *
+ * ⚠️ **Isto é exibição, não portão.** O sono é `presence`, e o `dailyVerdicts`
+ * faz `hit = n > 0` nesse modo, então nem 480 nem a faixa decidem nível.
+ *
+ * Vive aqui, e não no `DEFAULT_GOALS`, porque o `ensureGoals` só semeia
+ * quando a célula está ausente: quem já usa o app tem 480 gravado e
+ * continuaria vendo 8h se só o default mudasse.
+ *
+ * @type {Record<string, [number, number]>}
+ */
+export const GOAL_RANGE = {
+  sleep: [420, 480],
+};
+
 export const GOAL_KIND = {
   water: "sum",
   sleep: "presence",
@@ -85,6 +105,21 @@ export function goalFor(goals, metric) {
  * @returns {string} `"—"` quando não há alvo conhecido.
  */
 export function formatGoal(metric, target) {
+  // Faixa vence o alvo guardado (#340). Ver GOAL_RANGE: o número do store
+  // continua lá, e pra métrica `presence` ele nunca decidiu nada mesmo.
+  //
+  // Delega no formatador de PONTO de propósito. Chamar `formatGoal` aqui
+  // recairia na faixa e recursaria sem fim.
+  const faixa = GOAL_RANGE[metric];
+  if (faixa) {
+    const [min, max] = faixa;
+    return `${formatPoint(metric, min)} a ${formatPoint(metric, max)}`;
+  }
+  return formatPoint(metric, target);
+}
+
+/** Um alvo único, já na unidade que a pessoa lê. */
+function formatPoint(metric, target) {
   if (!Number.isFinite(target) || target <= 0) return "—";
 
   if (metric === "water") {
