@@ -2,6 +2,8 @@
 // Testes das funções de domínio da store (M4, #134). Puros, sem React.
 // A store é um singleton de módulo; zeramos entre os testes.
 import {
+  update,
+  getById,
   toggleRetomadaDemo,
   store,
   add,
@@ -99,5 +101,49 @@ describe("previsualização da retomada (#320)", () => {
     // interruptor a mudança da #320 seria mergeada sem ninguém ter visto.
     expect(toggleRetomadaDemo()).toBe(true);
     expect(toggleRetomadaDemo()).toBe(false);
+  });
+});
+
+describe("sono guarda os horários (#328)", () => {
+  test("bed e wake sobrevivem ao round-trip pelo details", () => {
+    // Antes da #328 o add descartava os dois, e a edição não tinha o que
+    // mostrar. Este teste é o que garante que eles voltam pelo getById.
+    add("sleep", {
+      date: new Date().toISOString(),
+      unit: "min",
+      quantity: 440,
+      score: 4,
+      bed: "23:40",
+      wake: "07:00",
+    });
+    const r = getAll("sleep")[0];
+    expect(r.bed).toBe("23:40");
+    expect(r.wake).toBe("07:00");
+    expect(r.quantity).toBe(440);
+    expect(getById(r.id).wake).toBe("07:00");
+  });
+
+  test("editar horário não apaga os campos legados do registro", () => {
+    add("sleep", {
+      date: new Date().toISOString(),
+      unit: "min",
+      quantity: 440,
+      score: 4,
+      bed: "23:40",
+      wake: "07:00",
+    });
+    const id = getAll("sleep")[0].id;
+    update(id, {
+      unit: "min",
+      quantity: 420,
+      note: "acordei antes",
+      score: 4,
+      bed: "23:40",
+      wake: "06:40",
+    });
+    const r = getById(id);
+    expect(r.quantity).toBe(420);
+    expect(r.wake).toBe("06:40");
+    expect(r.note).toBe("acordei antes");
   });
 });
