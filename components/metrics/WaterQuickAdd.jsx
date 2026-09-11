@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import { useTable } from "tinybase/ui-react";
 
-import { add, getById, getToday, store, update } from "@/infra/database";
+import { add, getById, groupByDate, store, update } from "@/infra/database";
 import getDate from "@/constants/getDate";
 import { maskMl, parseMl } from "@/constants/waterAmount";
 import { useThemeTokens } from "@/constants/themeTokens";
@@ -66,8 +66,11 @@ function WaterQuickLog({ onAfterAdd }) {
   // Assina a tabela pra re-renderizar quando um novo registro chega (inclusive
   // pós-startAutoLoad da persistência). Mesmo padrão da Home.
   const records = useTable("records", store);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const today = useMemo(() => getToday(), [records]);
+  // Deriva do `records` assinado, sem reler a store (#330).
+  const today = useMemo(
+    () => groupByDate(records ?? {}, new Date().toISOString()),
+    [records],
+  );
   const waterToday = today.water ?? [];
 
   // Campo de valor livre. Fechado por padrão pra não competir com os chips,

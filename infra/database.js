@@ -175,9 +175,23 @@ export function getByMonth(type, month) {
 // Todos os registros de um dia, agrupados por type. Uma passada única na tabela
 // (a "uma query só" da tela hoje), reusando hidratar. Compara ano/mês/dia local
 // de `date` (ISO string), mesma convenção de getByMonth.
-export function getByDate(isoDate) {
+/**
+ * Agrupa por tipo os registros de um dia, a partir de uma tabela JÁ EM MÃOS.
+ *
+ * ⚠️ **Existe pra que a tela derive do dado que ela assinou** (#330).
+ *
+ * O `getByDate` lê a store por fora. Numa tela isso vira um `useMemo` que
+ * depende de `records` do `useTable` mas lê o store de novo, e aí o que
+ * aparece depende de QUANDO a leitura acontece em relação à assinatura, em vez
+ * de ser função pura do dado assinado. O sintoma relatado: editar a duração de
+ * um sono de hoje não mudava o valor na Home, e sair da tela e voltar
+ * corrigia. Mesma família do #108.
+ *
+ * @param {Record<string, any>} linhas Tabela `records`, como o `useTable` devolve.
+ * @param {string} isoDate
+ */
+export function groupByDate(linhas, isoDate) {
   const alvo = new Date(isoDate);
-  const linhas = store.getTable(TABLE);
   const porTipo = {};
   for (const [id, linha] of Object.entries(linhas)) {
     if (!linha.date) continue;
@@ -198,6 +212,11 @@ export function getByDate(isoDate) {
     porTipo[tipo] = maisRecentesPrimeiro(porTipo[tipo]);
   }
   return porTipo;
+}
+
+/** Igual ao `groupByDate`, lendo a store. Pra quem não tem a tabela em mãos. */
+export function getByDate(isoDate) {
+  return groupByDate(store.getTable(TABLE), isoDate);
 }
 
 export function getToday() {
