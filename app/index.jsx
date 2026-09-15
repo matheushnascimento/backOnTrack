@@ -26,6 +26,7 @@ import { useSession } from "@/infra/session";
 import { useThemeTokens } from "@/constants/themeTokens";
 import { CATEGORY_MAP } from "@/components/categoryUtils";
 import { minutesToHHMM } from "@/constants/duration";
+import { latestBed } from "@/constants/sleepTimes";
 import { getGreeting } from "@/constants/greeting";
 import {
   headerCopy,
@@ -209,6 +210,15 @@ export default function Home() {
         (s, r) => s + (Number(r.quantity) || 0),
         0,
       );
+      // Sono sem acordar não tem duração (#349), e formatar zero daria
+      // "0:00", que lê como falha justamente pra quem registrou o
+      // comportamento. Nesse caso mostra o horário de deitar, que é o que
+      // foi registrado. Remendo de fatia: centrar a Home no comportamento
+      // pertence à fatia das ocasiões.
+      const semDuracao = type === "sleep" && total === 0;
+      const valor = semDuracao
+        ? latestBed(registros)
+        : formatValue(unit, total);
       return [
         type,
         {
@@ -216,7 +226,7 @@ export default function Home() {
           unit,
           count: registros.length,
           total,
-          value: registros.length > 0 ? formatValue(unit, total) : null,
+          value: registros.length > 0 ? valor : null,
         },
       ];
     }),

@@ -6,6 +6,7 @@
 
 import {
   durationFromTimes,
+  latestBed,
   parseHHMM,
   timesFrom,
 } from "../constants/sleepTimes";
@@ -68,8 +69,44 @@ describe("timesFrom", () => {
     // É este null que faz a edição cair no formulário de duração em vez de
     // mostrar dois campos vazios fingindo que o dado existe.
     expect(timesFrom({ quantity: 480, score: 4 })).toBeNull();
-    expect(timesFrom({ bed: "23:40" })).toBeNull();
     expect(timesFrom({ bed: "", wake: "" })).toBeNull();
     expect(timesFrom(null)).toBeNull();
+  });
+
+  it("aceita deitar sozinho, com acordar em branco (#349)", () => {
+    // Desde que o deitar virou o único campo obrigatório, existe registro com
+    // deitar e sem acordar. Exigir os dois aqui mandaria esse registro pro
+    // formulário de DURAÇÃO, que é justamente o dado que ele não tem.
+    expect(timesFrom({ bed: "23:40" })).toEqual({ bed: "23:40", wake: "" });
+    expect(timesFrom({ bed: "23:40", wake: "lixo" })).toEqual({
+      bed: "23:40",
+      wake: "",
+    });
+  });
+});
+
+describe("latestBed", () => {
+  const reg = (bed, createdAt) => ({ bed, createdAt });
+
+  it("devolve o deitar mais recente", () => {
+    const lista = [reg("22:00", 100), reg("23:40", 300), reg("01:00", 200)];
+    expect(latestBed(lista)).toBe("23:40");
+  });
+
+  it("ignora registro sem horário válido", () => {
+    // O histórico anterior ao #328 não tem `bed`, e a Home não pode mostrar
+    // undefined como se fosse horário.
+    expect(latestBed([reg(undefined, 300), reg("23:40", 100)])).toBe("23:40");
+    expect(latestBed([reg("25:00", 300), reg("23:40", 100)])).toBe("23:40");
+  });
+
+  it("devolve null quando nenhum registro tem horário", () => {
+    expect(latestBed([reg(undefined, 1), reg("", 2)])).toBeNull();
+    expect(latestBed([])).toBeNull();
+    expect(latestBed(undefined)).toBeNull();
+  });
+
+  it("tolera registro sem createdAt", () => {
+    expect(latestBed([reg("23:40")])).toBe("23:40");
   });
 });
