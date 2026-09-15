@@ -88,6 +88,42 @@ Se o portão do nível fosse duração de sono, o app rebaixaria alguém por alg
 
 **Regra:** o portão de nível é sempre um comportamento. No sono, é a consistência do horário de deitar. A duração segue registrada e exibida, porque é o que importa pra pessoa, mas não decide nível.
 
+### 4.1 A unidade é a ocasião, e não a quantidade (revisão de 15/09/2026)
+
+A tabela acima estava certa e incompleta. Ela separa bem o sono das outras quatro, e deixa passar que **as outras quatro também gateavam desfecho**, por outra porta: o veredito do dia era `soma >= alvo`, então o que decidia nível era _quanto_, e não _se_.
+
+O levantamento do §12 mostrou o preço disso. Água: 60 registros, 15 dias com registro, **nenhum** chegando aos 2000ml, consistência 0,00. Ninguém bebe 800ml por dia, que era a mediana. O sinal media o quanto foi **registrado**, e não o hábito.
+
+**A literatura mede ocasião.** Lally registrava, todo dia, se o comportamento foi realizado, de forma binária, nunca quanto. Gardner resume a receita como repetir um comportamento no mesmo contexto até ficar automático. A revisão "habit as automaticity, not frequency" coloca a automaticidade como ingrediente ativo e a repetição como precursor dela. Dose aparece uma vez, no exercício, como cerca de 4 sessões por semana, o que é **frequência de ocasiões**, e não quantidade por ocasião.
+
+**Regra revisada:** a unidade do veredito diário é a **ocasião em contexto**. A quantidade continua exibida, porque é informação útil sobre o dia, e deixa de decidir nível.
+
+| métrica           | comportamento | unidade do veredito  |
+| ----------------- | ------------- | -------------------- |
+| sono              | deitar        | 1 ocasião no dia     |
+| alimentação       | comer         | N ocasiões no dia    |
+| água              | beber         | N ocasiões no dia    |
+| exercício, estudo | fazer         | N ocasiões na semana |
+
+**Quantas ocasiões** cada uma exige fica em aberto de propósito. É exatamente o número que precisa vir de medição, e a série de dado correto começou em 11/09, depois de o §5 passar a medir a coisa certa.
+
+### 4.2 O desenho do sono, com os papéis separados
+
+Estar habituado a deitar no mesmo horário não garante dormir bem. Por isso o acordar continua valendo a pena, e entra como informação em vez de exigência:
+
+|                    | papel         | consequência                                           |
+| ------------------ | ------------- | ------------------------------------------------------ |
+| horário de deitar  | comportamento | consistência e regularidade, decide nível              |
+| horário de acordar | opcional      | habilita a duração                                     |
+| duração            | desfecho      | lida contra a faixa de suficiência, nunca decide nível |
+| qualidade          | percepção     | informação                                             |
+
+A **faixa de suficiência** (7h a 8h, #341) ganha aqui a função que ela de fato tem: referência de leitura para quando houver duração, e não meta a bater.
+
+**Fricção mínima.** Se deitar é o mínimo viável, exigir acordar e qualidade pra salvar contraria o comportamento que se quer repetir. O registro salva com o horário de deitar sozinho.
+
+**O que a implementação fazia de diferente do que esta seção sempre disse:** o sono virava `presence` genérico, contando qualquer registro em vez do ato de deitar, e a duração ocupava o lugar de número principal da tela. O §4 já dizia "no sono, é a consistência do horário de deitar" e "`bed` já é o dado" desde 14/08. O dado só passou a existir no #328, e a regularidade só passou a usá-lo no #343.
+
 Isso reaproveita o sinal de regularidade da §5: `bed` já é o dado, e é comportamento e proxy de automaticidade ao mesmo tempo.
 
 Base: auto-eficácia e o modelo do Fogg convergem em que hábito pega quando a habilidade exigida é mínima e a pessoa acumula experiências de domínio. Gatear por desfecho quebra as duas coisas.
@@ -100,13 +136,17 @@ Lally mediu automaticidade com questionário (SRHI). Não temos isso, e não que
 
 O que temos é `records` com `createdAt`, `quantity` e `type`. Dá pra montar um **proxy comportamental** com três sinais:
 
-| sinal            | o que é                              | por que indica automaticidade                                                                                                |
-| ---------------- | ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
-| **consistência** | % de dias no alvo, janela de 28 dias | o óbvio: o comportamento acontece                                                                                            |
-| **regularidade** | dispersão do horário do registro     | comportamento automático é disparado por contexto e acontece em horário estável; variabilidade cai conforme o hábito assenta |
-| **resiliência**  | falhou e voltou no dia seguinte?     | hábito automático se recupera sozinho; hábito frágil vira duas faltas                                                        |
+| sinal            | o que é                                             | por que indica automaticidade                                                                                                |
+| ---------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **consistência** | % de dias com a ocasião cumprida, janela de 28 dias | o óbvio: o comportamento acontece                                                                                            |
+| **regularidade** | dispersão do horário do comportamento               | comportamento automático é disparado por contexto e acontece em horário estável; variabilidade cai conforme o hábito assenta |
+| **resiliência**  | falhou e voltou no dia seguinte?                    | hábito automático se recupera sozinho; hábito frágil vira duas faltas                                                        |
 
-**A regularidade é o sinal mais interessante e o menos óbvio**, e é de graça, porque todo registro já tem timestamp. Sono ainda tem `bed`/`wake`, que dá o sinal direto sem depender da hora em que a pessoa abriu o app.
+**A regularidade é o sinal mais interessante e o menos óbvio**, e é quase de graça, porque todo registro já tem timestamp.
+
+⚠️ **Timestamp de registro não é horário do comportamento.** Por um mês o sinal leu `createdAt`, ou seja a hora em que a pessoa abriu o app, então quem deitava sempre às 23h30 e registrava em horários variados aparecia irregular. Desde o #343 o sono usa `bed`, e as duas fontes **não se misturam** na mesma janela: somar a variação do deitar com a do registrar dá um número pior que qualquer um dos dois puros. A consequência aceita é o `n` despencar na virada, porque dizer "ainda não tenho a medida certa" é melhor que responder com a errada.
+
+Isso também é o que a §4.1 pede: se a unidade é a ocasião em contexto, o horário que interessa é o da ocasião.
 
 ⚠️ **Isto é proxy, não medida.** Não estamos medindo automaticidade; estamos inferindo de comportamento observável. Os limiares abaixo são **ponto de partida pra calibrar com dado real**, não verdades:
 
@@ -115,6 +155,8 @@ O que temos é `records` com `createdAt`, `quantity` e `type`. Dá pra montar um
 - nenhuma falta dupla na janela
 
 O primeiro usuário com dado suficiente pra calibrar é o próprio dono do projeto, com registros desde julho.
+
+**Estado em 15/09:** o levantamento foi feito e está no §12. Ele não fechou a calibração, e sim mostrou que dois dos três sinais mediam a coisa errada. A série que serve pra calibrar começou em 11/09, depois das correções.
 
 ---
 
