@@ -136,7 +136,7 @@ function SleepCreate({ onAfterAdd }) {
         onChange={setBedTime}
         placeholder="23:00"
         onAgora={() => setBedTime(horaAgora())}
-        agoraLabel="deitei agora"
+        agoraLabel="deitar agora"
       />
 
       {/* acordou, opcional */}
