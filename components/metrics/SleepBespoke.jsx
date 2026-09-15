@@ -71,16 +71,6 @@ function formatDuration(min) {
   return `${h}h ${m}min`;
 }
 
-// Rótulo do dia relativo. "hoje", "ontem", ou nome do dia da semana. Casa com
-// o design que mostra "domingo"/"segunda" ao lado da hora.
-function relativeDayLabel(offset) {
-  const d = new Date();
-  d.setDate(d.getDate() + offset);
-  if (offset === 0) return "hoje";
-  if (offset === -1) return "ontem";
-  return d.toLocaleDateString("pt-BR", { weekday: "long" });
-}
-
 /**
  * @param {{ onAfterAdd?: () => void, recordId?: string }} props
  */
@@ -132,13 +122,21 @@ function SleepCreate({ onAfterAdd }) {
 
   return (
     <View className="gap-4">
-      {/* dormiu */}
+      {/* "deitou", e não "dormiu": dormir é desfecho, deitar é o
+          comportamento que o §4.2 nomeia.
+          
+          Sem rótulo de dia. Ele era fixo em "ontem" e assumia que a pessoa
+          registra de manhã sobre a noite passada. Com o botão "deitei agora"
+          essa suposição cai, e qualquer regra que eu derivasse do horário
+          seria um palpite exibido como fato. Não dizer o dia é mais honesto
+          que adivinhá-lo. */}
       <TimeRow
-        label="dormiu"
+        label="deitou"
         value={bedTime}
         onChange={setBedTime}
-        dayLabel={relativeDayLabel(-1)}
         placeholder="23:00"
+        onAgora={() => setBedTime(horaAgora())}
+        agoraLabel="deitei agora"
       />
 
       {/* acordou, opcional */}
@@ -146,7 +144,6 @@ function SleepCreate({ onAfterAdd }) {
         label="acordou (opcional)"
         value={wakeTime}
         onChange={setWakeTime}
-        dayLabel={relativeDayLabel(0)}
         placeholder="07:00"
       />
 
@@ -290,14 +287,12 @@ function SleepEdit({ recordId, onAfterSave }) {
             label="dormiu"
             value={bedTime}
             onChange={setBedTime}
-            dayLabel=""
             placeholder="23:00"
           />
           <TimeRow
             label="acordou"
             value={wakeTime}
             onChange={setWakeTime}
-            dayLabel=""
             placeholder="07:00"
           />
           <View className="flex-row items-center justify-between rounded-2xl bg-tint-blue dark:bg-tint-blue-dark px-5 py-4">
@@ -517,11 +512,10 @@ function NoteInput({ value, onChange }) {
  *   label: string,
  *   value: string,
  *   onChange: (v: string) => void,
- *   dayLabel: string,
  *   placeholder: string,
  * }} props
  */
-function TimeRow({ label, value, onChange, dayLabel, placeholder }) {
+function TimeRow({ label, value, onChange, placeholder, onAgora, agoraLabel }) {
   const t = useThemeTokens();
   return (
     <View className="flex-row items-center justify-between rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark px-5 py-4">
@@ -546,12 +540,31 @@ function TimeRow({ label, value, onChange, dayLabel, placeholder }) {
           }}
         />
       </View>
-      <Text
-        className="text-xs text-body-secondary dark:text-body-secondary-dark"
-        style={{ fontFamily: "Inter_400Regular" }}
-      >
-        {dayLabel}
-      </Text>
+      <View className="items-end">
+        {/* Atalho do momento do comportamento: um toque na hora de deitar
+            registra o horário exato, em vez de depender de lembrar depois. */}
+        {onAgora ? (
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={agoraLabel}
+            onPress={onAgora}
+            className="rounded-full border border-primary dark:border-primary-dark px-3 py-1 active:opacity-70"
+          >
+            <Text
+              className="text-xs text-primary dark:text-primary-dark"
+              style={{ fontFamily: "Inter_500Medium" }}
+            >
+              {agoraLabel}
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
+}
+
+/** "HH:MM" de agora, pro atalho da linha do deitar. */
+function horaAgora() {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }
