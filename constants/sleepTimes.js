@@ -18,6 +18,16 @@
 const DIA_MIN = 1440;
 
 /**
+ * Teto de plausibilidade pra uma noite, em minutos (#353).
+ *
+ * Sono muito longo, por doença ou recuperação, chega a 12 ou 14 horas. 16
+ * fica acima do legítimo e abaixo do absurdo, e o absurdo aqui tem uma forma
+ * só: horários invertidos. Deitar 23:00 e acordar 22:00 dá 23 horas, e o app
+ * aceitava isso em silêncio.
+ */
+export const MAX_NOITE_MIN = 16 * 60;
+
+/**
  * "23:40" em minutos desde a meia-noite, ou `null`.
  *
  * Estrito de propósito. O `hhmmToMinutes` de `constants/duration.js` devolve 0
@@ -106,4 +116,31 @@ export function latestBed(registros) {
     }
   }
   return melhor;
+}
+
+/**
+ * O problema do par de horários, quando há um (#353).
+ *
+ * ⚠️ **A regra NÃO é "acordar depois de deitar".** Quem deita 23:40 e acorda
+ * 07:00 tem o acordar numericamente menor, e essa é a noite típica: é por isso
+ * que a duração atravessa a meia-noite por módulo. Comparar os dois números
+ * rejeitaria o caso mais comum do app.
+ *
+ * O que dá pra detectar é **duração implausível**, que é como a inversão
+ * aparece. Ver `MAX_NOITE_MIN`.
+ *
+ * Devolve `null` quando não há o que reclamar, inclusive quando o acordar está
+ * vazio: deitar sozinho é registro válido (§4.2).
+ *
+ * @param {string} bed
+ * @param {string} wake
+ * @returns {string|null} mensagem pra tela
+ */
+export function sleepTimeIssue(bed, wake) {
+  if (parseHHMM(wake) == null) return null;
+  const dur = durationFromTimes(bed, wake);
+  if (dur == null) return null;
+  if (dur <= MAX_NOITE_MIN) return null;
+  const horas = Math.round(dur / 60);
+  return `Isso daria ${horas}h deitado. Confere se os horários não estão trocados.`;
 }
