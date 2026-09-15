@@ -366,3 +366,62 @@ describe("dispersão exatamente zero não vira NaN (#343)", () => {
     expect(r.sdMinutes <= 120).toBe(true);
   });
 });
+
+describe("o dia do veredito de sono vem da noite, não do registro (#355)", () => {
+  const em = (dia, h, m = 0) => new Date(2026, 8, dia, h, m, 0).getTime();
+  const AGORA = em(20, 12);
+  const noite = (createdAt, bed) => ({
+    type: "sleep",
+    quantity: 0,
+    createdAt,
+    ...(bed ? { bed } : {}),
+  });
+
+  it("a mesma noite cai no mesmo dia, registrada à noite ou de manhã", () => {
+    // Este é o teste da LIGAÇÃO, e não do helper: prova que o dailyVerdicts
+    // realmente usa a atribuição, em vez de ela existir sem consumidor.
+    const aNoite = dailyVerdicts(
+      [noite(em(14, 23, 45), "23:40")],
+      "sleep",
+      0,
+      28,
+      AGORA,
+    );
+    const deManha = dailyVerdicts(
+      [noite(em(15, 8), "23:40")],
+      "sleep",
+      0,
+      28,
+      AGORA,
+    );
+    const diaA = aNoite.find((v) => v.hit)?.dia;
+    const diaB = deManha.find((v) => v.hit)?.dia;
+    expect(diaA).toBeDefined();
+    expect(diaA).toBe(diaB);
+  });
+
+  it("sem a atribuição, os dois cairiam em dias diferentes", () => {
+    // Prova que o teste acima não passa por acidente: os createdAt são de
+    // dias distintos, e é só a atribuição que os junta.
+    expect(new Date(em(14, 23, 45)).getDate()).toBe(14);
+    expect(new Date(em(15, 8)).getDate()).toBe(15);
+  });
+
+  it("registro antigo sem horário segue no dia do createdAt", () => {
+    // Todo o histórico anterior ao #328, que é a maioria.
+    const v = dailyVerdicts([noite(em(15, 8))], "sleep", 0, 28, AGORA);
+    const dia = v.find((x) => x.hit)?.dia;
+    expect(dia).toContain("15");
+  });
+
+  it("duas noites seguidas contam como dois dias", () => {
+    const v = dailyVerdicts(
+      [noite(em(14, 23, 30), "23:00"), noite(em(15, 23, 30), "23:00")],
+      "sleep",
+      0,
+      28,
+      AGORA,
+    );
+    expect(v.filter((x) => x.hit)).toHaveLength(2);
+  });
+});

@@ -144,3 +144,47 @@ export function sleepTimeIssue(bed, wake) {
   const horas = Math.round(dur / 60);
   return `Isso daria ${horas}h deitado. Confere se os horários não estão trocados.`;
 }
+
+/**
+ * A que dia pertence a noite de um registro de sono (#355).
+ *
+ * ## Não existe convenção
+ *
+ * Levantamento de plataformas: Fitbit usa o dia em que o sono terminou, Oura
+ * usa fronteira às 18h, Garmin usa o dia do despertar, WHOOP abandona o
+ * calendário, e Apple e Google não definem nada. Cinco dão quatro respostas.
+ * Isto aqui é **escolha documentada**, e não convenção herdada.
+ *
+ * ## A regra, em duas etapas
+ *
+ * 1. **Instante do deitar**: a ocorrência mais recente do horário informado,
+ *    em ou antes do `createdAt`. É isso que torna o resultado independente de
+ *    quando a pessoa registrou, que é o defeito a corrigir.
+ * 2. **Fronteira das 18h**: o dia de sono vai das 18h às 18h.
+ *
+ * A segunda etapa existe por um furo do óbvio. Atribuir ao dia do início puro
+ * quebra pra quem oscila em torno da meia-noite: domingo 23h50 conta domingo,
+ * segunda 00h10 contaria terça, e **segunda ficaria vazia** mesmo tendo
+ * dormido. É exatamente a população que a estatística circular do §5 trata.
+ *
+ * `null` quando não dá pra derivar, e aí quem chama cai no `createdAt`. Isso
+ * cobre todo registro anterior ao #328, que não tem `bed`.
+ *
+ * @param {{bed?: string, createdAt?: number}} registro
+ * @returns {number|null} epoch ms de um instante DENTRO do dia de sono
+ */
+export function nightInstant(registro) {
+  const min = parseHHMM(registro?.bed);
+  if (min == null) return null;
+  const ts = Number(registro?.createdAt);
+  if (!Number.isFinite(ts) || ts <= 0) return null;
+
+  // Ocorrência mais recente do horário em ou antes do registro.
+  const d = new Date(ts);
+  d.setHours(Math.floor(min / 60), min % 60, 0, 0);
+  if (d.getTime() > ts) d.setDate(d.getDate() - 1);
+
+  // Fronteira das 18h: antes disso, a noite pertence ao dia anterior.
+  if (d.getHours() < 18) d.setDate(d.getDate() - 1);
+  return d.getTime();
+}
