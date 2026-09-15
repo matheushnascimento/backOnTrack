@@ -15,6 +15,7 @@
 // ninguém enquanto isso for verdade.
 
 import { GOAL_KIND } from "./goals";
+import { nightInstant } from "./sleepTimes";
 
 const MS_DIA = 86_400_000;
 
@@ -67,7 +68,12 @@ export function dailyVerdicts(records, metric, target, days, now = Date.now()) {
     if (r?.type !== metric) continue;
     const ts = Number(r.createdAt);
     if (!Number.isFinite(ts)) continue;
-    const k = diaLocal(ts);
+    // A noite pertence ao dia em que ACONTECEU, e não ao dia em que foi
+    // registrada (#355). Sem isto, tocar "deitar agora" às 23:40 conta num
+    // dia e registrar a mesma noite de manhã conta em outro. Só o sono tem
+    // horário de evento gravado; o resto segue no `createdAt`, e registro
+    // antigo sem `bed` também, porque não há de onde derivar.
+    const k = diaLocal(nightInstant(r) ?? ts);
     const q = Number(r.quantity);
     porDia.set(k, {
       total: (porDia.get(k)?.total ?? 0) + (Number.isFinite(q) ? q : 0),
