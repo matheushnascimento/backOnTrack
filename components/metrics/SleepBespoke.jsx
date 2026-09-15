@@ -8,6 +8,7 @@ import { minutesToHHMM } from "@/constants/duration";
 import {
   durationFromTimes,
   parseHHMM,
+  sleepTimeIssue,
   timesFrom,
 } from "@/constants/sleepTimes";
 import { formatGoal } from "@/constants/goals";
@@ -94,10 +95,14 @@ function SleepCreate({ onAfterAdd }) {
     [bedTime, wakeTime],
   );
 
+  // Aviso de horários trocados (#353). Só age quando há acordar: deitar
+  // sozinho segue sendo registro válido.
+  const problema = sleepTimeIssue(bedTime, wakeTime);
+
   // Só o deitar é obrigatório (#349). O §4.2 do modelo separou os papéis:
   // deitar é o comportamento, acordar habilita a duração, e qualidade é
   // percepção. Exigir os três contraria o comportamento que se quer repetir.
-  const canSave = parseHHMM(bedTime) != null;
+  const canSave = parseHHMM(bedTime) != null && problema == null;
 
   function handleSave() {
     if (!canSave) return;
@@ -145,7 +150,20 @@ function SleepCreate({ onAfterAdd }) {
         value={wakeTime}
         onChange={setWakeTime}
         placeholder="07:00"
+        onAgora={() => setWakeTime(horaAgora())}
+        agoraLabel="levantar agora"
       />
+
+      {/* O aviso fica entre os campos e a duração, porque é sobre eles.
+          Sem cor de erro: horários trocados são engano comum, e não falta. */}
+      {problema ? (
+        <Text
+          className="px-1 text-sm text-body-secondary dark:text-body-secondary-dark"
+          style={{ fontFamily: "Inter_400Regular" }}
+        >
+          {problema}
+        </Text>
+      ) : null}
 
       {/* Duração só aparece quando há acordar. Ela é desfecho, e mostrar
           "--" o tempo todo transformaria um campo opcional em cobrança. A
