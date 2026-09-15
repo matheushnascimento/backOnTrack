@@ -63,12 +63,47 @@ export function durationFromTimes(bed, wake) {
  * a edição oferecer o formulário certo em vez de mostrar dois campos vazios e
  * fingir que o dado existe.
  *
+ * ⚠️ **Quem manda é o `bed` sozinho** (#349). Desde que o deitar virou o único
+ * campo obrigatório, existe registro com deitar e sem acordar, e ele precisa
+ * abrir no formulário de horário. Exigir os dois aqui mandaria esse registro
+ * pro formulário de duração, que é justamente o dado que ele não tem.
+ *
+ * `wake` volta como string vazia quando não existe, e a tela trata isso como
+ * campo opcional em branco.
+ *
  * @param {{bed?: string, wake?: string}|null|undefined} registro
  * @returns {{bed: string, wake: string}|null}
  */
 export function timesFrom(registro) {
   const bed = registro?.bed;
+  if (parseHHMM(bed) == null) return null;
   const wake = registro?.wake;
-  if (parseHHMM(bed) == null || parseHHMM(wake) == null) return null;
-  return { bed, wake };
+  return { bed, wake: parseHHMM(wake) == null ? "" : wake };
+}
+
+/**
+ * O horário de deitar mais recente de uma lista de registros (#349).
+ *
+ * Serve pra Home ter o que mostrar quando o registro tem só o deitar. Sem
+ * isso ela formataria duração zero como "0:00", que lê como falha justamente
+ * pra quem registrou o comportamento direito.
+ *
+ * ⚠️ Isto é remendo de fatia. Centrar a Home no comportamento em vez da
+ * quantidade pertence à fatia das ocasiões, que mexe no `dailyVerdicts`.
+ *
+ * @param {Array<{bed?: string, createdAt?: number}>} registros
+ * @returns {string|null}
+ */
+export function latestBed(registros) {
+  let melhor = null;
+  let quando = -Infinity;
+  for (const r of registros ?? []) {
+    if (parseHHMM(r?.bed) == null) continue;
+    const ts = Number(r?.createdAt) || 0;
+    if (ts >= quando) {
+      quando = ts;
+      melhor = r.bed;
+    }
+  }
+  return melhor;
 }

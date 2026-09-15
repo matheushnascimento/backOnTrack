@@ -5,7 +5,12 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import { add, getById, update } from "@/infra/database";
 import getDate from "@/constants/getDate";
 import { minutesToHHMM } from "@/constants/duration";
-import { durationFromTimes, timesFrom } from "@/constants/sleepTimes";
+import {
+  durationFromTimes,
+  parseHHMM,
+  timesFrom,
+} from "@/constants/sleepTimes";
+import { formatGoal } from "@/constants/goals";
 import { useThemeTokens } from "@/constants/themeTokens";
 
 import TimePickerField from "./TimePickerField";
@@ -99,19 +104,25 @@ function SleepCreate({ onAfterAdd }) {
     [bedTime, wakeTime],
   );
 
-  const canSave = durationMin != null && durationMin > 0 && quality != null;
+  // Só o deitar é obrigatório (#349). O §4.2 do modelo separou os papéis:
+  // deitar é o comportamento, acordar habilita a duração, e qualidade é
+  // percepção. Exigir os três contraria o comportamento que se quer repetir.
+  const canSave = parseHHMM(bedTime) != null;
 
   function handleSave() {
     if (!canSave) return;
     add("sleep", {
       date: getDate().ISOdate,
       unit: "min",
-      quantity: durationMin,
-      score: quality,
+      // Duração é DESFECHO (§4.2), e só existe quando houve acordar. Zero
+      // aqui significa "não informado", e a Home trata isso mostrando o
+      // horário de deitar em vez de formatar zero como "0:00".
+      quantity: durationMin ?? 0,
       // Os horários vão junto (#328). Antes morriam aqui, e a edição só
       // conseguia oferecer duração porque o dado não existia.
       bed: bedTime,
-      wake: wakeTime,
+      ...(wakeTime ? { wake: wakeTime } : {}),
+      ...(quality != null ? { score: quality } : {}),
     });
     setBedTime("");
     setWakeTime("");
@@ -130,33 +141,42 @@ function SleepCreate({ onAfterAdd }) {
         placeholder="23:00"
       />
 
-      {/* acordou */}
+      {/* acordou, opcional */}
       <TimeRow
-        label="acordou"
+        label="acordou (opcional)"
         value={wakeTime}
         onChange={setWakeTime}
         dayLabel={relativeDayLabel(0)}
         placeholder="07:00"
       />
 
-      {/* duração calculada */}
-      <View className="flex-row items-center justify-between rounded-2xl bg-tint-blue dark:bg-tint-blue-dark px-5 py-4">
-        <Text
-          className="text-sm text-primary dark:text-primary-dark"
-          style={{ fontFamily: "Inter_500Medium" }}
-        >
-          Duração
-        </Text>
-        <Text
-          className="text-primary dark:text-primary-dark"
-          style={{
-            fontFamily: "JetBrainsMono_500Medium",
-            fontSize: 22,
-          }}
-        >
-          {formatDuration(durationMin)}
-        </Text>
-      </View>
+      {/* Duração só aparece quando há acordar. Ela é desfecho, e mostrar
+          "--" o tempo todo transformaria um campo opcional em cobrança. A
+          faixa vem junto como REFERÊNCIA DE LEITURA, e não como meta. */}
+      {durationMin != null ? (
+        <View className="gap-1 rounded-2xl bg-tint-blue dark:bg-tint-blue-dark px-5 py-4">
+          <View className="flex-row items-center justify-between">
+            <Text
+              className="text-sm text-primary dark:text-primary-dark"
+              style={{ fontFamily: "Inter_500Medium" }}
+            >
+              Duração
+            </Text>
+            <Text
+              className="text-primary dark:text-primary-dark"
+              style={{ fontFamily: "JetBrainsMono_500Medium", fontSize: 22 }}
+            >
+              {formatDuration(durationMin)}
+            </Text>
+          </View>
+          <Text
+            className="text-xs text-primary dark:text-primary-dark opacity-70"
+            style={{ fontFamily: "Inter_400Regular" }}
+          >
+            suficiente costuma ser {formatGoal("sleep")}
+          </Text>
+        </View>
+      ) : null}
 
       {/* qualidade */}
       <View className="mt-2">
@@ -164,7 +184,7 @@ function SleepCreate({ onAfterAdd }) {
           className="mb-3 text-xs uppercase tracking-wider text-label dark:text-label-dark"
           style={{ fontFamily: "JetBrainsMono_500Medium" }}
         >
-          Como se sente hoje
+          Como se sente hoje (opcional)
         </Text>
         <QualityPills value={quality} onChange={setQuality} />
       </View>
