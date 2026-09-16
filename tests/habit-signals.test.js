@@ -425,3 +425,43 @@ describe("o dia do veredito de sono vem da noite, não do registro (#355)", () =
     expect(v.filter((x) => x.hit)).toHaveLength(2);
   });
 });
+
+// Formato REAL que os sinais recebem em produção. Todos os consumidores
+// (Ajustes, tela do hábito, useJourney da Home) fazem
+// `Object.values(useTable("records", store))`, que devolve a linha crua: o
+// `bed` não é coluna, mora dentro do JSON `details`. Os testes acima montam o
+// registro com `bed` no topo, que é o formato hidratado, e por isso passavam
+// enquanto a leitura do horário não funcionava no app.
+describe("sinais leem o horário de deitar da linha crua do store", () => {
+  const em = (dia, h, m = 0) => new Date(2026, 7, dia, h, m, 0).getTime();
+  const linhaCrua = (createdAt, detalhes) => ({
+    type: "sleep",
+    date: new Date(createdAt).toISOString(),
+    quantity: 0,
+    unit: "min",
+    note: "",
+    details: JSON.stringify(detalhes),
+    createdAt,
+  });
+
+  it("dailyVerdicts: a mesma noite cai no mesmo dia, à noite ou de manhã (#355)", () => {
+    const diaDe = (linha) =>
+      dailyVerdicts([linha], "sleep", 0, 28, AGORA).find((v) => v.hit)?.dia;
+    const aNoite = diaDe(linhaCrua(em(12, 23, 45), { bed: "23:40" }));
+    const deManha = diaDe(linhaCrua(em(13, 8), { bed: "23:40" }));
+    expect(aNoite).toBeDefined();
+    expect(deManha).toBe(aNoite);
+  });
+
+  it("regularity: mede pelo horário de deitar, não pela hora de registrar (#344)", () => {
+    // Deitou sempre às 23:00, registrou em horas espalhadas pelo dia. Medido
+    // pelo deitar, a dispersão é zero; medido pelo createdAt, passa de horas.
+    const horasDeRegistro = [7, 13, 22, 9, 18];
+    const linhas = horasDeRegistro.map((h, i) =>
+      linhaCrua(em(13 - i, h), { bed: "23:00" }),
+    );
+    const r = regularity(linhas, "sleep", 28, AGORA);
+    expect(r.n).toBe(5);
+    expect(r.sdMinutes).toBeLessThan(5);
+  });
+});

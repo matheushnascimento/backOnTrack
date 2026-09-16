@@ -15,7 +15,7 @@
 // ninguém enquanto isso for verdade.
 
 import { GOAL_KIND } from "./goals";
-import { nightInstant } from "./sleepTimes";
+import { bedOf, nightInstant, parseHHMM } from "./sleepTimes";
 
 const MS_DIA = 86_400_000;
 
@@ -25,16 +25,14 @@ const MS_DIA = 86_400_000;
  * `null` quando não guarda, e aí quem chama decide o que fazer. Hoje só o sono
  * tem (`bed`, desde o #328); as outras métricas seguem sem horário de evento.
  *
- * @param {{bed?: string}} registro
+ * Lê pelo `bedOf`, que aceita a linha crua do store (o `bed` dentro do
+ * `details`). É esse o formato que os consumidores passam.
+ *
+ * @param {{bed?: string, details?: string}} registro
  * @returns {number|null}
  */
 function minutoDoEvento(registro) {
-  const m = /^(\d{1,2}):(\d{2})$/.exec(String(registro?.bed ?? "").trim());
-  if (!m) return null;
-  const h = Number(m[1]);
-  const min = Number(m[2]);
-  if (h > 23 || min > 59) return null;
-  return h * 60 + min;
+  return parseHHMM(bedOf(registro));
 }
 
 /** Chave de dia-calendário local (não UTC, porque o dia do usuário é o local). */

@@ -5,6 +5,7 @@
 // oferecer duração.
 
 import {
+  bedOf,
   durationFromTimes,
   latestBed,
   nightInstant,
@@ -196,5 +197,29 @@ describe("nightInstant", () => {
     expect(nightInstant({ bed: "lixo", createdAt: em(15, 8) })).toBeNull();
     expect(nightInstant({ bed: "23:40" })).toBeNull();
     expect(nightInstant(null)).toBeNull();
+  });
+});
+
+describe("bedOf", () => {
+  // Os dois formatos convivem no app: hidratado (getToday/getById) traz o
+  // `bed` no topo; a linha crua (useTable) traz dentro do `details`.
+  it("lê do topo, no registro hidratado", () => {
+    expect(bedOf({ bed: "23:40" })).toBe("23:40");
+  });
+
+  it("lê do details, na linha crua do store", () => {
+    expect(bedOf({ details: '{"score":3,"bed":"00:08"}' })).toBe("00:08");
+  });
+
+  it("o topo tem precedência sobre o details", () => {
+    expect(bedOf({ bed: "22:00", details: '{"bed":"23:00"}' })).toBe("22:00");
+  });
+
+  it("devolve undefined sem horário, sem quebrar em details ruim", () => {
+    expect(bedOf({ details: '{"score":3}' })).toBeUndefined();
+    expect(bedOf({ details: "{não é json" })).toBeUndefined();
+    expect(bedOf({ details: "" })).toBeUndefined();
+    expect(bedOf({})).toBeUndefined();
+    expect(bedOf(null)).toBeUndefined();
   });
 });

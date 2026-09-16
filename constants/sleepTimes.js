@@ -48,6 +48,33 @@ export function parseHHMM(hhmm) {
 }
 
 /**
+ * O horário de deitar de um registro, em qualquer dos dois formatos.
+ *
+ * O `bed` não é coluna da tabela `records`: mora dentro do JSON `details`.
+ * Quem lê via `getToday`/`getById` recebe o registro **hidratado**, com o
+ * `bed` espalhado no topo. Quem lê via `useTable("records")` recebe a linha
+ * **crua**, com o `bed` preso no `details`. Os sinais da jornada leem a crua.
+ *
+ * Ler só `registro.bed` funcionava nos testes, que montavam o formato
+ * hidratado, e devolvia `undefined` no app. Foi assim que a regularidade por
+ * horário de deitar (#344) e a atribuição da noite ao dia (#355) ficaram sem
+ * efeito em produção com a suíte verde.
+ *
+ * @param {{bed?: string, details?: string}|null|undefined} registro
+ * @returns {string|undefined} o "HH:MM" como gravado, sem validar
+ */
+export function bedOf(registro) {
+  if (registro?.bed != null) return registro.bed;
+  const details = registro?.details;
+  if (typeof details !== "string" || details === "") return undefined;
+  try {
+    return JSON.parse(details)?.bed;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Duração entre deitar e acordar, atravessando a meia-noite.
  *
  * Dormir 23:40 e acordar 07:00 são 7h20, e não um número negativo. O módulo
@@ -174,7 +201,7 @@ export function sleepTimeIssue(bed, wake) {
  * @returns {number|null} epoch ms de um instante DENTRO do dia de sono
  */
 export function nightInstant(registro) {
-  const min = parseHHMM(registro?.bed);
+  const min = parseHHMM(bedOf(registro));
   if (min == null) return null;
   const ts = Number(registro?.createdAt);
   if (!Number.isFinite(ts) || ts <= 0) return null;
