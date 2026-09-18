@@ -314,23 +314,68 @@ Rodado com o código de produção sobre a mesma sala, e não com uma reimplemen
 | exercício   | 1   | 0,04         | sem amostra            | não             |
 | estudo      | 2   | 0,00         | sem amostra            | não             |
 
+> ⚠️ **A linha do sono está errada.** Aqueles `139min` são dispersão da hora de REGISTRAR, não do horário de deitar. O #344 tinha entrado na main naquele mesmo dia, mas não funcionava no app: ele lia `registro.bed`, e os sinais recebem a linha crua do store, onde `bed` mora dentro do JSON `details`. A leitura devolvia `undefined` e caía no `createdAt`. Só o #356 (18/09) corrigiu. Ver o levantamento de 18/09 abaixo, e a issue #357.
+>
+> As demais linhas seguem válidas: água, alimentação, exercício e estudo não gravam horário de evento, então usam `createdAt` por desenho.
+
 **Três achados, que valem mais que os números.**
 
 **1. Em métrica `sum`, consistência mede o quanto foi REGISTRADO.** Água tem alvo de 2000ml. Em 15 dias com registro, nenhum chegou lá: melhor dia 1600, mediana 800. Ninguém bebe 800ml por dia. "Não fiz" e "não registrei" são indistinguíveis, e o dado diz que o segundo domina.
 
 Isso colide com o §4, que fixou o portão em comportamento e nunca em resultado. Foi por isso que o sono virou `presence`; as outras quatro seguem `sum` e reintroduzem o problema por outra porta. **Calibrar limiar não resolve: com consistência zero, nenhum número separa nada.**
 
-**2. O portão está acima do melhor observado.** O usuário mais ativo do projeto, depois de 38 dias, não passa em sono: 0,71 contra os 0,80 exigidos, e 139min contra os 120 de dispersão máxima.
+**2. O portão está acima do melhor observado.** O usuário mais ativo do projeto, depois de 38 dias, não passa em sono: 0,71 contra os 0,80 exigidos.
 
 A consistência ali é defensável: `presence` significa "registrou naquele dia", e 0,80 são 22 de 28 dias, um padrão honesto pra hábito em formação. O número diz que o hábito não fechou, e não que a régua está torta.
 
-**3. A regularidade media a hora de ABRIR O APP.** O sinal lia `createdAt`, então quem deitava sempre às 23h30 e registrava em horários variados aparecia irregular. Corrigido no #343, que passou a usar `bed` (gravado desde o #328). O mesmo PR revelou um bug que já existia: com dispersão exatamente zero a raiz virava `NaN`, e como o portão compara `sdMinutes <= max`, **quem fosse perfeito era reprovado por isso**.
+> ⚠️ **Corrigido em 18/09.** A versão original deste achado também citava "139min contra os 120 de dispersão máxima", e essa metade estava invertida. Medida pelo horário de deitar, a dispersão do mesmo usuário é de 27min, folgadamente **abaixo** do teto. Não há evidência de que o limiar de dispersão esteja apertado. Ver o levantamento de 18/09.
+
+**3. A regularidade media a hora de ABRIR O APP.** O sinal lia `createdAt`, então quem deitava sempre às 23h30 e registrava em horários variados aparecia irregular. O #343 e o #344 trocaram a leitura pra `bed` (gravado desde o #328). O mesmo PR revelou um bug que já existia: com dispersão exatamente zero a raiz virava `NaN`, e como o portão compara `sdMinutes <= max`, **quem fosse perfeito era reprovado por isso**.
+
+> ⚠️ **A troca não chegou ao app até 18/09.** O código novo lia `registro.bed`, e os quatro consumidores dos sinais passam a linha crua do store, onde `bed` está dentro do `details`. Os testes montavam o registro hidratado, com `bed` no topo, então a suíte ficou verde por uma semana enquanto o app seguia medindo `createdAt`. O #356 acrescentou um leitor que aceita os dois formatos, e testes que usam o formato exato da linha crua.
+>
+> A lição vale além deste caso: **teste que monta o insumo num formato que a produção não usa não prova ligação nenhuma.** É a mesma armadilha catalogada como capacidade pura sem fio.
+
+### Levantamento de 18/09/2026: o primeiro com a regularidade certa
+
+Refeito depois do #356, com o código de produção sobre a linha crua do store, que é o formato que o app usa. Sala do dono do projeto: 126 registros no total, de 04/08 a 18/09, sendo 65 em 20 dias dentro da janela de 28.
+
+| métrica     | n   | consistência | regularidade           | falhas duplas | portão |
+| ----------- | --- | ------------ | ---------------------- | ------------- | ------ |
+| sono        | 19  | 0,64         | 5 amostras, sd 27min   | 4             | não    |
+| água        | 30  | 0,00         | 30 amostras, sd 173min | 27            | não    |
+| alimentação | 15  | 0,11         | 15 amostras, sd 401min | 22            | não    |
+| exercício   | 1   | 0,04         | sem amostra            | 25            | não    |
+| estudo      | 0   | 0,00         | sem amostra            | 27            | não    |
+
+Segunda sala autenticada, com uso bem menor (24 registros, 14 na janela em 5 dias): sono 0,14 sem amostra de regularidade, água 0,00 com sd 232min, o resto com um registro ou nenhum.
+
+**O que muda em relação a 11/09.**
+
+**A dispersão do sono despenca de 139min para 27min.** Os cinco horários de deitar registrados são 00:36, 23:42, 00:08, 00:10 e 01:00, um agrupamento de cerca de 78 minutos em torno da meia-noite. O 139min anterior era a variação da hora de abrir o app, que é outro fenômeno.
+
+**O que barra o sono no portão passa a ser outra coisa.** Três critérios reprovam, e nenhum deles é a dispersão:
+
+| critério      | exigido  | observado |
+| ------------- | -------- | --------- |
+| consistência  | ≥ 0,80   | 0,64      |
+| amostras      | ≥ 8      | 5         |
+| falhas duplas | 0        | 4         |
+| dispersão     | ≤ 120min | **27min** |
+
+**A escassez de amostra é temporária e tem data.** Só 5 dos 31 registros de sono carregam horário de deitar, e o primeiro é de 13/09, porque o campo só passou a ser gravado no #328. O `regularityMinSamples: 8` é hoje o critério mais apertado por acidente de calendário, e se resolve sozinho conforme a janela anda. Não é sinal de limiar mal escolhido.
+
+**As falhas duplas não tinham sido notadas como barreira.** O portão exige zero, e o sono tem 4 na janela. Nas outras métricas o número beira o tamanho da própria janela (22 a 27 de 28 dias), porque quase todo dia é falha. Com a regra atual, qualquer coisa que não seja quase diária nunca passa. Isso merece decisão à parte, e conversa com a §6.
+
+**O achado 1 segue de pé, intocado.** Água com 30 registros e consistência 0,00 é o mesmo problema de métrica `sum` medindo o quanto foi registrado.
 
 ### Onde a calibração parou
 
-Duas mudanças saíram do levantamento: o sono passou a exibir **faixa de suficiência** em vez de 8h cravado (#341), e a regularidade passou a medir a hora de deitar (#343).
+Duas mudanças saíram do levantamento: o sono passou a exibir **faixa de suficiência** em vez de 8h cravado (#341), e a regularidade passou a medir a hora de deitar (#343, #344, e de fato só no #356).
 
-**Os limiares seguem provisórios**, agora por um motivo diferente do de agosto: a série de dado correto **começou em 11/09**. A anterior media a coisa errada, e não dá pra calibrar contra ela.
+**Os limiares seguem provisórios**, agora por um motivo diferente do de agosto: a série de dado correto para a regularidade do sono **começa em 18/09**, com o #356. A tentativa anterior datava de 11/09, mas aquele código nunca rodou no app, então não há série a recuperar ali.
+
+Com 5 noites com horário gravado, a janela de 28 dias só fica cheia por volta de meados de outubro. Antes disso, qualquer número de regularidade do sono é amostra pequena, e o `regularityMinSamples: 8` reprova por construção.
 
 **Decisão de modelo ainda pendente:** o que "consistência" deve significar numa métrica de soma. As opções levantadas foram contar o dia em que houve qualquer registro, como no sono, ou baixar as metas ao que é de fato registrado, que ajusta o alvo ao instrumento e por isso parece pior.
 
