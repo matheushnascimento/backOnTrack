@@ -366,3 +366,102 @@ describe("dispersão exatamente zero não vira NaN (#343)", () => {
     expect(r.sdMinutes <= 120).toBe(true);
   });
 });
+
+describe("o dia do veredito de sono vem da noite, não do registro (#355)", () => {
+  const em = (dia, h, m = 0) => new Date(2026, 8, dia, h, m, 0).getTime();
+  const AGORA = em(20, 12);
+  const noite = (createdAt, bed) => ({
+    type: "sleep",
+    quantity: 0,
+    createdAt,
+    ...(bed ? { bed } : {}),
+  });
+
+  it("a mesma noite cai no mesmo dia, registrada à noite ou de manhã", () => {
+    // Este é o teste da LIGAÇÃO, e não do helper: prova que o dailyVerdicts
+    // realmente usa a atribuição, em vez de ela existir sem consumidor.
+    const aNoite = dailyVerdicts(
+      [noite(em(14, 23, 45), "23:40")],
+      "sleep",
+      0,
+      28,
+      AGORA,
+    );
+    const deManha = dailyVerdicts(
+      [noite(em(15, 8), "23:40")],
+      "sleep",
+      0,
+      28,
+      AGORA,
+    );
+    const diaA = aNoite.find((v) => v.hit)?.dia;
+    const diaB = deManha.find((v) => v.hit)?.dia;
+    expect(diaA).toBeDefined();
+    expect(diaA).toBe(diaB);
+  });
+
+  it("sem a atribuição, os dois cairiam em dias diferentes", () => {
+    // Prova que o teste acima não passa por acidente: os createdAt são de
+    // dias distintos, e é só a atribuição que os junta.
+    expect(new Date(em(14, 23, 45)).getDate()).toBe(14);
+    expect(new Date(em(15, 8)).getDate()).toBe(15);
+  });
+
+  it("registro antigo sem horário segue no dia do createdAt", () => {
+    // Todo o histórico anterior ao #328, que é a maioria.
+    const v = dailyVerdicts([noite(em(15, 8))], "sleep", 0, 28, AGORA);
+    const dia = v.find((x) => x.hit)?.dia;
+    expect(dia).toContain("15");
+  });
+
+  it("duas noites seguidas contam como dois dias", () => {
+    const v = dailyVerdicts(
+      [noite(em(14, 23, 30), "23:00"), noite(em(15, 23, 30), "23:00")],
+      "sleep",
+      0,
+      28,
+      AGORA,
+    );
+    expect(v.filter((x) => x.hit)).toHaveLength(2);
+  });
+});
+
+// Formato REAL que os sinais recebem em produção. Todos os consumidores
+// (Ajustes, tela do hábito, useJourney da Home) fazem
+// `Object.values(useTable("records", store))`, que devolve a linha crua: o
+// `bed` não é coluna, mora dentro do JSON `details`. Os testes acima montam o
+// registro com `bed` no topo, que é o formato hidratado, e por isso passavam
+// enquanto a leitura do horário não funcionava no app.
+describe("sinais leem o horário de deitar da linha crua do store", () => {
+  const em = (dia, h, m = 0) => new Date(2026, 7, dia, h, m, 0).getTime();
+  const linhaCrua = (createdAt, detalhes) => ({
+    type: "sleep",
+    date: new Date(createdAt).toISOString(),
+    quantity: 0,
+    unit: "min",
+    note: "",
+    details: JSON.stringify(detalhes),
+    createdAt,
+  });
+
+  it("dailyVerdicts: a mesma noite cai no mesmo dia, à noite ou de manhã (#355)", () => {
+    const diaDe = (linha) =>
+      dailyVerdicts([linha], "sleep", 0, 28, AGORA).find((v) => v.hit)?.dia;
+    const aNoite = diaDe(linhaCrua(em(12, 23, 45), { bed: "23:40" }));
+    const deManha = diaDe(linhaCrua(em(13, 8), { bed: "23:40" }));
+    expect(aNoite).toBeDefined();
+    expect(deManha).toBe(aNoite);
+  });
+
+  it("regularity: mede pelo horário de deitar, não pela hora de registrar (#344)", () => {
+    // Deitou sempre às 23:00, registrou em horas espalhadas pelo dia. Medido
+    // pelo deitar, a dispersão é zero; medido pelo createdAt, passa de horas.
+    const horasDeRegistro = [7, 13, 22, 9, 18];
+    const linhas = horasDeRegistro.map((h, i) =>
+      linhaCrua(em(13 - i, h), { bed: "23:00" }),
+    );
+    const r = regularity(linhas, "sleep", 28, AGORA);
+    expect(r.n).toBe(5);
+    expect(r.sdMinutes).toBeLessThan(5);
+  });
+});

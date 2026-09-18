@@ -5,8 +5,10 @@
 // oferecer duração.
 
 import {
+  bedOf,
   durationFromTimes,
   latestBed,
+  nightInstant,
   parseHHMM,
   sleepTimeIssue,
   timesFrom,
@@ -150,5 +152,74 @@ describe("sleepTimeIssue", () => {
     // A borda importa: quem definir o teto de novo precisa ver o limite.
     expect(sleepTimeIssue("22:00", "14:00")).toBeNull();
     expect(sleepTimeIssue("22:00", "14:01")).not.toBeNull();
+  });
+});
+
+describe("nightInstant", () => {
+  const em = (dia, h, m = 0) => new Date(2026, 8, dia, h, m, 0).getTime();
+  const diaDe = (ts) => new Date(ts).getDate();
+
+  it("a mesma noite dá o mesmo dia, registrada à noite ou de manhã", () => {
+    // O defeito que motivou tudo: tocar "deitar agora" às 23:40 contava num
+    // dia, e registrar a mesma noite de manhã contava em outro.
+    const aNoite = nightInstant({ bed: "23:40", createdAt: em(14, 23, 45) });
+    const deManha = nightInstant({ bed: "23:40", createdAt: em(15, 8) });
+    expect(diaDe(aNoite)).toBe(diaDe(deManha));
+    expect(diaDe(aNoite)).toBe(14);
+  });
+
+  it("23h50 e 00h10 caem no MESMO dia", () => {
+    // O furo do "dia do início" puro: sem a fronteira das 18h, segunda
+    // ficaria vazia pra quem oscila em torno da meia-noite, mesmo tendo
+    // dormido todas as noites.
+    const antes = nightInstant({ bed: "23:50", createdAt: em(15, 8) });
+    const depois = nightInstant({ bed: "00:10", createdAt: em(15, 8) });
+    expect(diaDe(antes)).toBe(14);
+    expect(diaDe(depois)).toBe(14);
+  });
+
+  it("noites seguidas caem em dias seguidos", () => {
+    const seg = nightInstant({ bed: "23:00", createdAt: em(15, 7) });
+    const ter = nightInstant({ bed: "23:00", createdAt: em(16, 7) });
+    expect(diaDe(seg)).toBe(14);
+    expect(diaDe(ter)).toBe(15);
+  });
+
+  it("madrugada pertence ao dia anterior", () => {
+    expect(diaDe(nightInstant({ bed: "02:00", createdAt: em(15, 9) }))).toBe(
+      14,
+    );
+  });
+
+  it("devolve null sem horário, pra cair no createdAt", () => {
+    // Todo registro anterior ao #328 é assim, e é a maioria do histórico.
+    expect(nightInstant({ createdAt: em(15, 8) })).toBeNull();
+    expect(nightInstant({ bed: "lixo", createdAt: em(15, 8) })).toBeNull();
+    expect(nightInstant({ bed: "23:40" })).toBeNull();
+    expect(nightInstant(null)).toBeNull();
+  });
+});
+
+describe("bedOf", () => {
+  // Os dois formatos convivem no app: hidratado (getToday/getById) traz o
+  // `bed` no topo; a linha crua (useTable) traz dentro do `details`.
+  it("lê do topo, no registro hidratado", () => {
+    expect(bedOf({ bed: "23:40" })).toBe("23:40");
+  });
+
+  it("lê do details, na linha crua do store", () => {
+    expect(bedOf({ details: '{"score":3,"bed":"00:08"}' })).toBe("00:08");
+  });
+
+  it("o topo tem precedência sobre o details", () => {
+    expect(bedOf({ bed: "22:00", details: '{"bed":"23:00"}' })).toBe("22:00");
+  });
+
+  it("devolve undefined sem horário, sem quebrar em details ruim", () => {
+    expect(bedOf({ details: '{"score":3}' })).toBeUndefined();
+    expect(bedOf({ details: "{não é json" })).toBeUndefined();
+    expect(bedOf({ details: "" })).toBeUndefined();
+    expect(bedOf({})).toBeUndefined();
+    expect(bedOf(null)).toBeUndefined();
   });
 });

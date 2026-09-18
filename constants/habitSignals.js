@@ -15,6 +15,7 @@
 // ninguém enquanto isso for verdade.
 
 import { GOAL_KIND } from "./goals";
+import { bedOf, nightInstant, parseHHMM } from "./sleepTimes";
 
 const MS_DIA = 86_400_000;
 
@@ -24,16 +25,14 @@ const MS_DIA = 86_400_000;
  * `null` quando não guarda, e aí quem chama decide o que fazer. Hoje só o sono
  * tem (`bed`, desde o #328); as outras métricas seguem sem horário de evento.
  *
- * @param {{bed?: string}} registro
+ * Lê pelo `bedOf`, que aceita a linha crua do store (o `bed` dentro do
+ * `details`). É esse o formato que os consumidores passam.
+ *
+ * @param {{bed?: string, details?: string}} registro
  * @returns {number|null}
  */
 function minutoDoEvento(registro) {
-  const m = /^(\d{1,2}):(\d{2})$/.exec(String(registro?.bed ?? "").trim());
-  if (!m) return null;
-  const h = Number(m[1]);
-  const min = Number(m[2]);
-  if (h > 23 || min > 59) return null;
-  return h * 60 + min;
+  return parseHHMM(bedOf(registro));
 }
 
 /** Chave de dia-calendário local (não UTC, porque o dia do usuário é o local). */
@@ -67,7 +66,12 @@ export function dailyVerdicts(records, metric, target, days, now = Date.now()) {
     if (r?.type !== metric) continue;
     const ts = Number(r.createdAt);
     if (!Number.isFinite(ts)) continue;
-    const k = diaLocal(ts);
+    // A noite pertence ao dia em que ACONTECEU, e não ao dia em que foi
+    // registrada (#355). Sem isto, tocar "deitar agora" às 23:40 conta num
+    // dia e registrar a mesma noite de manhã conta em outro. Só o sono tem
+    // horário de evento gravado; o resto segue no `createdAt`, e registro
+    // antigo sem `bed` também, porque não há de onde derivar.
+    const k = diaLocal(nightInstant(r) ?? ts);
     const q = Number(r.quantity);
     porDia.set(k, {
       total: (porDia.get(k)?.total ?? 0) + (Number.isFinite(q) ? q : 0),
