@@ -16,7 +16,9 @@ npm start
 URL=ws://localhost:8787 npm run smoke
 ```
 
-O `smoke` conecta, escreve uma célula, desconecta, reconecta e confirma que o valor voltou. Exit 0 = OK.
+O `smoke` conecta, escreve uma célula, desconecta, reconecta e confirma que o valor voltou. Exit 0 = OK. No fim ele apaga a tabela `ping` que criou.
+
+Em dev local o server sobe em `AUTH_MODE=optional`, então a rodada anônima acima funciona. Contra qualquer server em `required`, é preciso `TOKEN` (ver abaixo).
 
 ## Deploy no homeserver
 
@@ -47,10 +49,16 @@ Passos (uma vez):
 3. **Smoke test remoto** (de qualquer máquina, sem VPN):
 
    ```bash
-   URL=wss://backontrack-sync.mhdn.com.br npm run smoke
+   URL=wss://backontrack-sync.mhdn.com.br TOKEN=<jwt> npm run smoke
    ```
 
    Exit 0 = round-trip OK pelo TLS público da Cloudflare.
+
+   **`TOKEN` é obrigatório desde o flip pra `AUTH_MODE=required`.** Sem ele a conexão leva 401 e o script diz isso na cara, consultando o `/healthz` pra separar recusa por política de queda de rede.
+
+   O token é o `access_token` de uma sessão do Supabase logada, e dura cerca de 1 hora. Sai do `localStorage` do app web, no DevTools.
+
+   ⚠️ **A rodada escreve na sala REAL da conta do token.** O server recusa com 403 qualquer sala que não seja o `sub`, então não há como apontar pra uma sala de teste. Por isso o script apaga a tabela que cria ao terminar. O que sobra no arquivo é a lápide do CRDT (uns 200 bytes de metadado), que é o que permite a deleção convergir nos outros aparelhos.
 
 ### Por que Cloudflare Tunnel
 
