@@ -90,3 +90,32 @@ export function isTokenExpired(session, now = Date.now(), skewMs = 5_000) {
 export function needsLogin(hasToken, authMode) {
   return !hasToken && authMode === "required";
 }
+
+/**
+ * O que fazer quando a conexão cai (#361).
+ *
+ * Existia uma assimetria que custou centenas de rejeições por dia no server:
+ * o caso "sem token sob `required`" parava o retry, e o caso "token vencido"
+ * não. A guarda era `if (!token)`, então quem tinha token morto caía direto
+ * no agendamento e repetia o mesmo token no teto do backoff, indefinidamente.
+ *
+ * As três saídas são diferentes de propósito:
+ *
+ * | resultado | significa | quem resolve |
+ * | --- | --- | --- |
+ * | `needs-login` | anônimo sob `required` | a pessoa, entrando |
+ * | `await-refresh` | token venceu | o `refreshSession`, e aí a URL muda |
+ * | `retry` | rede, ou causa desconhecida | o backoff |
+ *
+ * `needs-login` vem antes de `await-refresh` porque sem token não há o que
+ * renovar: o `isTokenExpired` já devolve `false` nesse caso, mas depender
+ * dessa ordem implícita seria frágil.
+ *
+ * @param {{hasToken: boolean, expired: boolean, authMode?: string|null}} args
+ * @returns {"needs-login"|"await-refresh"|"retry"}
+ */
+export function retryDecision({ hasToken, expired, authMode }) {
+  if (needsLogin(hasToken, authMode)) return "needs-login";
+  if (expired) return "await-refresh";
+  return "retry";
+}
