@@ -301,7 +301,12 @@ const verifiers = [
 // sinal de "já bindou" pra começar a conectar. Emitir antes abriria uma
 // corrida em que o teste conecta num socket que ainda não existe.
 httpServer.listen(PORT, () => {
+  // A porta EFETIVA, e não a pedida. Com `PORT=0` o SO escolhe uma livre, e é
+  // assim que os testes sobem o server: porta sorteada colide de vez em
+  // quando, e colisão vira `EADDRINUSE` com saída código 1, que era a falha
+  // intermitente do #342. Quem lê esta linha precisa do número real.
+  const porta = httpServer.address()?.port ?? PORT;
   console.log(
-    `[sync] listening on ws://0.0.0.0:${PORT} | data dir: ${DATA_DIR} | auth: ${AUTH_MODE}${verifiers ? ` (${verifiers})` : ""}`,
+    `[sync] listening on ws://0.0.0.0:${porta} | data dir: ${DATA_DIR} | auth: ${AUTH_MODE}${verifiers ? ` (${verifiers})` : ""}`,
   );
 });
