@@ -4,21 +4,18 @@
 // por describe, e checa quais conexões o server aceita/rejeita durante o
 // handshake HTTP → WebSocket. Testa o CÓDIGO da auth, sem depender de rede.
 
-import { spawn } from "node:child_process";
 import {
   createHmac,
   generateKeyPairSync,
   randomUUID,
   sign as cryptoSign,
 } from "node:crypto";
-import { mkdtempSync, rmSync } from "node:fs";
 import { createServer, request as httpRequest } from "node:http";
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
 
 import { WebSocket } from "ws";
 
-const SERVER_JS = resolve(__dirname, "..", "server", "server.js");
+import { startSyncServer, stopSyncServer } from "./support/syncServer";
+
 const JWT_SECRET = "test-jwt-secret-do-not-use-in-prod-please";
 
 // --- Helpers pra construir JWT HS256 sem dep extra ------------------------
@@ -96,56 +93,13 @@ function pastExp(seconds = 60) {
 }
 
 // --- Server subprocess helpers -------------------------------------------
+//
+// A montagem vive em `support/syncServer.js` desde o #342. Antes cada suíte
+// tinha a própria cópia, e as cópias sorteavam porta em faixas que se
+// cruzavam. Agora o SO escolhe, e a colisão deixa de existir.
 
-async function startServer(extraEnv = {}) {
-  const port = 41000 + Math.floor(Math.random() * 20000);
-  const dataDir = mkdtempSync(join(tmpdir(), "sync-auth-test-"));
-  const child = spawn("node", [SERVER_JS], {
-    env: {
-      ...process.env,
-      PORT: String(port),
-      DATA_DIR: dataDir,
-      ...extraEnv,
-    },
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-
-  await new Promise((resolveReady, rejectReady) => {
-    const t = setTimeout(
-      () => rejectReady(new Error("server didn't come up in 5s")),
-      5000,
-    );
-    child.stdout.on("data", (buf) => {
-      if (String(buf).includes("[sync] listening on ws://")) {
-        clearTimeout(t);
-        resolveReady();
-      }
-    });
-    child.on("exit", (code) => {
-      clearTimeout(t);
-      rejectReady(new Error(`server exited early with code ${code}`));
-    });
-  });
-
-  return { port, dataDir, child };
-}
-
-async function stopServer({ child, dataDir }) {
-  if (child && !child.killed) {
-    child.kill("SIGTERM");
-    await new Promise((r) => {
-      const t = setTimeout(() => {
-        child.kill("SIGKILL");
-        r();
-      }, 2000);
-      child.once("exit", () => {
-        clearTimeout(t);
-        r();
-      });
-    });
-  }
-  if (dataDir) rmSync(dataDir, { recursive: true, force: true });
-}
+const startServer = (extraEnv = {}) => startSyncServer(extraEnv);
+const stopServer = (servidor) => stopSyncServer(servidor);
 
 /**
  * Tenta abrir a conexão WS. Resolve com:
@@ -443,4 +397,28 @@ describe("ES256 via JWKS", () => {
     expect(res.open).toBe(false);
     expect(res.code).toBe(401);
   });
+});
+
+// O objetivo de saída do #342: quando o boot falhar, o log do CI tem que
+// dizer POR QUÊ. A rejeição antiga era só `server exited early with code 1`,
+// e descartava o que o subprocesso escreveu, então colisão de porta,
+// dependência faltando e erro de configuração ficavam indistinguíveis.
+describe("falha de boot é diagnosticável", () => {
+  it("a rejeição carrega o stderr do server, e não só o código de saída", async () => {
+    // `required` sem nenhum verificador faz o server abortar de propósito.
+    // Serve de falha de boot previsível pra checar o que a mensagem carrega.
+    await expect(
+      startServer({
+        AUTH_MODE: "required",
+        SUPABASE_URL: "",
+        SUPABASE_JWT_SECRET: "",
+      }),
+    ).rejects.toThrow(/AUTH_MODE=required requires SUPABASE_URL/);
+  }, 20000);
+
+  it("a mensagem diz que saiu antes de subir, com o código", async () => {
+    await expect(startServer({ AUTH_MODE: "invalido" })).rejects.toThrow(
+      /saiu antes de subir, código 1/,
+    );
+  }, 20000);
 });

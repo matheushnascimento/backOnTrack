@@ -1,75 +1,33 @@
 // @ts-nocheck -- teste; globals do jest não são tipados (ADR-002)
 // Testes do server WS de sync (M6, fatia 2, #198). Sobe o server em subprocess
-// com porta aleatória + tmpdir isolado: testa o CÓDIGO do server (não a infra
+// com porta do SO + tmpdir isolado: testa o CÓDIGO do server (não a infra
 // do túnel Cloudflare, que é outra classe de coisa). Roda in-process no CI,
 // sem depender de rede externa nem gerar lixo no server público.
 
-import { spawn } from "node:child_process";
-import { mkdtempSync, rmSync, readdirSync } from "node:fs";
-import { tmpdir } from "node:os";
-import { join, resolve } from "node:path";
+import { readdirSync } from "node:fs";
 import { createMergeableStore } from "tinybase";
 import { createWsSynchronizer } from "tinybase/synchronizers/synchronizer-ws-client";
 import { WebSocket } from "ws";
 
-const SERVER_JS = resolve(__dirname, "..", "server", "server.js");
+import { startSyncServer, stopSyncServer } from "./support/syncServer";
 
-// Porta alta aleatória, o que evita colisão com serviços conhecidos. 1-em-milhares
-// de chance de conflito com outro processo local; se acontecer, re-roda.
-const PORT = 40000 + Math.floor(Math.random() * 10000);
-
-let child;
+let servidor;
 let dataDir;
+let port;
 
 beforeAll(async () => {
-  dataDir = mkdtempSync(join(tmpdir(), "sync-server-test-"));
-
-  child = spawn("node", [SERVER_JS], {
-    env: { ...process.env, PORT: String(PORT), DATA_DIR: dataDir },
-    stdio: ["ignore", "pipe", "pipe"],
-  });
-
-  // Espera o log "listening on ...", que indica que o WebSocketServer já bindou.
-  await new Promise((resolveReady, rejectReady) => {
-    const timer = setTimeout(
-      () => rejectReady(new Error("server didn't come up in 5s")),
-      5000,
-    );
-    child.stdout.on("data", (buf) => {
-      if (String(buf).includes("[sync] listening on ws://")) {
-        clearTimeout(timer);
-        resolveReady();
-      }
-    });
-    child.on("exit", (code) => {
-      clearTimeout(timer);
-      rejectReady(new Error(`server exited early with code ${code}`));
-    });
-  });
-}, 10000);
+  servidor = await startSyncServer();
+  ({ dataDir, port } = servidor);
+}, 15000);
 
 afterAll(async () => {
-  if (child && !child.killed) {
-    child.kill("SIGTERM");
-    // Fallback SIGKILL se não morrer em 2s.
-    await new Promise((r) => {
-      const t = setTimeout(() => {
-        child.kill("SIGKILL");
-        r();
-      }, 2000);
-      child.once("exit", () => {
-        clearTimeout(t);
-        r();
-      });
-    });
-  }
-  if (dataDir) rmSync(dataDir, { recursive: true, force: true });
+  if (servidor) await stopSyncServer(servidor);
 });
 
 /** Conecta como cliente TinyBase, retorna [store, sync]. */
 async function connect(room) {
   const store = createMergeableStore();
-  const url = `ws://localhost:${PORT}/${room}`;
+  const url = `ws://localhost:${port}/${room}`;
   const sync = await createWsSynchronizer(store, new WebSocket(url));
   await sync.startSync();
   return [store, sync];
