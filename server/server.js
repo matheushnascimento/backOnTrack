@@ -85,6 +85,26 @@ function base64UrlDecode(str) {
   return Buffer.from(b64, "base64");
 }
 
+/**
+ * O `sub` de um token, SEM verificar assinatura. Só pra log (#361).
+ *
+ * Nunca usar isto pra decidir acesso: quem autoriza é o `verifyJwt`. Aqui o
+ * token já foi recusado, e o nome serve pra saber de qual cliente veio.
+ *
+ * @param {string} token
+ * @returns {string|null}
+ */
+function claimSub(token) {
+  try {
+    const partes = String(token).split(".");
+    if (partes.length !== 3) return null;
+    const sub = JSON.parse(base64UrlDecode(partes[1]).toString("utf8"))?.sub;
+    return typeof sub === "string" ? sub : null;
+  } catch {
+    return null;
+  }
+}
+
 // Cache de chaves públicas do JWKS, indexado por `kid`. O Supabase rotaciona
 // chaves raramente; um kid desconhecido dispara refetch (com throttle pra um
 // token forjado não virar vetor de DoS contra o endpoint).
@@ -237,7 +257,17 @@ const wss = new WebSocketServer({
           return callback(true);
         })
         .catch((e) => {
-          console.warn(`[sync] rejecting: invalid token: ${e.message}`);
+          // O `sub` vai junto pra dar nome ao ruído (#361). Com várias salas,
+          // "invalid token: expired" sozinho não diz QUEM está no laço, e a
+          // resposta exigia adivinhação. O claim é legível mesmo com a
+          // assinatura vencida ou inválida, porque só a verificação falhou, e
+          // não a decodificação.
+          //
+          // Isto é log, e nunca autorização: quem decide é o `verifyJwt`, que
+          // já rejeitou. Um `sub` forjado suja o log e não abre porta nenhuma.
+          console.warn(
+            `[sync] rejecting: invalid token: ${e.message} (sub=${claimSub(token) ?? "ilegível"}, pathId="${pathId}")`,
+          );
           callback(false, 401, `invalid token: ${e.message}`);
         });
       return;

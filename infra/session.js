@@ -83,6 +83,25 @@ export function SessionProvider({ children }) {
     signOut: async () => {
       if (supabase) await supabase.auth.signOut();
     },
+    // Renovação sob demanda (#361). O `startAutoRefresh` acima cobre o caso
+    // normal, mas quando o sync descobre que o token venceu, esperar o
+    // próximo tique do timer significa ficar sem sincronizar nesse intervalo.
+    // Pedir agora encurta isso.
+    //
+    // Devolve se conseguiu, porque o caller decide entre esperar a URL mudar
+    // (sucesso) e voltar pro backoff (falha). Não relança: falha de rede aqui
+    // é esperada, e virar exceção só complicaria o chamador.
+    refresh: async () => {
+      if (!supabase) return false;
+      try {
+        const { data, error } = await supabase.auth.refreshSession();
+        if (error) throw error;
+        return Boolean(data?.session);
+      } catch (e) {
+        console.warn("[session] refresh falhou:", e?.message ?? e);
+        return false;
+      }
+    },
   };
 
   return (

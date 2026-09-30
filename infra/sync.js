@@ -16,7 +16,7 @@ import { store } from "./database";
 import { useSession } from "./session";
 import { buildHealthzUrl, buildSyncUrl } from "./sync-url";
 import { retryDelay } from "./sync-retry";
-import { isTokenExpired, needsLogin, resolveRoomId } from "./sync-session";
+import { isTokenExpired, resolveRoomId, retryDecision } from "./sync-session";
 
 // Re-exporta pra manter API estável (callers antigos podem importar de sync.js).
 // A implementação vive em infra/sync-url.js pra ficar testável isolado
@@ -113,7 +113,7 @@ async function fetchAuthMode(healthzUrl, timeoutMs = 4000) {
  * @returns {{ status: "off"|"connecting"|"online"|"offline", reconnect: () => void }}
  */
 export function useRegistrosSync() {
-  const { user, session, ready } = useSession();
+  const { user, session, ready, refresh } = useSession();
   const anonRoomId = useValue("syncRoomId", store);
 
   // roomId: user.id se logado; senão o UUID anônimo. `null` enquanto a sessão
@@ -209,34 +209,67 @@ export function useRegistrosSync() {
         if (currentWsRef.current !== ws || !mountedRef.current) return;
         if (retryTimerRef.current) return; // retry já agendado
 
+        // Agendamento do backoff, isolado porque agora há mais de um caminho
+        // que chega até ele.
+        const agendarRetry = () => {
+          setStatus(SYNC_OFFLINE);
+          const delay = retryDelay(retryExpRef.current);
+          retryExpRef.current += 1;
+          retryTimerRef.current = setTimeout(() => {
+            retryTimerRef.current = null;
+            if (mountedRef.current) setGeneration((g) => g + 1);
+          }, delay);
+        };
+
         // Caiu sem token: pode não ser rede. Sob `AUTH_MODE=required` o
         // server recusa anônimo por política, e o 401 do handshake não chega
         // até aqui, porque a API WebSocket não expõe status de upgrade recusado.
         // Perguntar o modo é o que separa "preciso entrar" de "estou sem
         // sinal"; sem isso o app diz "sem conexão" e oferece um "Tentar de
         // novo" que nunca vai funcionar (#278).
+        let modo = null;
         if (!token) {
-          const modo = await fetchAuthMode(buildHealthzUrl(SYNC_URL));
+          modo = await fetchAuthMode(buildHealthzUrl(SYNC_URL));
           // Reconferir depois do await: o socket pode ter sido trocado ou o
           // hook desmontado enquanto a sondagem estava no ar.
           if (currentWsRef.current !== ws || !mountedRef.current) return;
           if (retryTimerRef.current) return;
-          if (needsLogin(false, modo)) {
-            // Sem retry de propósito: anônimo não entra por mais que insista.
-            // Ficar no backoff só gastaria bateria e encheria o log do server
-            // de rejeição que nós mesmos causamos.
-            setStatus(SYNC_NEEDS_AUTH);
-            return;
-          }
         }
 
-        setStatus(SYNC_OFFLINE);
-        const delay = retryDelay(retryExpRef.current);
-        retryExpRef.current += 1;
-        retryTimerRef.current = setTimeout(() => {
-          retryTimerRef.current = null;
-          if (mountedRef.current) setGeneration((g) => g + 1);
-        }, delay);
+        const decisao = retryDecision({
+          hasToken: Boolean(token),
+          expired: isTokenExpired(session),
+          authMode: modo,
+        });
+
+        if (decisao === "needs-login") {
+          // Sem retry de propósito: anônimo não entra por mais que insista.
+          // Ficar no backoff só gastaria bateria e encheria o log do server
+          // de rejeição que nós mesmos causamos.
+          setStatus(SYNC_NEEDS_AUTH);
+          return;
+        }
+
+        if (decisao === "await-refresh") {
+          // Token venceu. Repetir o mesmo token é o laço que produzia
+          // centenas de `invalid token: expired` por dia no server (#361).
+          // Pedir a renovação agora encurta a espera pelo tique do
+          // `startAutoRefresh`.
+          setStatus(SYNC_OFFLINE);
+          const renovou = await refresh?.();
+          if (currentWsRef.current !== ws || !mountedRef.current) return;
+          if (retryTimerRef.current) return;
+          // Renovou: a sessão nova muda a `url`, o synchronizer é recriado, e
+          // agendar aqui só criaria uma conexão concorrente.
+          if (renovou) return;
+          // Não renovou (offline, refresh token morto): volta pro backoff, e
+          // a próxima rodada tenta renovar de novo. Sem isso o sync ficaria
+          // parado em silêncio até alguém reabrir o app.
+          agendarRetry();
+          return;
+        }
+
+        agendarRetry();
       };
 
       ws.addEventListener("close", onDown);

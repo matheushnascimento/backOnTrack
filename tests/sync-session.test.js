@@ -3,6 +3,7 @@ import {
   isTokenExpired,
   needsLogin,
   resolveRoomId,
+  retryDecision,
 } from "@/infra/sync-session";
 
 // Cobre os dois defeitos da #275. Os dois eram "tratar 'ainda não sei' como se
@@ -135,5 +136,52 @@ describe("needsLogin", () => {
     expect(needsLogin(true, "required")).toBe(false);
     expect(needsLogin(true, "optional")).toBe(false);
     expect(needsLogin(true, null)).toBe(false);
+  });
+});
+
+// A assimetria da #361: o caso "sem token sob required" parava o retry e o
+// caso "token vencido" não, então quem tinha token morto repetia o mesmo
+// token no teto do backoff, para sempre. Foram centenas de rejeições por dia
+// no server, de 07/09 a 30/09.
+describe("retryDecision", () => {
+  it("anônimo sob required: manda entrar, sem retry", () => {
+    expect(
+      retryDecision({ hasToken: false, expired: false, authMode: "required" }),
+    ).toBe("needs-login");
+  });
+
+  it("token vencido: espera a renovação, sem repetir o token morto", () => {
+    expect(
+      retryDecision({ hasToken: true, expired: true, authMode: null }),
+    ).toBe("await-refresh");
+  });
+
+  it("com token válido: é rede, então tenta de novo", () => {
+    expect(
+      retryDecision({ hasToken: true, expired: false, authMode: null }),
+    ).toBe("retry");
+  });
+
+  it("anônimo sob optional: é rede, e não política", () => {
+    expect(
+      retryDecision({ hasToken: false, expired: false, authMode: "optional" }),
+    ).toBe("retry");
+  });
+
+  it("modo desconhecido não vira 'precisa entrar'", () => {
+    // `/healthz` mudo significa server inalcançável, que É problema de rede.
+    // Mandar fazer login aqui esconderia a causa real.
+    expect(
+      retryDecision({ hasToken: false, expired: false, authMode: null }),
+    ).toBe("retry");
+    expect(retryDecision({ hasToken: false, expired: false })).toBe("retry");
+  });
+
+  it("falta de login tem precedência sobre vencimento", () => {
+    // Sem token não há o que renovar. O `isTokenExpired` já devolve false
+    // nesse caso, e a ordem explícita evita depender disso.
+    expect(
+      retryDecision({ hasToken: false, expired: true, authMode: "required" }),
+    ).toBe("needs-login");
   });
 });
