@@ -44,6 +44,12 @@ export const store = createMergeableStore()
     // Room ID por install pra sync WS (M6 fatia 3, #202). Gerado no 1º launch
     // (ver infra/persistence.js). Default vazio = sync ainda não inicializado.
     syncRoomId: { type: "string", default: "" },
+    // Lembrete diário do hábito em foco (#364). Desligado por padrão: o app
+    // não notifica ninguém sem a pessoa pedir.
+    reminderEnabled: { type: "boolean", default: false },
+    // Horário do lembrete, "HH:MM". 21:00 é um default de fim de dia, com
+    // folga pra ainda dar tempo de registrar antes de dormir.
+    reminderTime: { type: "string", default: "21:00" },
     // Como o usuário quer ser chamado no cumprimento da Home. Preferido em
     // relação à derivação do email, que quando presente cai no primeiro nome
     // (antes do primeiro ponto). Editável em Ajustes.
@@ -261,6 +267,23 @@ export function getDisplayName() {
 
 export function setDisplayName(name) {
   store.setValue("displayName", String(name ?? "").trim());
+}
+
+// --- Lembrete do hábito em foco (#364) ---
+
+export function getReminder() {
+  return {
+    enabled: Boolean(store.getValue("reminderEnabled")),
+    time: String(store.getValue("reminderTime") || "21:00"),
+  };
+}
+
+export function setReminderEnabled(on) {
+  store.setValue("reminderEnabled", Boolean(on));
+}
+
+export function setReminderTime(hhmm) {
+  store.setValue("reminderTime", String(hhmm ?? "").trim());
 }
 
 // --- Sync (M6 fatia 3, #202) ---

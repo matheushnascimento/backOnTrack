@@ -17,6 +17,7 @@ import { useTable, useValue } from "tinybase/ui-react";
 import { goBack } from "@/constants/navigation";
 import MyView from "@/components/MyView";
 import SkipLevelSheet from "@/components/journey/SkipLevelSheet";
+import TimePickerField from "@/components/metrics/TimePickerField";
 
 import {
   clearAll,
@@ -29,6 +30,8 @@ import {
   toggleDemoStable,
   toggleRetomadaDemo,
   setDisplayName,
+  setReminderEnabled,
+  setReminderTime,
   store,
 } from "@/infra/database";
 import { useSession } from "@/infra/session";
@@ -41,6 +44,7 @@ import {
   SYNC_ONLINE,
   useSyncStatus,
 } from "@/infra/sync";
+import { ensureNotificationPermission } from "@/infra/reminders";
 import { saveThemePreference } from "@/infra/theme";
 import { confirmAction } from "@/constants/dialogs";
 import { getEnvironmentInfo, isDevSurface } from "@/constants/environment";
@@ -72,9 +76,8 @@ const DEV_SURFACE = isDevSurface();
 //   - NAVEGAÇÃO     = Semana / Histórico.
 //   - APP           = Tema switch inline, Feedback, Roadmap, Exportar, Sobre.
 //   - CONTA         = só se logado (Logado como… + Sair).
+//   - LEMBRETES     = um por dia, só do hábito em foco (#364).
 //   - AVANÇADO      = Limpar todos os dados (destrutivo, confirm modal).
-//
-// Lembretes da mockup ficaram fora (dependem de expo-notifications, escopo M7).
 
 // Rótulos das metas. Os VALORES vêm do store desde a #285. Antes eram texto
 // fixo aqui, e o modelo de níveis não fecha sem meta como dado. Edição pelo
@@ -107,6 +110,11 @@ export default function Ajustes() {
   const t = useThemeTokens();
 
   const displayName = useValue("displayName", store);
+  const reminderEnabled = useValue("reminderEnabled", store);
+  const reminderTime = useValue("reminderTime", store);
+  // Só pra explicar o toggle que não liga. Sem isto a pessoa clica, nada
+  // acontece, e não há como saber que o sistema negou.
+  const [reminderDenied, setReminderDenied] = useState(false);
   const [nameModalOpen, setNameModalOpen] = useState(false);
   // `useTable` assina a tabela: metas semeadas depois do load do persister
   // chegam sozinhas, sem precisar reabrir a tela.
@@ -218,6 +226,68 @@ export default function Ajustes() {
         </Section>
 
         {/* Navegação */}
+        {/* Lembretes (#364). Um por dia, só do hábito em foco, e calado se a
+            pessoa já registrou. O horário é dela. */}
+        <Section title="Lembretes">
+          <View className="flex-row items-center justify-between border-t border-surface-subtle px-4 py-3">
+            <View className="flex-1 pr-3">
+              <Text
+                className="text-sm text-ink dark:text-ink-dark"
+                style={{ fontFamily: "Inter_400Regular" }}
+              >
+                Lembrete diário
+              </Text>
+              <Text
+                className="text-xs text-body-secondary dark:text-body-secondary-dark"
+                style={{ fontFamily: "Inter_400Regular", marginTop: 2 }}
+              >
+                Só do hábito em foco, e calado se você já registrou no dia
+              </Text>
+            </View>
+            <Switch
+              value={Boolean(reminderEnabled)}
+              onValueChange={async (next) => {
+                if (!next) {
+                  setReminderDenied(false);
+                  setReminderEnabled(false);
+                  return;
+                }
+                // Pede permissão ANTES de ligar: ligar sem permissão deixaria
+                // o switch aceso prometendo o que não acontece.
+                const ok = await ensureNotificationPermission();
+                setReminderDenied(!ok);
+                setReminderEnabled(ok);
+              }}
+              accessibilityLabel="Ativar lembrete diário"
+            />
+          </View>
+          {reminderDenied && (
+            <Text
+              className="border-t border-surface-subtle px-4 py-3 text-xs text-body-secondary dark:text-body-secondary-dark"
+              style={{ fontFamily: "Inter_400Regular" }}
+            >
+              O sistema não deu permissão de notificação. Dá pra liberar nos
+              ajustes do aparelho e tentar de novo.
+            </Text>
+          )}
+          {Boolean(reminderEnabled) && (
+            <View className="flex-row items-center justify-between border-t border-surface-subtle px-4 py-3">
+              <Text
+                className="text-sm text-ink dark:text-ink-dark"
+                style={{ fontFamily: "Inter_400Regular" }}
+              >
+                Horário
+              </Text>
+              <TimePickerField
+                value={String(reminderTime ?? "")}
+                onChangeText={setReminderTime}
+                placeholder="21:00"
+                accessibilityLabel="Horário do lembrete"
+              />
+            </View>
+          )}
+        </Section>
+
         <Section title="Navegação">
           <Row
             label="Semana"
