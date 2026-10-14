@@ -11,12 +11,37 @@
  * ## A regra
  *
  * Dois valores determinam o terceiro. Com três preenchidos que não fecham a
- * conta, o resultado carrega um `issue` e **o caller não grava**.
+ * conta, **um deles cede**, e qual é decidido pelo papel de cada um.
  *
- * Travar em vez de escolher é decisão de produto: o app não sabe qual dos três
- * a pessoa quis dizer, e adivinhar erra em silêncio. Mesmo espírito do aviso de
- * noite implausível do #353, que este módulo absorveu: ele bloqueava com
- * mensagem em vez de corrigir sozinho, e agora as três métricas têm isso.
+ * A primeira versão travava o save aqui, com o argumento de que o app não sabe
+ * qual dos três a pessoa quis dizer. O argumento estava errado por um detalhe
+ * de sequência: três campos preenchidos só acontecem depois de alguém digitar
+ * o terceiro, e o terceiro é a informação mais nova que existe na tela.
+ * Travar ali é o app dizer "não entendi" sobre o que entendeu.
+ *
+ * ## Quem cede
+ *
+ * O campo tocado por último vence sempre. Dos outros dois, cede o de papel
+ * mais fraco:
+ *
+ *     duração   cede primeiro   (é desfecho)
+ *     fim       cede depois     (é habilitador)
+ *     início    nunca cede      (é o comportamento)
+ *
+ * A ordem é a inversão do §4.2 do modelo, que separou esses três papéis pro
+ * sono: deitar é o comportamento, acordar habilita a duração, e a duração é
+ * consequência. Quem é consequência cede primeiro, e quem é o fato vivido cede
+ * por último.
+ *
+ * O efeito é o de uma planilha. Com os três coerentes, mexer no início ou no
+ * fim recalcula a duração, e mexer na duração move o fim.
+ *
+ * ## O que ainda trava
+ *
+ * Só o que não dá pra interpretar: formato ilegível e duração de 24h ou mais.
+ * O teto de sanidade virou `warning`, que aparece e **não** impede o save:
+ * "14h deitado" é suspeita, e não impossibilidade, e dois dos três tetos são
+ * palpite.
  *
  * ## Atravessar a meia-noite
  *
@@ -24,9 +49,7 @@
  * já fazia com `(fim - início + 1440) % 1440`.
  *
  * O preço é que erro de digitação vira sessão longa em silêncio: `09:00` no
- * lugar de `19:00` daria 14 horas sem reclamar. Por isso o `maxMin`, que é
- * teto de sanidade por métrica, e não regra de negócio. Os números são
- * arbitrários até existir dado de uso que os sustente.
+ * lugar de `19:00` daria 14 horas sem reclamar. É disso que o `maxMin` avisa.
  */
 
 import { hhmmToMinutes } from "./duration";
@@ -94,17 +117,53 @@ function fmtClock(total) {
 const problema = (code, message) => ({ code, message });
 
 /**
- * Completa o que falta e aponta contradição.
+ * Ordem em que os campos cedem quando os três se contradizem.
  *
- * @param {{start?: string, end?: string, duration?: string, maxMin?: number}} campos
- *   Strings "HH:MM"; vazio significa não preenchido.
+ * Inversão do §4.2: desfecho primeiro, comportamento por último. Ver o topo
+ * do arquivo.
+ */
+const ORDEM_DE_CEDER = ["duration", "end", "start"];
+
+/**
+ * Qual campo recalcular, dado o que a pessoa acabou de tocar.
+ *
+ * O tocado está fora da disputa por definição, então o `início` só apareceria
+ * aqui se fosse o último da lista com os outros dois tocados, o que a ordem
+ * impede. Ele nunca cede, e isso é a garantia que importa: é o único dos três
+ * que a pessoa viveu, em vez de ter calculado.
+ *
+ * Sem `lastEdited` cede a duração, que é o caso de quem chama sem rastro de
+ * edição (hidratação de registro, por exemplo).
+ */
+function quemCede(lastEdited) {
+  return ORDEM_DE_CEDER.find((campo) => campo !== lastEdited);
+}
+
+/**
+ * Completa o que falta e resolve contradição recalculando um dos três.
+ *
+ * `issue` impede o save. `warning` só aparece. São dois campos, e não um
+ * `issue` com flag de severidade, pra que o gate do caller seja `issue == null`
+ * e não dependa de alguém lembrar de checar um booleano.
+ *
+ * @param {{
+ *   start?: string, end?: string, duration?: string, maxMin?: number,
+ *   lastEdited?: "start"|"end"|"duration"|null,
+ * }} campos Strings "HH:MM"; vazio significa não preenchido.
  * @returns {{
  *   start: string, end: string, duration: string,
  *   derived: "start"|"end"|"duration"|null,
  *   issue: {code: string, message: string}|null,
+ *   warning: {code: string, message: string}|null,
  * }}
  */
-export function reconcileTimes({ start, end, duration, maxMin } = {}) {
+export function reconcileTimes({
+  start,
+  end,
+  duration,
+  maxMin,
+  lastEdited,
+} = {}) {
   const s = parseClock(start);
   const e = parseClock(end);
   const d = parseDur(duration);
@@ -114,9 +173,10 @@ export function reconcileTimes({ start, end, duration, maxMin } = {}) {
     end: end ?? "",
     duration: duration ?? "",
     derived: null,
+    warning: null,
   };
 
-  // Campo ilegível: não dá pra derivar nada nem afirmar contradição.
+  // Campo ilegível: não dá pra derivar nada nem comparar com nada.
   if (s === undefined || e === undefined || d === undefined) {
     return {
       ...comoVeio,
@@ -141,7 +201,8 @@ export function reconcileTimes({ start, end, duration, maxMin } = {}) {
   // Zero ou um campo não é erro: é formulário pela metade.
   if (preenchidos <= 1) return { ...comoVeio, issue: null };
 
-  const vaoDaQuantidade = (dur) =>
+  // Teto de sanidade: avisa e deixa salvar. Ver o topo do arquivo.
+  const avisoDoTeto = (dur) =>
     maxMin != null && dur > maxMin
       ? problema(
           "longa-demais",
@@ -149,46 +210,49 @@ export function reconcileTimes({ start, end, duration, maxMin } = {}) {
         )
       : null;
 
+  const porHorarios = (ini, fim) => {
+    const dur = (fim - ini + MIN_POR_DIA) % MIN_POR_DIA;
+    return {
+      start: fmtClock(ini),
+      end: fmtClock(fim),
+      duration: fmtDur(dur),
+      derived: "duration",
+      issue: null,
+      warning: avisoDoTeto(dur),
+    };
+  };
+  const porInicioEDuracao = (ini, dur) => ({
+    start: fmtClock(ini),
+    end: fmtClock(ini + dur),
+    duration: fmtDur(dur),
+    derived: "end",
+    issue: null,
+    warning: avisoDoTeto(dur),
+  });
+
   if (preenchidos === 3) {
     const esperada = (e - s + MIN_POR_DIA) % MIN_POR_DIA;
-    if (esperada !== d) {
-      return {
-        ...comoVeio,
-        issue: problema(
-          "conflito",
-          `Os três não fecham: de ${fmtClock(s)} a ${fmtClock(e)} dá ${fmtDur(esperada)}, e não ${fmtDur(d)}. Ajusta um deles.`,
-        ),
-      };
+    // Coerentes: ninguém cede, e nenhum campo é calculado.
+    if (esperada === d) {
+      return { ...comoVeio, issue: null, warning: avisoDoTeto(d) };
     }
-    return { ...comoVeio, issue: vaoDaQuantidade(d) };
+    // Contraditórios: o tocado por último vence, e o de papel mais fraco entre
+    // os outros dois é recalculado.
+    return quemCede(lastEdited) === "end"
+      ? porInicioEDuracao(s, d)
+      : porHorarios(s, e);
   }
 
   // Exatamente dois: deriva o terceiro.
-  if (s != null && e != null) {
-    const dur = (e - s + MIN_POR_DIA) % MIN_POR_DIA;
-    return {
-      start: fmtClock(s),
-      end: fmtClock(e),
-      duration: fmtDur(dur),
-      derived: "duration",
-      issue: vaoDaQuantidade(dur),
-    };
-  }
-  if (s != null && d != null) {
-    return {
-      start: fmtClock(s),
-      end: fmtClock(s + d),
-      duration: fmtDur(d),
-      derived: "end",
-      issue: vaoDaQuantidade(d),
-    };
-  }
+  if (s != null && e != null) return porHorarios(s, e);
+  if (s != null && d != null) return porInicioEDuracao(s, d);
   return {
     start: fmtClock(e - d),
     end: fmtClock(e),
     duration: fmtDur(d),
     derived: "start",
-    issue: vaoDaQuantidade(d),
+    issue: null,
+    warning: avisoDoTeto(d),
   };
 }
 

@@ -51,36 +51,117 @@ describe("atravessar a meia-noite", () => {
   });
 });
 
-describe("três preenchidos", () => {
-  it("coerentes passam sem issue", () => {
+describe("três preenchidos e coerentes", () => {
+  it("passam sem issue e sem campo calculado", () => {
     const out = r({ start: "10:00", end: "11:30", duration: "1:30" });
     expect(out.issue).toBeNull();
     expect(out.derived).toBeNull();
   });
 
-  it("coerentes atravessando a meia-noite também passam", () => {
+  it("atravessando a meia-noite também passam", () => {
     expect(
       r({ start: "23:00", end: "01:00", duration: "2:00" }).issue,
     ).toBeNull();
   });
+});
 
-  it("contraditórios travam, e a mensagem diz o que não fecha", () => {
-    // O ponto do recurso: o app não escolhe qual dos três é verdade.
-    const out = r({ start: "10:00", end: "11:30", duration: "2:00" });
-    expect(out.issue.code).toBe("conflito");
-    expect(out.issue.message).toContain("1:30");
-    expect(out.issue.message).toContain("2:00");
+describe("três preenchidos e contraditórios: um cede", () => {
+  // A primeira versão travava o save aqui. O argumento ("o app não sabe qual
+  // dos três a pessoa quis dizer") ignorava a sequência: três campos
+  // preenchidos só existem depois de alguém digitar o terceiro, e o terceiro é
+  // a informação mais nova da tela.
+  //
+  // Regra: o tocado por último vence, e cede o de papel mais fraco entre os
+  // outros dois (duração, depois fim, nunca o início).
+
+  it("nunca trava", () => {
+    for (const lastEdited of ["start", "end", "duration", null]) {
+      const out = r({
+        start: "10:00",
+        end: "11:30",
+        duration: "2:00",
+        lastEdited,
+      });
+      expect(out.issue).toBeNull();
+      expect(out.derived).not.toBeNull();
+    }
   });
 
-  it("não reescreve os campos quando trava", () => {
-    // Devolver valores "corrigidos" junto do erro faria a tela mudar debaixo
-    // da pessoa no mesmo instante em que diz que algo está errado.
-    const out = r({ start: "10:00", end: "11:30", duration: "2:00" });
-    expect(out).toMatchObject({
+  it("digitar a duração move o FIM, porque o início é o fato vivido", () => {
+    const out = r({
       start: "10:00",
       end: "11:30",
       duration: "2:00",
+      lastEdited: "duration",
     });
+    expect(out).toMatchObject({
+      start: "10:00",
+      end: "12:00",
+      duration: "2:00",
+      derived: "end",
+    });
+  });
+
+  it("digitar o fim recalcula a DURAÇÃO", () => {
+    const out = r({
+      start: "10:00",
+      end: "12:30",
+      duration: "2:00",
+      lastEdited: "end",
+    });
+    expect(out).toMatchObject({
+      start: "10:00",
+      end: "12:30",
+      duration: "2:30",
+      derived: "duration",
+    });
+  });
+
+  it("digitar o início recalcula a DURAÇÃO, e não mexe no fim", () => {
+    const out = r({
+      start: "09:00",
+      end: "11:30",
+      duration: "2:00",
+      lastEdited: "start",
+    });
+    expect(out).toMatchObject({
+      start: "09:00",
+      end: "11:30",
+      duration: "2:30",
+      derived: "duration",
+    });
+  });
+
+  it("o início NUNCA é o campo recalculado", () => {
+    // É o único dos três que a pessoa viveu em vez de calcular. Recência pura
+    // o moveria no primeiro caso, e essa é a pior resposta possível.
+    for (const lastEdited of ["start", "end", "duration", null]) {
+      const out = r({
+        start: "10:00",
+        end: "11:30",
+        duration: "2:00",
+        lastEdited,
+      });
+      expect(out.derived).not.toBe("start");
+      expect(out.start).toBe("10:00");
+    }
+  });
+
+  it("sem rastro de edição cede a duração", () => {
+    // Caso de quem chama sem estado de UI, como a hidratação de um registro.
+    const out = r({ start: "10:00", end: "11:30", duration: "2:00" });
+    expect(out.derived).toBe("duration");
+    expect(out.duration).toBe("1:30");
+  });
+
+  it("resolve atravessando a meia-noite", () => {
+    const out = r({
+      start: "23:00",
+      end: "01:00",
+      duration: "3:00",
+      lastEdited: "duration",
+    });
+    expect(out.end).toBe("02:00");
   });
 });
 
@@ -103,32 +184,52 @@ describe("formulário pela metade não é erro", () => {
   });
 });
 
-describe("teto de sanidade", () => {
+describe("teto de sanidade: avisa e deixa salvar", () => {
+  // Era `issue`, e travava. "14h deitado" é suspeita, e não impossibilidade,
+  // e dois dos três tetos são palpite. Bloquear o save por palpite é o app
+  // recusando um registro que pode estar certo.
   const max = MAX_SPAN_MIN.exercise; // 6h
 
-  it("acima do teto aponta, porque costuma ser dígito trocado", () => {
+  it("acima do teto avisa, porque costuma ser dígito trocado", () => {
     // 09:00 no lugar de 19:00 daria 14h sem reclamar, se não houvesse teto.
     const out = r({ start: "19:00", end: "09:00", maxMin: max });
-    expect(out.issue.code).toBe("longa-demais");
-    expect(out.issue.message).toContain("14:00");
+    expect(out.warning.code).toBe("longa-demais");
+    expect(out.warning.message).toContain("14:00");
   });
 
-  it("dentro do teto passa", () => {
-    expect(r({ start: "19:00", end: "20:00", maxMin: max }).issue).toBeNull();
+  it("o aviso NÃO impede o save", () => {
+    expect(r({ start: "19:00", end: "09:00", maxMin: max }).issue).toBeNull();
+  });
+
+  it("dentro do teto não avisa", () => {
+    expect(r({ start: "19:00", end: "20:00", maxMin: max }).warning).toBeNull();
   });
 
   it("sem teto informado, não reclama de duração nenhuma", () => {
-    expect(r({ start: "19:00", end: "09:00" }).issue).toBeNull();
+    expect(r({ start: "19:00", end: "09:00" }).warning).toBeNull();
   });
 
-  it("vale também quando os três vêm preenchidos e coerentes", () => {
+  it("vale quando os três vêm preenchidos e coerentes", () => {
     const out = r({
       start: "19:00",
       end: "09:00",
       duration: "14:00",
       maxMin: max,
     });
-    expect(out.issue.code).toBe("longa-demais");
+    expect(out.warning.code).toBe("longa-demais");
+    expect(out.issue).toBeNull();
+  });
+
+  it("vale também no campo que foi recalculado", () => {
+    const out = r({
+      start: "19:00",
+      end: "20:00",
+      duration: "14:00",
+      maxMin: max,
+      lastEdited: "duration",
+    });
+    expect(out.end).toBe("09:00");
+    expect(out.warning.code).toBe("longa-demais");
   });
 });
 
@@ -144,40 +245,40 @@ describe("teto do sono, absorvido do #353", () => {
       ["22:00", "06:30"],
       ["00:30", "08:00"],
     ]) {
-      expect(r({ start: bed, end: wake, maxMin: max }).issue).toBeNull();
+      expect(r({ start: bed, end: wake, maxMin: max }).warning).toBeNull();
     }
   });
 
   it("noite longa de recuperação ainda passa", () => {
-    expect(r({ start: "22:00", end: "10:00", maxMin: max }).issue).toBeNull();
-    expect(r({ start: "21:00", end: "11:00", maxMin: max }).issue).toBeNull();
+    expect(r({ start: "22:00", end: "10:00", maxMin: max }).warning).toBeNull();
+    expect(r({ start: "21:00", end: "11:00", maxMin: max }).warning).toBeNull();
   });
 
   it("horários invertidos aparecem como duração implausível", () => {
-    expect(r({ start: "23:00", end: "22:00", maxMin: max }).issue.code).toBe(
+    expect(r({ start: "23:00", end: "22:00", maxMin: max }).warning.code).toBe(
       "longa-demais",
     );
     expect(
-      r({ start: "07:00", end: "00:30", maxMin: max }).issue.message,
+      r({ start: "07:00", end: "00:30", maxMin: max }).warning.message,
     ).toContain("17:30");
   });
 
   it("a fronteira do teto é exata", () => {
-    expect(r({ start: "22:00", end: "14:00", maxMin: max }).issue).toBeNull();
+    expect(r({ start: "22:00", end: "14:00", maxMin: max }).warning).toBeNull();
     expect(
-      r({ start: "22:00", end: "14:01", maxMin: max }).issue,
+      r({ start: "22:00", end: "14:01", maxMin: max }).warning,
     ).not.toBeNull();
   });
 
   it("deitar sem acordar segue sendo registro válido", () => {
     // §4.2: deitar é o comportamento, acordar é opcional.
-    expect(r({ start: "23:40", maxMin: max }).issue).toBeNull();
+    expect(r({ start: "23:40", maxMin: max }).warning).toBeNull();
   });
 
   it("o teto também pega deitar mais duração, que o #353 não via", () => {
     // Ganho real da unificação: antes só o par de horários era checado.
     expect(
-      r({ start: "23:00", duration: "18:00", maxMin: max }).issue.code,
+      r({ start: "23:00", duration: "18:00", maxMin: max }).warning.code,
     ).toBe("longa-demais");
   });
 });

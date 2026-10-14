@@ -10,7 +10,7 @@ import { formatGoal } from "@/constants/goals";
 import { SPAN_NAMES, horaAgora, spanRecord } from "@/constants/timeSpan";
 import { useThemeTokens } from "@/constants/themeTokens";
 
-import TimeSpanFields, { useTimeSpan } from "./TimeSpanFields";
+import TimeSpanFields, { useSpanEdits, useTimeSpan } from "./TimeSpanFields";
 
 // UI bespoke da tela de sono (M5-B fatia 2b, mockup 2a·3 do Claude Design).
 // Substitui o card Score/OBS/Top/Bottom da MetricScreen quando o registry
@@ -67,11 +67,13 @@ function SleepCreate({ onAfterAdd }) {
   const [duration, setDuration] = useState("");
   const [quality, setQuality] = useState(/** @type {number|null} */ (null));
 
+  const { lastEdited, marcar, esquecer } = useSpanEdits();
   const span = useTimeSpan({
     start: bedTime,
     end: wakeTime,
     duration,
     metric: "sleep",
+    lastEdited,
   });
 
   // Só o deitar é obrigatório (#349). O §4.2 do modelo separou os papéis:
@@ -100,6 +102,7 @@ function SleepCreate({ onAfterAdd }) {
     setWakeTime("");
     setDuration("");
     setQuality(null);
+    esquecer();
     onAfterAdd?.();
   }
 
@@ -122,6 +125,7 @@ function SleepCreate({ onAfterAdd }) {
           setWakeTime,
           duration,
           setDuration,
+          marcar,
         })}
         hint={`suficiente costuma ser ${formatGoal("sleep")}`}
       />
@@ -164,6 +168,7 @@ function camposDaNoite({
   setWakeTime,
   duration,
   setDuration,
+  marcar,
 }) {
   return [
     {
@@ -171,7 +176,7 @@ function camposDaNoite({
       label: "deitou",
       placeholder: "23:00",
       value: bedTime,
-      onChange: setBedTime,
+      onChange: marcar("start", setBedTime),
       // Atalho do momento do comportamento: um toque na hora de deitar
       // registra o horário exato, em vez de depender de lembrar depois.
       agora: () => setBedTime(horaAgora()),
@@ -182,7 +187,7 @@ function camposDaNoite({
       label: "acordou (opcional)",
       placeholder: "07:00",
       value: wakeTime,
-      onChange: setWakeTime,
+      onChange: marcar("end", setWakeTime),
       agora: () => setWakeTime(horaAgora()),
       agoraLabel: "levantar agora",
     },
@@ -191,7 +196,7 @@ function camposDaNoite({
       label: "duração (opcional)",
       placeholder: "8:00",
       value: duration,
-      onChange: setDuration,
+      onChange: marcar("duration", setDuration),
     },
   ];
 }
@@ -239,11 +244,13 @@ function SleepEdit({ recordId, onAfterSave }) {
     }
   }, [recordId]);
 
+  const { lastEdited, marcar } = useSpanEdits();
   const span = useTimeSpan({
     start: bedTime,
     end: wakeTime,
     duration,
     metric: "sleep",
+    lastEdited,
   });
   const tempo = spanRecord(span, SPAN_NAMES.sleep);
 
@@ -288,6 +295,7 @@ function SleepEdit({ recordId, onAfterSave }) {
           setWakeTime,
           duration,
           setDuration,
+          marcar,
         })}
       />
 

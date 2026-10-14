@@ -9,7 +9,7 @@ import { minutesToHHMM } from "@/constants/duration";
 import { useThemeTokens } from "@/constants/themeTokens";
 import { SPAN_NAMES, horaAgora, spanRecord } from "@/constants/timeSpan";
 
-import TimeSpanFields, { useTimeSpan } from "./TimeSpanFields";
+import TimeSpanFields, { useSpanEdits, useTimeSpan } from "./TimeSpanFields";
 
 // UI bespoke da tela de estudo (M5-B fatia 2c, mockup 2a·6).
 // Toggle "Feito" full-width com check → duração HH:MM (default "00:00") →
@@ -49,10 +49,18 @@ function StudyCreate({ onAfterAdd }) {
   const [duration, setDuration] = useState("");
   const [focus, setFocus] = useState(/** @type {string|null} */ (null));
 
-  const span = useTimeSpan({ start, end, duration, metric: "study" });
+  const { lastEdited, marcar, esquecer } = useSpanEdits();
+  const span = useTimeSpan({
+    start,
+    end,
+    duration,
+    metric: "study",
+    lastEdited,
+  });
   const tempo = spanRecord(span, SPAN_NAMES.study);
   // Duração continua sendo o que define um registro de estudo, mas agora ela
-  // pode vir dos horários. O que bloqueia é contradição, não campo vazio.
+  // pode vir dos horários. O `issue` já exclui o aviso do teto, que avisa e
+  // deixa salvar.
   const canSave = studied && span.issue == null && tempo.quantity > 0;
 
   function handleSave() {
@@ -71,6 +79,7 @@ function StudyCreate({ onAfterAdd }) {
     setEnd("");
     setDuration("");
     setFocus(null);
+    esquecer();
     onAfterAdd?.();
   }
 
@@ -87,6 +96,7 @@ function StudyCreate({ onAfterAdd }) {
           setEnd,
           duration,
           setDuration,
+          marcar,
         })}
         hint="quanto puder é suficiente"
       />
@@ -139,7 +149,14 @@ function StudyEdit({ recordId, onAfterSave }) {
     setNote(r.note ?? r.observation ?? "");
   }, [recordId]);
 
-  const span = useTimeSpan({ start, end, duration, metric: "study" });
+  const { lastEdited, marcar } = useSpanEdits();
+  const span = useTimeSpan({
+    start,
+    end,
+    duration,
+    metric: "study",
+    lastEdited,
+  });
   const tempo = spanRecord(span, SPAN_NAMES.study);
   const canSave =
     loaded != null && studied && span.issue == null && tempo.quantity > 0;
@@ -172,6 +189,7 @@ function StudyEdit({ recordId, onAfterSave }) {
           setEnd,
           duration,
           setDuration,
+          marcar,
         })}
         hint="quanto puder é suficiente"
       />
@@ -209,6 +227,7 @@ function camposDeTempo({
   setEnd,
   duration,
   setDuration,
+  marcar,
 }) {
   return [
     {
@@ -216,7 +235,7 @@ function camposDeTempo({
       label: "começou",
       placeholder: "19:00",
       value: start,
-      onChange: setStart,
+      onChange: marcar("start", setStart),
       agora: () => setStart(horaAgora()),
       agoraLabel: "agora",
     },
@@ -225,7 +244,7 @@ function camposDeTempo({
       label: "terminou",
       placeholder: "19:45",
       value: end,
-      onChange: setEnd,
+      onChange: marcar("end", setEnd),
       agora: () => setEnd(horaAgora()),
       agoraLabel: "agora",
     },
@@ -234,7 +253,7 @@ function camposDeTempo({
       label: "duração",
       placeholder: "0:45",
       value: duration,
-      onChange: setDuration,
+      onChange: marcar("duration", setDuration),
     },
   ];
 }

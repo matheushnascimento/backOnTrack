@@ -8,7 +8,7 @@ import { minutesToHHMM } from "@/constants/duration";
 import { SPAN_NAMES, horaAgora, spanRecord } from "@/constants/timeSpan";
 import { useThemeTokens } from "@/constants/themeTokens";
 
-import TimeSpanFields, { useTimeSpan } from "./TimeSpanFields";
+import TimeSpanFields, { useSpanEdits, useTimeSpan } from "./TimeSpanFields";
 
 // UI bespoke da tela de exercício (M5-B fatia 2c, mockup 2a·4).
 // Toggle Treino/Cardio (independentes) → início/fim/duração → intensidade
@@ -46,6 +46,7 @@ function camposDoTreino({
   setEndTime,
   duration,
   setDuration,
+  marcar,
 }) {
   return [
     {
@@ -53,7 +54,7 @@ function camposDoTreino({
       label: "começou às",
       placeholder: "18:30",
       value: startTime,
-      onChange: setStartTime,
+      onChange: marcar("start", setStartTime),
       agora: () => setStartTime(horaAgora()),
       agoraLabel: "agora",
     },
@@ -62,7 +63,7 @@ function camposDoTreino({
       label: "terminou às",
       placeholder: "19:30",
       value: endTime,
-      onChange: setEndTime,
+      onChange: marcar("end", setEndTime),
       agora: () => setEndTime(horaAgora()),
       agoraLabel: "agora",
     },
@@ -71,7 +72,7 @@ function camposDoTreino({
       label: "duração",
       placeholder: "1:00",
       value: duration,
-      onChange: setDuration,
+      onChange: marcar("duration", setDuration),
     },
   ];
 }
@@ -96,14 +97,17 @@ function ExerciseCreate({ onAfterAdd }) {
   const [endTime, setEndTime] = useState("");
   const [intensity, setIntensity] = useState(/** @type {number|null} */ (null));
 
+  const { lastEdited, marcar, esquecer } = useSpanEdits();
   const span = useTimeSpan({
     start: startTime,
     end: endTime,
     duration,
     metric: "exercise",
+    lastEdited,
   });
   const tempo = spanRecord(span, SPAN_NAMES.exercise);
 
+  // `issue` já exclui o aviso do teto, que avisa e deixa salvar.
   const canSave =
     (training || cardio) &&
     tempo.quantity > 0 &&
@@ -127,6 +131,7 @@ function ExerciseCreate({ onAfterAdd }) {
     setStartTime("");
     setEndTime("");
     setIntensity(null);
+    esquecer();
     onAfterAdd?.();
   }
 
@@ -148,6 +153,7 @@ function ExerciseCreate({ onAfterAdd }) {
           setEndTime,
           duration,
           setDuration,
+          marcar,
         })}
         hint="dois campos quaisquer dão o terceiro"
       />
@@ -207,11 +213,13 @@ function ExerciseEdit({ recordId, onAfterSave }) {
     }
   }, [recordId]);
 
+  const { lastEdited, marcar } = useSpanEdits();
   const span = useTimeSpan({
     start: startTime,
     end: endTime,
     duration,
     metric: "exercise",
+    lastEdited,
   });
   const tempo = spanRecord(span, SPAN_NAMES.exercise);
 
@@ -259,6 +267,7 @@ function ExerciseEdit({ recordId, onAfterSave }) {
           setEndTime,
           duration,
           setDuration,
+          marcar,
         })}
         hint="dois campos quaisquer dão o terceiro"
       />
