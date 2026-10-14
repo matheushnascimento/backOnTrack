@@ -15,8 +15,6 @@
 // funcionando neles. Quem decide é `timesFrom`, que devolve `null` e manda a
 // tela cair no formulário de duração.
 
-const DIA_MIN = 1440;
-
 /**
  * "23:40" em minutos desde a meia-noite, ou `null`.
  *
@@ -64,24 +62,9 @@ export function bedOf(registro) {
   }
 }
 
-/**
- * Duração entre deitar e acordar, atravessando a meia-noite.
- *
- * Dormir 23:40 e acordar 07:00 são 7h20, e não um número negativo. O módulo
- * resolve isso. Duração zero devolve `null`, porque deitar e acordar no mesmo
- * minuto não é uma noite.
- *
- * @param {string} bed
- * @param {string} wake
- * @returns {number|null} minutos
- */
-export function durationFromTimes(bed, wake) {
-  const b = parseHHMM(bed);
-  const w = parseHHMM(wake);
-  if (b == null || w == null) return null;
-  const dur = (w - b + DIA_MIN) % DIA_MIN;
-  return dur > 0 ? dur : null;
-}
+// A duração entre deitar e acordar (`durationFromTimes`) saiu no #366: o
+// `reconcileTimes` faz isso pras três métricas, e mantê-la aqui deixaria uma
+// função testada que ninguém chama.
 
 /**
  * Os horários de um registro, quando ele os tem.

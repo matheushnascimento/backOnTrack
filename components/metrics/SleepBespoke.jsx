@@ -16,26 +16,27 @@ import TimeSpanFields, { useTimeSpan } from "./TimeSpanFields";
 // Substitui o card Score/OBS/Top/Bottom da MetricScreen quando o registry
 // aponta pra `renderCustom`. Padrão "noite passada":
 //
-//   [dormiu · 23:40]      domingo
-//   [acordou · 07:00]     segunda
-//   [Duração              7h 20min]  (tint azul)
+//   [deitou     23:40]    [deitar agora]
+//   [acordou    07:00]    [levantar agora]
+//   [duração    7:20]     (calculado, dim)
 //
 //   COMO SE SENTE HOJE
 //   [mal] [ok] [bem] [ótimo]
 //
 //   [Registrar]
 //
-// Duração calculada auto (crossing midnight: (wake - bed + 1440) % 1440).
 // Qualidade mapeia pra `score` (2/3/4/5) pra reusar a infra do histórico.
 //
 // Fatia do sono do #256: quando `recordId` chega (edição pelo HistoryCard), o
 // componente troca pra <SleepEdit>.
 //
-// Desde a #328 o registro guarda `bed` e `wake` no `details`, e a edição mostra
-// os mesmos dois campos de horário da criação. Registro gravado ANTES disso não
-// tem os campos, e aí a edição cai no formulário de duração. Quem decide é o
-// `timesFrom`, e os dois caminhos coexistem porque todo histórico existente é
-// do formato antigo.
+// Desde a #328 o registro guarda `bed` e `wake` no `details`. Registro gravado
+// ANTES disso não tem os campos, e era a maioria do histórico: a edição tinha
+// um segundo formulário, só de duração, pra dar conta deles. O #366 fechou esse
+// ramo, porque a duração virou campo editável no mesmo bloco, e aí o registro
+// antigo abre com duração preenchida e horários vazios que ele pode receber.
+// O `timesFrom` continua dizendo quais campos vêm preenchidos, e já não
+// escolhe formulário.
 //
 // Score fora do range QUALITY (registros antigos com estrelas 0-5) fica sem
 // pill selecionada e o valor original é preservado no save se o usuário não

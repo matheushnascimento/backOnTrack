@@ -6,7 +6,6 @@
 
 import {
   bedOf,
-  durationFromTimes,
   latestBed,
   nightInstant,
   parseHHMM,
@@ -35,27 +34,6 @@ describe("parseHHMM", () => {
   it("recusa o que não é string", () => {
     expect(parseHHMM(null)).toBeNull();
     expect(parseHHMM(480)).toBeNull();
-  });
-});
-
-describe("durationFromTimes", () => {
-  it("atravessa a meia-noite", () => {
-    // O caso normal de quem dorme: 23:40 às 07:00 são 7h20, não negativo.
-    expect(durationFromTimes("23:40", "07:00")).toBe(440);
-  });
-
-  it("funciona dentro do mesmo dia", () => {
-    expect(durationFromTimes("01:00", "09:30")).toBe(510);
-  });
-
-  it("recusa duração zero", () => {
-    // Deitar e acordar no mesmo minuto não é uma noite.
-    expect(durationFromTimes("07:00", "07:00")).toBeNull();
-  });
-
-  it("recusa quando algum horário não lê", () => {
-    expect(durationFromTimes("23:40", "")).toBeNull();
-    expect(durationFromTimes("", "07:00")).toBeNull();
   });
 });
 
