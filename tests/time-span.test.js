@@ -6,7 +6,13 @@
 // se contradizem, aliasar duração de 25h como 1h pelo módulo de 1440, ou
 // recusar sessão que legitimamente atravessa a meia-noite.
 
-import { reconcileTimes, MAX_SPAN_MIN } from "@/constants/timeSpan";
+import {
+  MAX_SPAN_MIN,
+  SPAN_NAMES,
+  reconcileTimes,
+  spanLabel,
+  spanRecord,
+} from "@/constants/timeSpan";
 
 const r = (campos) => reconcileTimes(campos);
 
@@ -126,6 +132,56 @@ describe("teto de sanidade", () => {
   });
 });
 
+describe("teto do sono, absorvido do #353", () => {
+  // Estes casos vinham de `sleepTimeIssue`, que este módulo substituiu. Ficam
+  // aqui pra proteção não sumir junto com a função.
+  const max = MAX_SPAN_MIN.sleep; // 16h
+
+  it("a noite típica atravessa a meia-noite e não reclama", () => {
+    // O acordar é numericamente MENOR que o deitar, e isso é o caso comum.
+    for (const [bed, wake] of [
+      ["23:40", "07:00"],
+      ["22:00", "06:30"],
+      ["00:30", "08:00"],
+    ]) {
+      expect(r({ start: bed, end: wake, maxMin: max }).issue).toBeNull();
+    }
+  });
+
+  it("noite longa de recuperação ainda passa", () => {
+    expect(r({ start: "22:00", end: "10:00", maxMin: max }).issue).toBeNull();
+    expect(r({ start: "21:00", end: "11:00", maxMin: max }).issue).toBeNull();
+  });
+
+  it("horários invertidos aparecem como duração implausível", () => {
+    expect(r({ start: "23:00", end: "22:00", maxMin: max }).issue.code).toBe(
+      "longa-demais",
+    );
+    expect(
+      r({ start: "07:00", end: "00:30", maxMin: max }).issue.message,
+    ).toContain("17:30");
+  });
+
+  it("a fronteira do teto é exata", () => {
+    expect(r({ start: "22:00", end: "14:00", maxMin: max }).issue).toBeNull();
+    expect(
+      r({ start: "22:00", end: "14:01", maxMin: max }).issue,
+    ).not.toBeNull();
+  });
+
+  it("deitar sem acordar segue sendo registro válido", () => {
+    // §4.2: deitar é o comportamento, acordar é opcional.
+    expect(r({ start: "23:40", maxMin: max }).issue).toBeNull();
+  });
+
+  it("o teto também pega deitar mais duração, que o #353 não via", () => {
+    // Ganho real da unificação: antes só o par de horários era checado.
+    expect(
+      r({ start: "23:00", duration: "18:00", maxMin: max }).issue.code,
+    ).toBe("longa-demais");
+  });
+});
+
 describe("entradas que não dá pra interpretar", () => {
   it("duração de 24h ou mais não cabe em dois horários de relógio", () => {
     // Sem esta guarda o `% 1440` faria 25h bater com 1h e passar como
@@ -164,5 +220,112 @@ describe("formato de saída", () => {
 
   it("duração de mais de 10h não ganha zero à esquerda", () => {
     expect(r({ start: "00:00", end: "11:00" }).duration).toBe("11:00");
+  });
+});
+
+describe("spanRecord", () => {
+  // Esta é a parte que o `update` pode apagar sem avisar: ele RECONSTRÓI o
+  // `details`, então campo que não entra no payload SOME, e a suíte fica verde
+  // (#328, #332). Os três nomes diferentes existem porque os registros
+  // existentes têm nomes diferentes, e não por escolha.
+
+  it("grava a duração em minutos, inclusive a derivada", () => {
+    const span = reconcileTimes({ start: "10:00", end: "11:30" });
+    expect(spanRecord(span, SPAN_NAMES.study).quantity).toBe(90);
+  });
+
+  it("o estudo omite horário ausente, porque o campo é novo", () => {
+    const span = reconcileTimes({ duration: "0:45" });
+    expect(spanRecord(span, SPAN_NAMES.study)).toEqual({ quantity: 45 });
+  });
+
+  it("o exercício e o sono sempre escrevem o início, mesmo vazio", () => {
+    // Omitir passaria a APAGAR o campo desses registros no update, que é
+    // mudança que a tela não pediu.
+    const span = reconcileTimes({ duration: "0:45" });
+    expect(spanRecord(span, SPAN_NAMES.exercise)).toEqual({
+      quantity: 45,
+      trainingTime: "",
+    });
+    expect(spanRecord(span, SPAN_NAMES.sleep)).toEqual({
+      quantity: 45,
+      bed: "",
+    });
+  });
+
+  it("cada métrica usa os nomes dos próprios registros", () => {
+    const span = reconcileTimes({ start: "23:00", end: "07:00" });
+    expect(spanRecord(span, SPAN_NAMES.sleep)).toEqual({
+      quantity: 480,
+      bed: "23:00",
+      wake: "07:00",
+    });
+    expect(spanRecord(span, SPAN_NAMES.exercise)).toEqual({
+      quantity: 480,
+      trainingTime: "23:00",
+      end: "07:00",
+    });
+    expect(spanRecord(span, SPAN_NAMES.study)).toEqual({
+      quantity: 480,
+      start: "23:00",
+      end: "07:00",
+    });
+  });
+
+  it("o fim derivado é gravado como qualquer outro", () => {
+    // O valor aparece dim na tela, e isso é procedência, e não rascunho.
+    const span = reconcileTimes({ start: "18:30", duration: "1:00" });
+    expect(spanRecord(span, SPAN_NAMES.exercise).end).toBe("19:30");
+  });
+
+  it("duração zero é gravada, porque no sono significa não informado", () => {
+    // §4.2: deitar sozinho é registro válido, e a Home mostra o horário em vez
+    // de formatar zero como "0:00".
+    const span = reconcileTimes({ start: "23:40" });
+    expect(spanRecord(span, SPAN_NAMES.sleep)).toEqual({
+      quantity: 0,
+      bed: "23:40",
+    });
+  });
+});
+
+describe("spanLabel", () => {
+  it("mostra a faixa quando há os dois horários", () => {
+    expect(spanLabel({ trainingTime: "18:30", end: "19:30" }, "exercise")).toBe(
+      "18:30-19:30",
+    );
+    expect(spanLabel({ bed: "23:00", wake: "07:00" }, "sleep")).toBe(
+      "23:00-07:00",
+    );
+  });
+
+  it("mostra só o início quando não há fim", () => {
+    expect(spanLabel({ trainingTime: "18:30" }, "exercise")).toBe("18:30");
+  });
+
+  it("sem início não mostra nada, nem com fim presente", () => {
+    expect(spanLabel({ end: "19:30" }, "exercise")).toBe("");
+    expect(spanLabel({}, "study")).toBe("");
+    expect(spanLabel(null, "study")).toBe("");
+  });
+
+  it("horário ilegível não vira faixa", () => {
+    // O histórico tem registro com trainingTime ":" de quem não preencheu.
+    expect(spanLabel({ trainingTime: ":" }, "exercise")).toBe("");
+    expect(spanLabel({ trainingTime: "18:30", end: ":" }, "exercise")).toBe(
+      "18:30",
+    );
+  });
+
+  it("métrica sem horário devolve vazio em vez de quebrar", () => {
+    expect(spanLabel({ start: "10:00" }, "water")).toBe("");
+  });
+
+  it("registro CRU não rende faixa, e isso é a armadilha do #356", () => {
+    // Os campos ficam presos no `details`, e aqui o retorno é vazio sem erro
+    // nenhum. Quem chama tem que passar registro hidratado.
+    expect(
+      spanLabel({ details: JSON.stringify({ bed: "23:00" }) }, "sleep"),
+    ).toBe("");
   });
 });

@@ -14,9 +14,9 @@
  * conta, o resultado carrega um `issue` e **o caller não grava**.
  *
  * Travar em vez de escolher é decisão de produto: o app não sabe qual dos três
- * a pessoa quis dizer, e adivinhar erra em silêncio. Mesmo espírito do
- * `sleepTimeIssue`, que já bloqueia noite absurda com mensagem em vez de
- * corrigir sozinho.
+ * a pessoa quis dizer, e adivinhar erra em silêncio. Mesmo espírito do aviso de
+ * noite implausível do #353, que este módulo absorveu: ele bloqueava com
+ * mensagem em vez de corrigir sozinho, e agora as três métricas têm isso.
  *
  * ## Atravessar a meia-noite
  *
@@ -29,13 +29,26 @@
  * arbitrários até existir dado de uso que os sustente.
  */
 
+import { hhmmToMinutes } from "./duration";
+
 const MIN_POR_DIA = 1440;
 
-/** Teto de sanidade por métrica, em minutos. Arbitrário até haver medição. */
+/**
+ * Teto de sanidade por métrica, em minutos.
+ *
+ * O do sono vem do #353, e é o único com raciocínio por trás: sono muito
+ * longo, por doença ou recuperação, chega a 12 ou 14 horas, então 16 fica
+ * acima do legítimo e abaixo do absurdo. E o absurdo tem uma forma só, que é
+ * horário invertido: deitar 23:00 e acordar 22:00 dá 23 horas, e o app aceitava
+ * isso em silêncio.
+ *
+ * Os outros dois são palpite. Ficam aqui pra ter o mesmo tipo de proteção, e
+ * não porque alguém mediu 6h de exercício ou 12h de estudo como limite. Dado de
+ * uso muda estes números.
+ */
 export const MAX_SPAN_MIN = {
   exercise: 6 * 60,
   study: 12 * 60,
-  // O sono tem o próprio teto desde o #354, em `sleepTimes.js`.
   sleep: 16 * 60,
 };
 
@@ -177,4 +190,73 @@ export function reconcileTimes({ start, end, duration, maxMin } = {}) {
     derived: "start",
     issue: vaoDaQuantidade(d),
   };
+}
+
+/**
+ * "HH:MM" de agora, pro atalho "comecei agora" das três telas.
+ *
+ * Vive aqui, e não em cada tela, porque o sono tinha a própria cópia e o
+ * exercício ia ganhar a segunda. Formato de relógio, com dois dígitos na hora,
+ * pro `reconcileTimes` aceitar sem reformatar.
+ */
+export function horaAgora(now = new Date()) {
+  return fmtClock(now.getHours() * 60 + now.getMinutes());
+}
+
+/**
+ * A parte de tempo de um registro, nos nomes de campo da métrica.
+ *
+ * As três telas montavam isso na mão, com os mesmos spreads condicionais
+ * repetidos quatro vezes cada (criar e editar). Era o lugar exato do bug que
+ * já aconteceu duas vezes: o `update` RECONSTRÓI o `details`, então um campo
+ * esquecido num dos callsites SOME em silêncio, com a suíte verde (#328, #332).
+ *
+ * Os nomes mudam por métrica porque os registros existentes mudam, e não por
+ * escolha: o sono grava `bed`/`wake` desde o #328, e o exercício grava o início
+ * como `trainingTime` desde antes. Renomear exigiria migração do `details`.
+ *
+ * `startAlways` é pros dois que sempre escreveram o campo de início, mesmo
+ * vazio. Omitir passaria a apagá-lo desses registros, e não é o que a tela
+ * pediu.
+ *
+ * @param {{start: string, end: string, duration: string}} span saída do `reconcileTimes`
+ * @param {{start: string, end: string, startAlways?: boolean}} nomes
+ */
+export function spanRecord(span, { start, end, startAlways = false }) {
+  const campos = { quantity: hhmmToMinutes(span.duration) };
+  if (span.start || startAlways) campos[start] = span.start;
+  if (span.end) campos[end] = span.end;
+  return campos;
+}
+
+/** Nomes de campo por métrica. Ver `spanRecord`. */
+export const SPAN_NAMES = {
+  exercise: { start: "trainingTime", end: "end", startAlways: true },
+  study: { start: "start", end: "end" },
+  sleep: { start: "bed", end: "wake", startAlways: true },
+};
+
+/**
+ * A faixa de horário de um registro, pro histórico: "18:30-19:30", ou só
+ * "18:30" quando não há fim.
+ *
+ * O card mostrava isso só no exercício, e só o início, porque era a única tela
+ * que tinha horário. Agora as três têm, e deixar os campos novos invisíveis
+ * seria gravar dado que ninguém lê.
+ *
+ * ⚠️ Espera registro HIDRATADO, com os campos do `details` no topo, que é o que
+ * `get`/`getById` devolvem. Linha crua do `useTable` tem os campos presos no
+ * `details`, e ali o retorno seria vazio sem erro nenhum (#356).
+ *
+ * @param {Record<string, any>|null|undefined} registro
+ * @param {string} metric chave da métrica (nome da tabela)
+ * @returns {string} vazio quando não há início
+ */
+export function spanLabel(registro, metric) {
+  const nomes = SPAN_NAMES[metric];
+  if (!nomes) return "";
+  const inicio = registro?.[nomes.start];
+  if (parseClock(inicio) == null) return "";
+  const fim = registro?.[nomes.end];
+  return parseClock(fim) == null ? inicio : `${inicio}-${fim}`;
 }

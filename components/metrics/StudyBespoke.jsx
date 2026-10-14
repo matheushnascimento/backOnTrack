@@ -1,14 +1,15 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 import Svg, { Path } from "react-native-svg";
 
 import { add, getById, update } from "@/infra/database";
 import getDate from "@/constants/getDate";
-import { hhmmToMinutes, minutesToHHMM } from "@/constants/duration";
+import { minutesToHHMM } from "@/constants/duration";
 import { useThemeTokens } from "@/constants/themeTokens";
+import { SPAN_NAMES, horaAgora, spanRecord } from "@/constants/timeSpan";
 
-import TimePickerField from "./TimePickerField";
+import TimeSpanFields, { useTimeSpan } from "./TimeSpanFields";
 
 // UI bespoke da tela de estudo (M5-B fatia 2c, mockup 2a·6).
 // Toggle "Feito" full-width com check → duração HH:MM (default "00:00") →
@@ -22,18 +23,12 @@ import TimePickerField from "./TimePickerField";
 // componente troca pra <StudyEdit>: hidrata Feito/duração/foco/OBS do
 // registro; salva via `update`. Score do registro é preservado (v2 create não
 // define, v1 shell definia).
+//
+// #366: a tela ganhou início e fim. Eram ausentes aqui, e a duração era o
+// único jeito de dizer quanto durou. Agora os três convivem pelo
+// `reconcileTimes`, e `start`/`end` entram no registro quando informados.
 
 const FOCUS = ["leitura", "curso", "prática", "revisão", "outro"];
-
-function parseHHMM(s) {
-  if (!s) return null;
-  const m = /^(\d{1,2}):(\d{2})$/.exec(s.trim());
-  if (!m) return null;
-  const h = Number(m[1]);
-  const min = Number(m[2]);
-  if (h > 23 || min > 59) return null;
-  return h * 60 + min;
-}
 
 /**
  * @param {{ onAfterAdd?: () => void, recordId?: string }} props
@@ -49,22 +44,31 @@ export default function StudyBespoke({ onAfterAdd, recordId }) {
  */
 function StudyCreate({ onAfterAdd }) {
   const [studied, setStudied] = useState(true);
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
   const [duration, setDuration] = useState("");
   const [focus, setFocus] = useState(/** @type {string|null} */ (null));
 
-  const durationMin = useMemo(() => parseHHMM(duration), [duration]);
-  const canSave = studied && durationMin != null && durationMin > 0;
+  const span = useTimeSpan({ start, end, duration, metric: "study" });
+  const tempo = spanRecord(span, SPAN_NAMES.study);
+  // Duração continua sendo o que define um registro de estudo, mas agora ela
+  // pode vir dos horários. O que bloqueia é contradição, não campo vazio.
+  const canSave = studied && span.issue == null && tempo.quantity > 0;
 
   function handleSave() {
     if (!canSave) return;
     add("study", {
       date: getDate().ISOdate,
       unit: "min",
-      quantity: hhmmToMinutes(duration),
       studied,
       focus: focus ?? "",
+      // Horários são opcionais aqui: quem só sabe que estudou 45min segue
+      // registrando sem eles, e o §4.2 trata ausência como ausência.
+      ...tempo,
     });
     setStudied(true);
+    setStart("");
+    setEnd("");
     setDuration("");
     setFocus(null);
     onAfterAdd?.();
@@ -74,10 +78,16 @@ function StudyCreate({ onAfterAdd }) {
     <View className="gap-4">
       <DoneToggle value={studied} onToggle={() => setStudied((v) => !v)} />
 
-      <DurationField
-        value={duration}
-        onChange={setDuration}
-        placeholder="00:45"
+      <TimeSpanFields
+        span={span}
+        fields={camposDeTempo({
+          start,
+          setStart,
+          end,
+          setEnd,
+          duration,
+          setDuration,
+        })}
         hint="quanto puder é suficiente"
       />
 
@@ -110,6 +120,8 @@ function StudyCreate({ onAfterAdd }) {
  */
 function StudyEdit({ recordId, onAfterSave }) {
   const [studied, setStudied] = useState(true);
+  const [start, setStart] = useState("");
+  const [end, setEnd] = useState("");
   const [duration, setDuration] = useState("");
   const [focus, setFocus] = useState(/** @type {string|null} */ (null));
   const [note, setNote] = useState("");
@@ -120,24 +132,29 @@ function StudyEdit({ recordId, onAfterSave }) {
     if (!r) return;
     setLoaded(r);
     setStudied(r.studied != null ? !!r.studied : true);
+    setStart(r.start ? String(r.start) : "");
+    setEnd(r.end ? String(r.end) : "");
     setDuration(minutesToHHMM(r.quantity));
     setFocus(r.focus ? String(r.focus) : null);
     setNote(r.note ?? r.observation ?? "");
   }, [recordId]);
 
-  const durationMin = useMemo(() => parseHHMM(duration), [duration]);
+  const span = useTimeSpan({ start, end, duration, metric: "study" });
+  const tempo = spanRecord(span, SPAN_NAMES.study);
   const canSave =
-    loaded != null && studied && durationMin != null && durationMin > 0;
+    loaded != null && studied && span.issue == null && tempo.quantity > 0;
 
   function handleSave() {
     if (!canSave) return;
+    // Todo campo do registro tem que ser repassado aqui: o `update`
+    // RECONSTRÓI o details, e o que não vem SOME em silêncio (#328, #332).
     update(recordId, {
       unit: "min",
-      quantity: hhmmToMinutes(duration),
       note,
       score: loaded.score,
       studied,
       focus: focus ?? "",
+      ...tempo,
     });
     onAfterSave?.();
   }
@@ -146,10 +163,16 @@ function StudyEdit({ recordId, onAfterSave }) {
     <View className="gap-4">
       <DoneToggle value={studied} onToggle={() => setStudied((v) => !v)} />
 
-      <DurationField
-        value={duration}
-        onChange={setDuration}
-        placeholder="00:45"
+      <TimeSpanFields
+        span={span}
+        fields={camposDeTempo({
+          start,
+          setStart,
+          end,
+          setEnd,
+          duration,
+          setDuration,
+        })}
         hint="quanto puder é suficiente"
       />
 
@@ -173,6 +196,47 @@ function StudyEdit({ recordId, onAfterSave }) {
       />
     </View>
   );
+}
+
+/**
+ * Descritores na ordem início → fim → duração, iguais nas duas telas (create e
+ * edit), que é o que impedia as duas de divergirem como as métricas divergiram.
+ */
+function camposDeTempo({
+  start,
+  setStart,
+  end,
+  setEnd,
+  duration,
+  setDuration,
+}) {
+  return [
+    {
+      key: "start",
+      label: "começou",
+      placeholder: "19:00",
+      value: start,
+      onChange: setStart,
+      agora: () => setStart(horaAgora()),
+      agoraLabel: "agora",
+    },
+    {
+      key: "end",
+      label: "terminou",
+      placeholder: "19:45",
+      value: end,
+      onChange: setEnd,
+      agora: () => setEnd(horaAgora()),
+      agoraLabel: "agora",
+    },
+    {
+      key: "duration",
+      label: "duração",
+      placeholder: "0:45",
+      value: duration,
+      onChange: setDuration,
+    },
+  ];
 }
 
 /** @param {{ value: boolean, onToggle: () => void }} props */
@@ -215,51 +279,6 @@ function DoneToggle({ value, onToggle }) {
         Feito
       </Text>
     </Pressable>
-  );
-}
-
-/**
- * @param {{
- *   value: string,
- *   onChange: (v: string) => void,
- *   placeholder: string,
- *   hint: string,
- * }} props
- */
-function DurationField({ value, onChange, placeholder, hint }) {
-  const t = useThemeTokens();
-  return (
-    <View>
-      <View className="flex-row items-center justify-between rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark px-5 py-4">
-        <View className="gap-0.5">
-          <Text
-            className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
-            style={{ fontFamily: "JetBrainsMono_500Medium" }}
-          >
-            duração
-          </Text>
-          <TimePickerField
-            value={value}
-            onChangeText={onChange}
-            placeholder={placeholder}
-            accessibilityLabel="Duração"
-            style={{
-              fontFamily: "JetBrainsMono_500Medium",
-              fontSize: 24,
-              color: t.ink,
-              padding: 0,
-              minWidth: 80,
-            }}
-          />
-        </View>
-      </View>
-      <Text
-        className="ml-1 mt-2 text-xs text-label dark:text-label-dark"
-        style={{ fontFamily: "JetBrainsMono_400Regular" }}
-      >
-        {hint}
-      </Text>
-    </View>
   );
 }
 

@@ -68,9 +68,12 @@ export default function TimePickerField({
   const [show, setShow] = useState(false);
   const [mode, setMode] = useState(/** @type {"hour"|"minute"} */ ("hour"));
 
-  const [h, m] = parseHHMM(value);
   const displayText = value || placeholder || "--:--";
   const isEmpty = !value;
+  // Semeado pelo que está NA TELA, não só pelo value: quando o campo mostra um
+  // valor calculado no slot do placeholder (#366), o relógio abre nele em vez
+  // de em 00:00, e ajustar vira um toque em vez de dois.
+  const [h, m] = parseHHMM(value || placeholder);
 
   function open() {
     setMode("hour");
