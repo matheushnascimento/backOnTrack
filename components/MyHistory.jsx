@@ -12,6 +12,7 @@ import { confirmAction } from "@/constants/dialogs";
 import { minutesToHHMM } from "@/constants/duration";
 import { router } from "expo-router";
 import { maisRecentesPrimeiro } from "@/constants/recordOrder";
+import { spanLabel } from "@/constants/timeSpan";
 //#endregion
 
 function formatDate(date) {
@@ -54,6 +55,7 @@ export function HistoryCard({
   const id = obj.id;
   const note = obj.note ?? obj.observation;
   const value = formatQuantity(obj, unit);
+  const faixa = spanLabel(obj, tableName);
 
   function handleEdit() {
     router.navigate(`/(metrics)/${tableName}?id=${id}`);
@@ -92,14 +94,16 @@ export function HistoryCard({
           >
             {capName}
           </Text>
-          {exercise && obj.trainingTime && (
+          {/* Faixa de horário das três métricas de tempo (#366). Era só o
+              início do exercício, porque era o único horário que existia. */}
+          {faixa ? (
             <Text
               className="text-xs text-body-secondary dark:text-body-secondary-dark"
               style={{ fontFamily: "JetBrainsMono_400Regular" }}
             >
-              · {obj.trainingTime}
+              · {faixa}
             </Text>
-          )}
+          ) : null}
         </View>
         {obj.score != null && obj.score !== "" ? (
           <View

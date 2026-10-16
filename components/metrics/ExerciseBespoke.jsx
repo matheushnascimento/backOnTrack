@@ -1,17 +1,27 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
 
 import { add, getById, update } from "@/infra/database";
 import getDate from "@/constants/getDate";
-import { hhmmToMinutes, minutesToHHMM } from "@/constants/duration";
+import { minutesToHHMM } from "@/constants/duration";
+import { SPAN_NAMES, horaAgora, spanRecord } from "@/constants/timeSpan";
 import { useThemeTokens } from "@/constants/themeTokens";
 
-import TimePickerField from "./TimePickerField";
+import TimeSpanFields, { useSpanEdits, useTimeSpan } from "./TimeSpanFields";
 
 // UI bespoke da tela de exercício (M5-B fatia 2c, mockup 2a·4).
-// Toggle Treino/Cardio (independentes) → duração HH:MM → hora de início
-// opcional → intensidade (leve/ok/forte/puxado) mapeando pra score 2/3/4/5.
+// Toggle Treino/Cardio (independentes) → início/fim/duração → intensidade
+// (leve/ok/forte/puxado) mapeando pra score 2/3/4/5.
+//
+// #366: esta tela era o caso pior dos três. Tinha "começou às" e "duração"
+// INDEPENDENTES, sem fim nenhum: dava pra dizer "comecei 10:00, durou 1h" sem
+// nada ligar os dois, e nada denunciava "comecei 10:00, durou 9h". Agora os
+// três passam pelo `reconcileTimes`.
+//
+// ⚠️ O início continua gravado como `trainingTime`, e não como `start`. É nome
+// legado de todo registro existente, lido também pelo MyHistory, e renomeá-lo
+// exigiria migração do `details`. O fim, que é campo novo, entra como `end`.
 //
 // Fatia do exercício do #256: quando `recordId` chega (edição pelo HistoryCard),
 // o componente troca pra <ExerciseEdit>: hidrata modalidade, duração,
@@ -26,14 +36,45 @@ const INTENSITY = [
   { key: "puxado", label: "puxado", score: 5 },
 ];
 
-function parseHHMM(s) {
-  if (!s) return null;
-  const m = /^(\d{1,2}):(\d{2})$/.exec(s.trim());
-  if (!m) return null;
-  const h = Number(m[1]);
-  const min = Number(m[2]);
-  if (h > 23 || min > 59) return null;
-  return { h, min };
+/**
+ * Descritores na ordem início → fim → duração, iguais na criação e na edição.
+ */
+function camposDoTreino({
+  startTime,
+  setStartTime,
+  endTime,
+  setEndTime,
+  duration,
+  setDuration,
+  marcar,
+}) {
+  return [
+    {
+      key: "start",
+      label: "começou às",
+      placeholder: "18:30",
+      value: startTime,
+      onChange: marcar("start", setStartTime),
+      agora: () => setStartTime(horaAgora()),
+      agoraLabel: "agora",
+    },
+    {
+      key: "end",
+      label: "terminou às",
+      placeholder: "19:30",
+      value: endTime,
+      onChange: marcar("end", setEndTime),
+      agora: () => setEndTime(horaAgora()),
+      agoraLabel: "agora",
+    },
+    {
+      key: "duration",
+      label: "duração",
+      placeholder: "1:00",
+      value: duration,
+      onChange: marcar("duration", setDuration),
+    },
+  ];
 }
 
 /**
@@ -53,36 +94,44 @@ function ExerciseCreate({ onAfterAdd }) {
   const [cardio, setCardio] = useState(false);
   const [duration, setDuration] = useState("");
   const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [intensity, setIntensity] = useState(/** @type {number|null} */ (null));
 
-  const durationOk = useMemo(() => {
-    const p = parseHHMM(duration);
-    return p != null && p.h * 60 + p.min > 0;
-  }, [duration]);
-  const startTimeOk = useMemo(
-    () => startTime === "" || parseHHMM(startTime) != null,
-    [startTime],
-  );
+  const { lastEdited, marcar, esquecer } = useSpanEdits();
+  const span = useTimeSpan({
+    start: startTime,
+    end: endTime,
+    duration,
+    metric: "exercise",
+    lastEdited,
+  });
+  const tempo = spanRecord(span, SPAN_NAMES.exercise);
 
+  // `issue` já exclui o aviso do teto, que avisa e deixa salvar.
   const canSave =
-    (training || cardio) && durationOk && startTimeOk && intensity != null;
+    (training || cardio) &&
+    tempo.quantity > 0 &&
+    span.issue == null &&
+    intensity != null;
 
   function handleSave() {
     if (!canSave) return;
     add("exercise", {
       date: getDate().ISOdate,
       unit: "min",
-      quantity: hhmmToMinutes(duration),
       training,
       cardio,
-      trainingTime: startTime,
       score: intensity,
+      // O início sai como `trainingTime`; ver o aviso no topo do arquivo.
+      ...tempo,
     });
     setTraining(false);
     setCardio(false);
     setDuration("");
     setStartTime("");
+    setEndTime("");
     setIntensity(null);
+    esquecer();
     onAfterAdd?.();
   }
 
@@ -95,20 +144,18 @@ function ExerciseCreate({ onAfterAdd }) {
         onCardio={() => setCardio((v) => !v)}
       />
 
-      <FieldRow
-        label="duração"
-        value={duration}
-        onChange={setDuration}
-        placeholder="1:00"
-        hint="obrigatório"
-      />
-
-      <FieldRow
-        label="começou às"
-        value={startTime}
-        onChange={setStartTime}
-        placeholder="18:30"
-        hint="opcional"
+      <TimeSpanFields
+        span={span}
+        fields={camposDoTreino({
+          startTime,
+          setStartTime,
+          endTime,
+          setEndTime,
+          duration,
+          setDuration,
+          marcar,
+        })}
+        hint="dois campos quaisquer dão o terceiro"
       />
 
       <View className="mt-2">
@@ -142,6 +189,7 @@ function ExerciseEdit({ recordId, onAfterSave }) {
   const [cardio, setCardio] = useState(false);
   const [duration, setDuration] = useState("");
   const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [note, setNote] = useState("");
   const [intensity, setIntensity] = useState(/** @type {number|null} */ (null));
   const [intensityTouched, setIntensityTouched] = useState(false);
@@ -158,23 +206,28 @@ function ExerciseEdit({ recordId, onAfterSave }) {
     // esses viram string vazia pra o placeholder aparecer.
     const rawTrainingTime = String(r.trainingTime ?? "");
     setStartTime(rawTrainingTime === ":" ? "" : rawTrainingTime);
+    setEndTime(r.end ? String(r.end) : "");
     setNote(r.note ?? r.observation ?? "");
     if (INTENSITY.some((i) => i.score === r.score)) {
       setIntensity(r.score);
     }
   }, [recordId]);
 
-  const durationOk = useMemo(() => {
-    const p = parseHHMM(duration);
-    return p != null && p.h * 60 + p.min > 0;
-  }, [duration]);
-  const startTimeOk = useMemo(
-    () => startTime === "" || parseHHMM(startTime) != null,
-    [startTime],
-  );
+  const { lastEdited, marcar } = useSpanEdits();
+  const span = useTimeSpan({
+    start: startTime,
+    end: endTime,
+    duration,
+    metric: "exercise",
+    lastEdited,
+  });
+  const tempo = spanRecord(span, SPAN_NAMES.exercise);
 
   const canSave =
-    loaded != null && (training || cardio) && durationOk && startTimeOk;
+    loaded != null &&
+    (training || cardio) &&
+    tempo.quantity > 0 &&
+    span.issue == null;
 
   function handlePickIntensity(score) {
     setIntensity(score);
@@ -183,14 +236,15 @@ function ExerciseEdit({ recordId, onAfterSave }) {
 
   function handleSave() {
     if (!canSave) return;
+    // Todo campo tem que ser repassado: o `update` RECONSTRÓI o details, e o
+    // que não vem SOME em silêncio (#328, #332).
     update(recordId, {
       unit: "min",
-      quantity: hhmmToMinutes(duration),
       note,
       score: intensityTouched ? intensity : loaded.score,
       training,
       cardio,
-      trainingTime: startTime,
+      ...tempo,
     });
     onAfterSave?.();
   }
@@ -204,20 +258,18 @@ function ExerciseEdit({ recordId, onAfterSave }) {
         onCardio={() => setCardio((v) => !v)}
       />
 
-      <FieldRow
-        label="duração"
-        value={duration}
-        onChange={setDuration}
-        placeholder="1:00"
-        hint="obrigatório"
-      />
-
-      <FieldRow
-        label="começou às"
-        value={startTime}
-        onChange={setStartTime}
-        placeholder="18:30"
-        hint="opcional"
+      <TimeSpanFields
+        span={span}
+        fields={camposDoTreino({
+          startTime,
+          setStartTime,
+          endTime,
+          setEndTime,
+          duration,
+          setDuration,
+          marcar,
+        })}
+        hint="dois campos quaisquer dão o terceiro"
       />
 
       <View>
@@ -397,49 +449,5 @@ function ModalityChip({ label, hint, selected, onPress }) {
         {hint}
       </Text>
     </Pressable>
-  );
-}
-
-/**
- * @param {{
- *   label: string,
- *   value: string,
- *   onChange: (v: string) => void,
- *   placeholder: string,
- *   hint: string,
- * }} props
- */
-function FieldRow({ label, value, onChange, placeholder, hint }) {
-  const t = useThemeTokens();
-  return (
-    <View className="flex-row items-center justify-between rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark px-5 py-4">
-      <View className="gap-0.5">
-        <Text
-          className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
-          style={{ fontFamily: "JetBrainsMono_500Medium" }}
-        >
-          {label}
-        </Text>
-        <TimePickerField
-          value={value}
-          onChangeText={onChange}
-          placeholder={placeholder}
-          accessibilityLabel={label}
-          style={{
-            fontFamily: "JetBrainsMono_500Medium",
-            fontSize: 24,
-            color: t.ink,
-            padding: 0,
-            minWidth: 80,
-          }}
-        />
-      </View>
-      <Text
-        className="text-xs text-body-secondary dark:text-body-secondary-dark"
-        style={{ fontFamily: "Inter_400Regular" }}
-      >
-        {hint}
-      </Text>
-    </View>
   );
 }
