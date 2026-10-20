@@ -8,7 +8,9 @@
 
 import {
   DEFAULT_REMINDER_TIME,
+  DIAS_AGENDADOS,
   nextReminderAt,
+  reminderSchedule,
   reminderText,
 } from "@/constants/reminder";
 
@@ -133,5 +135,53 @@ describe("horário não escolhido", () => {
     expect(
       nextReminderAt({ enabled: true, focus: "sleep", hhmm: "25:99", now }),
     ).toBeNull();
+  });
+});
+
+describe("reminderSchedule", () => {
+  // Com uma ocorrência só, um dia sem abrir o app desligava o lembrete até a
+  // próxima abertura. Sem teto, quem sumiu receberia cobrança diária.
+  const base = { enabled: true, focus: "sleep", hhmm: "21:00" };
+  const em = (d, h, m = 0) => new Date(2026, 9, d, h, m).getTime();
+  const hm = (ms) => {
+    const d = new Date(ms);
+    return [d.getDate(), d.getHours(), d.getMinutes()];
+  };
+
+  it("agenda três dias seguidos no mesmo horário", () => {
+    const datas = reminderSchedule({ ...base, now: em(20, 10) });
+    expect(DIAS_AGENDADOS).toBe(3);
+    expect(datas.map(hm)).toEqual([
+      [20, 21, 0],
+      [21, 21, 0],
+      [22, 21, 0],
+    ]);
+  });
+
+  it("registrado hoje, os três começam amanhã", () => {
+    const datas = reminderSchedule({
+      ...base,
+      registeredToday: true,
+      now: em(20, 10),
+    });
+    expect(datas.map(hm)[0]).toEqual([21, 21, 0]);
+    expect(datas).toHaveLength(3);
+  });
+
+  it("sem lembrete, lista vazia", () => {
+    expect(reminderSchedule({ ...base, enabled: false })).toEqual([]);
+    expect(reminderSchedule({ ...base, focus: null })).toEqual([]);
+  });
+
+  it("a hora local sobrevive à troca de horário de verão", () => {
+    // Somar 24h em ms deslocaria uma hora no dia da troca. O `setDate` mantém
+    // a hora de parede, que é o que a pessoa escolheu. Só morde rodando num
+    // fuso com horário de verão, e o Brasil não tem desde 2019: em UTC ou em
+    // São Paulo este teste passa de qualquer jeito.
+    const datas = reminderSchedule({ ...base, now: em(20, 10) }, 30);
+    for (const ms of datas) {
+      const d = new Date(ms);
+      expect([d.getHours(), d.getMinutes()]).toEqual([21, 0]);
+    }
   });
 });

@@ -92,6 +92,39 @@ export function nextReminderAt({
 }
 
 /**
+ * Quantos dias à frente ficam agendados de uma vez.
+ *
+ * O app só recalcula com ele aberto. Com uma ocorrência só, um dia sem abrir o
+ * app desligava o lembrete até a próxima abertura, justamente pra quem mais
+ * precisaria dele. Com várias sem teto, quem sumiu receberia cobrança diária
+ * indefinida, e o modelo deixa a volta com a tela de retomada, que convida sem
+ * cobrar. Três é palpite, como os tetos de tempo do #366.
+ */
+export const DIAS_AGENDADOS = 3;
+
+/**
+ * As próximas ocorrências, uma por dia, a partir de `nextReminderAt`.
+ *
+ * `setDate` em vez de somar 24h: no dia de troca de horário de verão, somar
+ * milissegundos deslocaria o lembrete em uma hora.
+ *
+ * @param {Parameters<typeof nextReminderAt>[0]} args
+ * @param {number} [dias]
+ * @returns {number[]} epoch ms, vazio quando não deve haver lembrete
+ */
+export function reminderSchedule(args, dias = DIAS_AGENDADOS) {
+  const primeiro = nextReminderAt(args);
+  if (primeiro == null) return [];
+  const datas = [];
+  for (let i = 0; i < dias; i++) {
+    const d = new Date(primeiro);
+    d.setDate(d.getDate() + i);
+    datas.push(d.getTime());
+  }
+  return datas;
+}
+
+/**
  * Texto da notificação, sem cobrança.
  *
  * O tom é o mesmo da tela de retomada, que "não cobra quem sumiu, convida".
