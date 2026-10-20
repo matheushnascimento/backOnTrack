@@ -18,6 +18,7 @@ import { goBack } from "@/constants/navigation";
 import MyView from "@/components/MyView";
 import SkipLevelSheet from "@/components/journey/SkipLevelSheet";
 import TimePickerField from "@/components/metrics/TimePickerField";
+import { DEFAULT_REMINDER_TIME } from "@/constants/reminder";
 
 import {
   clearAll,
@@ -281,7 +282,7 @@ export default function Ajustes() {
               <TimePickerField
                 value={String(reminderTime ?? "")}
                 onChangeText={setReminderTime}
-                placeholder="21:00"
+                placeholder={DEFAULT_REMINDER_TIME}
                 accessibilityLabel="Horário do lembrete"
               />
             </View>

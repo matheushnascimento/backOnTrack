@@ -6,7 +6,11 @@
 // depois de a pessoa já ter registrado, não sair pra quem não tem hábito em
 // foco, e nunca cair no passado, que faria a notificação disparar na hora.
 
-import { nextReminderAt, reminderText } from "@/constants/reminder";
+import {
+  DEFAULT_REMINDER_TIME,
+  nextReminderAt,
+  reminderText,
+} from "@/constants/reminder";
 
 // Base fixa, passada explicitamente, pelo mesmo motivo do habit-signals: sem
 // isso o teste depende da hora em que a suíte roda.
@@ -50,7 +54,9 @@ describe("nextReminderAt", () => {
   });
 
   it("não agenda nada com horário inválido", () => {
-    for (const ruim of ["", "abacaxi", "25:00", "21:99", "9h", null, 2100]) {
+    // Vazio e nulo saíram desta lista: valem o padrão de Ajustes. Ver
+    // "horário não escolhido" abaixo.
+    for (const ruim of ["abacaxi", "25:00", "21:99", "9h", 2100]) {
       expect(nextReminderAt({ ...base, hhmm: ruim })).toBeNull();
     }
   });
@@ -105,5 +111,27 @@ describe("reminderText", () => {
     // transformariam o convite em cobrança.
     const { body } = reminderText("sleep", { sleep: { displayName: "sono" } });
     expect(body).not.toMatch(/esquec|perc|falh|!|ofensiva|dias seguidos/i);
+  });
+});
+
+describe("horário não escolhido", () => {
+  // Ajustes mostrava 21:00 no placeholder e gravava vazio, e o lembrete
+  // simplesmente não existia: a tela prometia e nada era agendado.
+  const now = new Date(2026, 9, 20, 10, 0).getTime();
+
+  it("vazio agenda no padrão que a tela exibe", () => {
+    for (const hhmm of ["", undefined, null]) {
+      const quando = new Date(
+        nextReminderAt({ enabled: true, focus: "sleep", hhmm, now }),
+      );
+      expect([quando.getHours(), quando.getMinutes()]).toEqual([21, 0]);
+    }
+    expect(DEFAULT_REMINDER_TIME).toBe("21:00");
+  });
+
+  it("horário inválido continua sem lembrete", () => {
+    expect(
+      nextReminderAt({ enabled: true, focus: "sleep", hhmm: "25:99", now }),
+    ).toBeNull();
   });
 });

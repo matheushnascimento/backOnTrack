@@ -271,13 +271,6 @@ export function setDisplayName(name) {
 
 // --- Lembrete do hábito em foco (#364) ---
 
-export function getReminder() {
-  return {
-    enabled: Boolean(store.getValue("reminderEnabled")),
-    time: String(store.getValue("reminderTime") || "21:00"),
-  };
-}
-
 export function setReminderEnabled(on) {
   store.setValue("reminderEnabled", Boolean(on));
 }

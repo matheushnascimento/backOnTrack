@@ -34,6 +34,15 @@
 import { parseHHMM } from "./sleepTimes";
 
 /**
+ * Horário do lembrete quando a pessoa ativa sem escolher um.
+ *
+ * Ajustes MOSTRAVA 21:00 no placeholder, mas o valor gravado ficava vazio e o
+ * `nextReminderAt` devolvia `null`: a tela dizia que ia lembrar e nada era
+ * agendado. Agora o placeholder e o agendamento leem daqui.
+ */
+export const DEFAULT_REMINDER_TIME = "21:00";
+
+/**
  * Instante do próximo lembrete, ou `null` quando não deve haver nenhum.
  *
  * @param {{
@@ -55,7 +64,9 @@ export function nextReminderAt({
   if (!enabled) return null;
   if (!focus) return null;
 
-  const minuto = parseHHMM(hhmm);
+  // Vazio vale o padrão que Ajustes exibe, e não "sem lembrete". Inválido
+  // continua sendo `null`: não dá pra adivinhar o que "25:99" queria dizer.
+  const minuto = parseHHMM(hhmm || DEFAULT_REMINDER_TIME);
   if (minuto == null) return null;
 
   const agora = new Date(now);

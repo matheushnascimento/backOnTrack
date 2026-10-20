@@ -98,7 +98,12 @@ export default function TimePickerField({
         accessibilityLabel={accessibilityLabel}
         onPress={open}
       >
-        <Text style={[style, isEmpty && { color: t.iconDim }]}>
+        {/* A cor do tema vem ANTES do `style` do caller: quem passa cor
+            continua mandando, e quem não passa herda a do tema em vez do preto
+            padrão do Text. Ajustes não passava, e o horário sumia no escuro. */}
+        <Text
+          style={[{ color: t.ink }, style, isEmpty && { color: t.iconDim }]}
+        >
           {displayText}
         </Text>
       </Pressable>
