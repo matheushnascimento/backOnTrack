@@ -36,7 +36,7 @@ function minutoDoEvento(registro) {
 }
 
 /** Chave de dia-calendário local (não UTC, porque o dia do usuário é o local). */
-function diaLocal(ms) {
+export function diaLocal(ms) {
   const d = new Date(ms);
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
