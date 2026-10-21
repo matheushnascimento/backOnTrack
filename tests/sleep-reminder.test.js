@@ -11,6 +11,9 @@ import {
   MIN_NOITES,
   medianaCircular,
   sleepReminderSchedule,
+  sleepReminderStatus,
+  sleepReminderText,
+  sleepTakesOverFocus,
   typicalSleepTimes,
 } from "@/constants/sleepReminder";
 
@@ -228,5 +231,67 @@ describe("sleepReminderSchedule", () => {
     });
     const acordar = agenda.filter((a) => a.kind === "wake").map((a) => a.at);
     expect(acordar.map(quando)[0]).toEqual([22, 8, 30]);
+  });
+});
+
+describe("sleepTakesOverFocus", () => {
+  const now = em(20, 10);
+  const base = { focus: "sleep", enabled: true, records: semana(), now };
+
+  it("assume quando o foco é o sono, está ligado e tem noites", () => {
+    expect(sleepTakesOverFocus(base)).toBe(true);
+  });
+
+  it("com o foco em outro hábito, o lembrete do foco segue", () => {
+    expect(sleepTakesOverFocus({ ...base, focus: "water" })).toBe(false);
+  });
+
+  it("desligado, o lembrete do foco segue", () => {
+    expect(sleepTakesOverFocus({ ...base, enabled: false })).toBe(false);
+  });
+
+  it("sem noites suficientes, o lembrete do foco segue", () => {
+    // Desligar o fixo antes do adaptativo existir deixaria quem está
+    // começando sem lembrete nenhum.
+    expect(
+      sleepTakesOverFocus({ ...base, records: semana().slice(0, 4) }),
+    ).toBe(false);
+  });
+});
+
+describe("sleepReminderText", () => {
+  it("nenhum dos dois cobra", () => {
+    for (const kind of ["bed", "wake"]) {
+      const { body } = sleepReminderText(kind);
+      expect(body).not.toMatch(/!|esquec|não perca|precisa/i);
+    }
+  });
+});
+
+describe("sleepReminderStatus", () => {
+  const now = em(20, 10);
+
+  it("aprendendo, diz quantas noites faltam", () => {
+    const st = sleepReminderStatus(semana().slice(0, 3), now);
+    expect(st).toEqual({ faltam: 2, deitar: null, acordar: null });
+  });
+
+  it("com noites, mostra os horários dos AVISOS, já com a folga", () => {
+    expect(sleepReminderStatus(semana(), now)).toEqual({
+      faltam: 0,
+      deitar: "22:30",
+      acordar: "07:30",
+    });
+  });
+
+  it("aviso de deitar atravessa a meia-noite pra trás", () => {
+    const records = [10, 11, 12, 13, 14].map((d) =>
+      noite(d, "00:10", undefined, { createdAt: em(d + 1, 9) }),
+    );
+    expect(sleepReminderStatus(records, now)).toEqual({
+      faltam: 0,
+      deitar: "23:40",
+      acordar: null,
+    });
   });
 });

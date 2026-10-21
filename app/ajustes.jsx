@@ -19,6 +19,7 @@ import MyView from "@/components/MyView";
 import SkipLevelSheet from "@/components/journey/SkipLevelSheet";
 import TimePickerField from "@/components/metrics/TimePickerField";
 import { DEFAULT_REMINDER_TIME } from "@/constants/reminder";
+import { MIN_NOITES, sleepReminderStatus } from "@/constants/sleepReminder";
 
 import {
   clearAll,
@@ -33,6 +34,7 @@ import {
   setDisplayName,
   setReminderEnabled,
   setReminderTime,
+  setSleepReminderEnabled,
   store,
 } from "@/infra/database";
 import { useSession } from "@/infra/session";
@@ -113,6 +115,7 @@ export default function Ajustes() {
   const displayName = useValue("displayName", store);
   const reminderEnabled = useValue("reminderEnabled", store);
   const reminderTime = useValue("reminderTime", store);
+  const sleepReminderEnabled = useValue("sleepReminderEnabled", store);
   // Só pra explicar o toggle que não liga. Sem isto a pessoa clica, nada
   // acontece, e não há como saber que o sistema negou.
   const [reminderDenied, setReminderDenied] = useState(false);
@@ -127,6 +130,12 @@ export default function Ajustes() {
   // histórico com o MESMO critério do portão e concede, ou diz que observa.
   const [skipMetric, setSkipMetric] = useState(null);
   const recordsTable = useTable("records", store);
+  // Linhas cruas, como o hook do lembrete recebe: o status tem que dizer o
+  // mesmo que o agendamento faz.
+  const sleepStatus = useMemo(
+    () => sleepReminderStatus(Object.values(recordsTable ?? {})),
+    [recordsTable],
+  );
   const grantedValue = useValue("journeyGranted", store);
   const skipInfo = useMemo(() => {
     if (!skipMetric) return null;
@@ -286,6 +295,52 @@ export default function Ajustes() {
                 accessibilityLabel="Horário do lembrete"
               />
             </View>
+          )}
+          {/* Lembrete do sono (#368): horário aprendido, sem campo pra
+              escolher. Interruptor próprio porque notifica mesmo quando o foco
+              é outro hábito. */}
+          <View className="flex-row items-center justify-between border-t border-surface-subtle px-4 py-3">
+            <View className="flex-1 pr-3">
+              <Text
+                className="text-sm text-ink dark:text-ink-dark"
+                style={{ fontFamily: "Inter_400Regular" }}
+              >
+                Lembretes do sono
+              </Text>
+              <Text
+                className="text-xs text-body-secondary dark:text-body-secondary-dark"
+                style={{ fontFamily: "Inter_400Regular", marginTop: 2 }}
+              >
+                Antes de deitar e depois de acordar, no horário que você costuma
+                ter
+              </Text>
+            </View>
+            <Switch
+              value={Boolean(sleepReminderEnabled)}
+              onValueChange={async (next) => {
+                if (!next) {
+                  setReminderDenied(false);
+                  setSleepReminderEnabled(false);
+                  return;
+                }
+                const ok = await ensureNotificationPermission();
+                setReminderDenied(!ok);
+                setSleepReminderEnabled(ok);
+              }}
+              accessibilityLabel="Ativar lembretes do sono"
+            />
+          </View>
+          {Boolean(sleepReminderEnabled) && (
+            <Text
+              className="border-t border-surface-subtle px-4 py-3 text-xs text-body-secondary dark:text-body-secondary-dark"
+              style={{ fontFamily: "Inter_400Regular" }}
+            >
+              {sleepStatus.deitar == null
+                ? `Aprendendo seu horário: faltam ${sleepStatus.faltam} de ${MIN_NOITES} noites com hora de deitar nas últimas duas semanas.`
+                : sleepStatus.acordar == null
+                  ? `Aviso de deitar às ${sleepStatus.deitar}. O de acordar aparece quando houver noites suficientes com hora de acordar.`
+                  : `Aviso de deitar às ${sleepStatus.deitar} e de acordar às ${sleepStatus.acordar}.`}
+            </Text>
           )}
         </Section>
 

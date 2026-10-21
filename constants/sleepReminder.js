@@ -32,6 +32,7 @@
 
 import { diaLocal } from "./habitSignals";
 import { bedOf, nightInstant, parseHHMM, wakeOf } from "./sleepTimes";
+import { fmtClock } from "./timeSpan";
 
 const MIN_POR_DIA = 1440;
 const MS_DIA = 86_400_000;
@@ -237,4 +238,67 @@ export function sleepReminderSchedule({
     }
   }
   return agenda.sort((a, b) => a.at - b.at);
+}
+
+/**
+ * Texto de cada lembrete, sem cobrança.
+ *
+ * O de deitar avisa o que vem, em vez de mandar: o app aprendeu um horário, e
+ * dizer "hora de deitar" transformaria um padrão observado numa ordem. O de
+ * acordar segue o mesmo convite do lembrete do foco (#364).
+ *
+ * @param {"bed"|"wake"} kind
+ * @returns {{title: string, body: string}}
+ */
+export function sleepReminderText(kind) {
+  return {
+    title: "Back on Track",
+    body:
+      kind === "bed"
+        ? "Em meia hora costuma ser sua hora de deitar."
+        : "Um minuto pra registrar a noite?",
+  };
+}
+
+/**
+ * O lembrete do sono assume o lugar do lembrete fixo do foco?
+ *
+ * Só quando o foco É o sono, a pessoa ligou o do sono e ele tem noites
+ * suficientes pra existir. Sem isso seriam dois lembretes sobre a mesma noite.
+ *
+ * Abaixo do mínimo de noites, o fixo continua: desligá-lo antes do adaptativo
+ * ter dado deixaria quem está começando sem lembrete nenhum.
+ *
+ * @param {{focus: string|null, enabled: boolean, records: Array<object>, now?: number}} args
+ */
+export function sleepTakesOverFocus({
+  focus,
+  enabled,
+  records,
+  now = Date.now(),
+}) {
+  if (focus !== "sleep" || !enabled) return false;
+  return typicalSleepTimes(records, now).bed != null;
+}
+
+/**
+ * O que Ajustes mostra embaixo do interruptor.
+ *
+ * Ligar sem noites suficientes não agenda nada, e sem este texto a tela ficaria
+ * muda sobre isso. Foi o defeito do 21:00 no #365: a interface prometia, e nada
+ * acontecia.
+ *
+ * @param {Array<object>} records
+ * @param {number} [now]
+ * @returns {{faltam: number, deitar: string|null, acordar: string|null}}
+ *   `faltam` são as noites com horário de deitar que ainda faltam; os horários
+ *   são os dos AVISOS, já com a folga, e não os típicos.
+ */
+export function sleepReminderStatus(records, now = Date.now()) {
+  const { bed, wake, nBed } = typicalSleepTimes(records, now);
+  return {
+    faltam: Math.max(0, MIN_NOITES - nBed),
+    deitar: bed == null ? null : fmtClock(bed - FOLGA_MIN + MIN_POR_DIA),
+    acordar: wake == null ? null : fmtClock(wake + FOLGA_MIN),
+  };
 }

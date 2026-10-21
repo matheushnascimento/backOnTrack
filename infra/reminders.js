@@ -5,7 +5,16 @@ import * as Notifications from "expo-notifications";
 import { useTable, useValue } from "tinybase/ui-react";
 
 import { CATEGORY_MAP } from "@/components/categoryUtils";
-import { reminderSchedule, reminderText } from "@/constants/reminder";
+import {
+  DIAS_AGENDADOS,
+  reminderSchedule,
+  reminderText,
+} from "@/constants/reminder";
+import {
+  sleepReminderSchedule,
+  sleepReminderText,
+  sleepTakesOverFocus,
+} from "@/constants/sleepReminder";
 import { getToday, store } from "./database";
 import { useJourney } from "./useJourney";
 
@@ -43,6 +52,9 @@ const isNative = () => Platform.OS === "ios" || Platform.OS === "android";
 
 /** Prefixo dos agendamentos do lembrete do foco. */
 const PREFIXO_FOCO = "foco-";
+
+/** Prefixo dos agendamentos do lembrete do sono (#368). */
+const PREFIXO_SONO = "sono-";
 
 /** Cancela só os agendamentos cujo identificador começa com `prefixo`. */
 async function cancelarPorPrefixo(prefixo) {
@@ -105,21 +117,56 @@ export async function rescheduleFocusReminder(estado) {
   if (!(await ensureNotificationPermission())) return [];
   await ensureCanal();
 
-  const { title, body } = reminderText(estado.focus, CATEGORY_MAP);
+  const conteudo = reminderText(estado.focus, CATEGORY_MAP);
   await Promise.all(
-    datas.map((quando, i) =>
-      Notifications.scheduleNotificationAsync({
-        identifier: `${PREFIXO_FOCO}${i}`,
-        content: { title, body },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DATE,
-          date: new Date(quando),
-          ...(Platform.OS === "android" ? { channelId: CANAL } : {}),
-        },
-      }),
-    ),
+    datas.map((quando, i) => agendar(`${PREFIXO_FOCO}${i}`, conteudo, quando)),
   );
   return datas;
+}
+
+/** Uma ocorrência avulsa, no canal dos lembretes. */
+function agendar(identifier, content, quando) {
+  return Notifications.scheduleNotificationAsync({
+    identifier,
+    content,
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: new Date(quando),
+      ...(Platform.OS === "android" ? { channelId: CANAL } : {}),
+    },
+  });
+}
+
+/**
+ * Reagenda os lembretes do sono (#368), cancelando só os dele.
+ *
+ * A regra de QUANDO é toda do `sleepReminderSchedule`: horário típico,
+ * mínimo de noites, folga de 30 min e noites já registradas.
+ *
+ * @param {{records: Array<object>, enabled: boolean}} estado linhas cruas
+ * @returns {Promise<Array<{kind: string, at: number}>>}
+ */
+export async function rescheduleSleepReminder({ records, enabled }) {
+  if (!isNative()) return [];
+
+  const agenda = sleepReminderSchedule({
+    records,
+    enabled,
+    dias: DIAS_AGENDADOS,
+  });
+
+  await cancelarPorPrefixo(PREFIXO_SONO);
+  if (agenda.length === 0) return [];
+
+  if (!(await ensureNotificationPermission())) return [];
+  await ensureCanal();
+
+  await Promise.all(
+    agenda.map(({ kind, at }, i) =>
+      agendar(`${PREFIXO_SONO}${kind}-${i}`, sleepReminderText(kind), at),
+    ),
+  );
+  return agenda;
 }
 
 /**
@@ -131,6 +178,7 @@ export async function rescheduleFocusReminder(estado) {
 export function useFocusReminder() {
   const enabled = useValue("reminderEnabled", store);
   const hhmm = useValue("reminderTime", store);
+  const sleepEnabled = useValue("sleepReminderEnabled", store);
   const records = useTable("records", store);
   const { focus } = useJourney();
 
@@ -142,8 +190,16 @@ export function useFocusReminder() {
     const hoje = getToday();
     const registeredToday = (hoje?.[focus]?.length ?? 0) > 0;
 
+    // Com o foco no sono e o lembrete do sono ativo e com noites, o fixo se
+    // cala: seriam dois lembretes sobre a mesma noite (#368).
+    const assumido = sleepTakesOverFocus({
+      focus,
+      enabled: Boolean(sleepEnabled),
+      records: Object.values(records ?? {}),
+    });
+
     rescheduleFocusReminder({
-      enabled: Boolean(enabled),
+      enabled: Boolean(enabled) && !assumido,
       hhmm: String(hhmm ?? ""),
       focus,
       registeredToday,
@@ -152,5 +208,34 @@ export function useFocusReminder() {
       // sem serviços, o lembrete simplesmente não existe.
       console.warn("[reminders] não consegui reagendar:", e?.message ?? e);
     });
-  }, [enabled, hhmm, focus, records]);
+  }, [enabled, hhmm, focus, records, sleepEnabled]);
+}
+
+/**
+ * Mantém os lembretes do sono em dia enquanto o app estiver montado (#368).
+ *
+ * Reage a registro novo e ao interruptor. Chamar no root, uma vez, ao lado do
+ * `useFocusReminder`.
+ *
+ * ⚠️ Passa as LINHAS CRUAS do `useTable`, com `bed` e `wake` presos no
+ * `details`. O `sleepReminderSchedule` lê pelo `bedOf`/`wakeOf`, que aceitam
+ * esse formato. Ler `registro.bed` direto aqui devolveria `undefined` sem erro,
+ * que foi como o #344 ficou sem efeito em produção (#356).
+ */
+export function useSleepReminder() {
+  const enabled = useValue("sleepReminderEnabled", store);
+  const records = useTable("records", store);
+
+  useEffect(() => {
+    if (!isNative()) return;
+    rescheduleSleepReminder({
+      records: Object.values(records ?? {}),
+      enabled: Boolean(enabled),
+    }).catch((e) => {
+      console.warn(
+        "[reminders] não consegui reagendar o sono:",
+        e?.message ?? e,
+      );
+    });
+  }, [enabled, records]);
 }

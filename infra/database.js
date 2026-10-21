@@ -50,6 +50,10 @@ export const store = createMergeableStore()
     // Horário do lembrete, "HH:MM". 21:00 é um default de fim de dia, com
     // folga pra ainda dar tempo de registrar antes de dormir.
     reminderTime: { type: "string", default: "21:00" },
+    // Lembrete do sono que aprende o horário (#368). Desligado por padrão pelo
+    // mesmo motivo do de cima, e separado dele porque notifica mesmo quando o
+    // foco é outro hábito.
+    sleepReminderEnabled: { type: "boolean", default: false },
     // Como o usuário quer ser chamado no cumprimento da Home. Preferido em
     // relação à derivação do email, que quando presente cai no primeiro nome
     // (antes do primeiro ponto). Editável em Ajustes.
@@ -277,6 +281,10 @@ export function setReminderEnabled(on) {
 
 export function setReminderTime(hhmm) {
   store.setValue("reminderTime", String(hhmm ?? "").trim());
+}
+
+export function setSleepReminderEnabled(on) {
+  store.setValue("sleepReminderEnabled", Boolean(on));
 }
 
 // --- Sync (M6 fatia 3, #202) ---
