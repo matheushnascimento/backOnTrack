@@ -18,6 +18,7 @@ import {
 } from "@expo-google-fonts/jetbrains-mono";
 
 import { useRegistrosPersistencia } from "@/infra/persistence";
+import { useFocusReminder } from "@/infra/reminders";
 import { SessionProvider } from "@/infra/session";
 import { SyncStatusProvider } from "@/infra/sync";
 import { useRestoreThemePreference } from "@/infra/theme";
@@ -84,6 +85,11 @@ export default function RootLayout() {
 }
 
 function AppTree() {
+  // Lembrete do hábito em foco (#364). Mora aqui porque precisa reagir a
+  // registro novo e a troca de foco em qualquer tela, e montar duas vezes
+  // produziria dois agendamentos.
+  useFocusReminder();
+
   return (
     <View className="flex-1">
       <Stack screenOptions={{ headerShown: false }}>

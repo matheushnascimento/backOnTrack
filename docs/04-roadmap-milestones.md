@@ -111,7 +111,7 @@ Esta milestone não existia no plano original. Ela nasceu do diagnóstico do có
 **Objetivo de saída:** o app é bom de usar, não só funcional.
 
 - ⬜ Gráficos/tendências simples por métrica (ex: água por semana)
-- ⬜ Lembretes e notificações (`expo-notifications`)
+- 🟡 Lembretes e notificações (`expo-notifications`): o lembrete diário do hábito em foco saiu no #365, com horário em Ajustes, silêncio depois do registro e no máximo três dias agendados sem abrir o app. Falta o lembrete do sono que aprende o horário típico de deitar e de acordar (#368). É dep nativa, então chega aos testers só com o APK 1.3.0
 - 🟡 Metas personalizadas por métrica: a metade de baixo saiu na fatia 0 do M9 (#288): as metas viraram dado no store (`constants/goals.js` + tabela `goals`), com alvo, tipo e cadência por métrica, e Ajustes já **exibe** os valores vindos de lá. Falta a edição pelo usuário, e hoje todo mundo roda no default
 - ⬜ **Autocuidado como 6ª métrica** (novo valor de `tipo` + config de tela; sem estrutura nova)
 - ⬜ Micro-interações e feedback visual ao registrar
