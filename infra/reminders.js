@@ -1,6 +1,6 @@
 // @ts-nocheck -- API do expo-notifications não é tipada aqui (ADR-002)
-import { useEffect } from "react";
-import { Platform } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { AppState, Platform } from "react-native";
 import * as Notifications from "expo-notifications";
 import { useTable, useValue } from "tinybase/ui-react";
 
@@ -72,6 +72,11 @@ async function cancelarPorPrefixo(prefixo) {
  * O Android 13+ exige `POST_NOTIFICATIONS` em runtime; antes disso a
  * permissão vinha com a instalação. O `requestPermissionsAsync` cobre os dois.
  *
+ * ⚠️ **Só chamar em resposta a um toque da pessoa**, que hoje é o interruptor
+ * de Ajustes. Os hooks de agendamento chamavam esta função e o app pedia
+ * permissão na abertura, sem contexto nenhum. Pra agendar, use
+ * `hasNotificationPermission`, que consulta sem pedir.
+ *
  * @returns {Promise<boolean>} concedida?
  */
 export async function ensureNotificationPermission() {
@@ -83,6 +88,45 @@ export async function ensureNotificationPermission() {
   if (!atual.canAskAgain) return false;
   const pedido = await Notifications.requestPermissionsAsync();
   return Boolean(pedido.granted);
+}
+
+/** A permissão está concedida? Consulta, e nunca pede. */
+export async function hasNotificationPermission() {
+  if (!isNative()) return false;
+  const atual = await Notifications.getPermissionsAsync();
+  return Boolean(atual.granted);
+}
+
+/**
+ * Estado da permissão, reconsultado quando o app volta ao primeiro plano.
+ *
+ * Voltar ao primeiro plano é o momento em que ela muda: a pessoa sai pras
+ * configurações do aparelho, libera ou revoga, e volta. Sem a reconsulta, os
+ * lembretes só voltariam no próximo registro, e Ajustes mostraria o estado
+ * antigo.
+ *
+ * @returns {{granted: boolean|null, refresh: () => Promise<void>}} `null`
+ *   enquanto a primeira consulta não volta
+ */
+export function useNotificationPermission() {
+  const [granted, setGranted] = useState(/** @type {boolean|null} */ (null));
+  const refresh = useCallback(async () => {
+    try {
+      setGranted(await hasNotificationPermission());
+    } catch {
+      setGranted(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refresh();
+    const sub = AppState.addEventListener("change", (estado) => {
+      if (estado === "active") refresh();
+    });
+    return () => sub?.remove?.();
+  }, [refresh]);
+
+  return { granted, refresh };
 }
 
 /** Canal do Android. Sem canal, a notificação não aparece no 8.0+. */
@@ -114,7 +158,8 @@ export async function rescheduleFocusReminder(estado) {
   await cancelarPorPrefixo(PREFIXO_FOCO);
   if (datas.length === 0) return [];
 
-  if (!(await ensureNotificationPermission())) return [];
+  // Consulta, e não pede: quem pede é o interruptor de Ajustes.
+  if (!(await hasNotificationPermission())) return [];
   await ensureCanal();
 
   const conteudo = reminderText(estado.focus, CATEGORY_MAP);
@@ -158,7 +203,8 @@ export async function rescheduleSleepReminder({ records, enabled }) {
   await cancelarPorPrefixo(PREFIXO_SONO);
   if (agenda.length === 0) return [];
 
-  if (!(await ensureNotificationPermission())) return [];
+  // Consulta, e não pede: quem pede é o interruptor de Ajustes.
+  if (!(await hasNotificationPermission())) return [];
   await ensureCanal();
 
   await Promise.all(
@@ -181,6 +227,9 @@ export function useFocusReminder() {
   const sleepEnabled = useValue("sleepReminderEnabled", localStore);
   const records = useTable("records", store);
   const { focus } = useJourney();
+  // Gatilho: liberar a permissão nas configurações do aparelho e voltar tem
+  // que reagendar na hora, e não só no próximo registro.
+  const { granted } = useNotificationPermission();
 
   useEffect(() => {
     if (!isNative()) return;
@@ -208,7 +257,7 @@ export function useFocusReminder() {
       // sem serviços, o lembrete simplesmente não existe.
       console.warn("[reminders] não consegui reagendar:", e?.message ?? e);
     });
-  }, [enabled, hhmm, focus, records, sleepEnabled]);
+  }, [enabled, hhmm, focus, records, sleepEnabled, granted]);
 }
 
 /**
@@ -225,6 +274,7 @@ export function useFocusReminder() {
 export function useSleepReminder() {
   const enabled = useValue("sleepReminderEnabled", localStore);
   const records = useTable("records", store);
+  const { granted } = useNotificationPermission();
 
   useEffect(() => {
     if (!isNative()) return;
@@ -237,5 +287,5 @@ export function useSleepReminder() {
         e?.message ?? e,
       );
     });
-  }, [enabled, records]);
+  }, [enabled, records, granted]);
 }

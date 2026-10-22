@@ -143,3 +143,24 @@ export function reminderText(focus, mapa = {}) {
     body: `Um minuto pra registrar ${nome}?`,
   };
 }
+
+/**
+ * Como um interruptor de lembrete aparece em Ajustes.
+ *
+ * Ligado só quando a pessoa quer E o sistema deixa. Mostrar ligado sem
+ * permissão é prometer o que não acontece: recusar o pedido do Android deixava
+ * o interruptor aceso e nada era agendado.
+ *
+ * A preferência continua guardada mesmo sem permissão. Se a pessoa liberar nas
+ * configurações do aparelho, os lembretes voltam sem precisar ligar de novo.
+ *
+ * @param {{enabled: boolean, granted: boolean|null}} args `granted` null
+ *   significa "ainda consultando", e aí vale a preferência, pra o interruptor
+ *   não piscar desligado na abertura da tela.
+ * @returns {{ligado: boolean, semPermissao: boolean}}
+ */
+export function reminderToggleState({ enabled, granted }) {
+  if (!enabled) return { ligado: false, semPermissao: false };
+  if (granted === false) return { ligado: false, semPermissao: true };
+  return { ligado: true, semPermissao: false };
+}
