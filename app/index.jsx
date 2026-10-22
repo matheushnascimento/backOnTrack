@@ -21,6 +21,7 @@ import {
   raiseJourneyPeak,
   store,
   syncGraduatedAt,
+  localStore,
 } from "@/infra/database";
 import { useSession } from "@/infra/session";
 import { useThemeTokens } from "@/constants/themeTokens";
@@ -132,7 +133,7 @@ export default function Home() {
 
   // Previsualização de nível (#293). Substitui só o nível e o foco, e o resto
   // do estado segue real. Testa a TELA, não o modelo.
-  const demoLevel = useValue("journeyDemoLevel", store);
+  const demoLevel = useValue("journeyDemoLevel", localStore);
   const emDemo = Number(demoLevel ?? -1) >= 0;
   const journey = emDemo
     ? {
@@ -185,7 +186,7 @@ export default function Home() {
   // Previsualização (#320): a retomada exige 3+ dias sem registro, condição
   // que quem usa o app diariamente não produz sem apagar os próprios dados.
   // O value só é ligável pela superfície de dev, então não alcança tester.
-  const retomadaDemo = useValue("retomadaDemo", store);
+  const retomadaDemo = useValue("retomadaDemo", localStore);
 
   const showRetomada =
     !retomadaDismissed &&

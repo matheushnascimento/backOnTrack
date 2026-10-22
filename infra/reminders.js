@@ -1,12 +1,21 @@
 // @ts-nocheck -- API do expo-notifications não é tipada aqui (ADR-002)
-import { useEffect } from "react";
-import { Platform } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { AppState, Platform } from "react-native";
 import * as Notifications from "expo-notifications";
 import { useTable, useValue } from "tinybase/ui-react";
 
 import { CATEGORY_MAP } from "@/components/categoryUtils";
-import { reminderSchedule, reminderText } from "@/constants/reminder";
-import { getToday, store } from "./database";
+import {
+  DIAS_AGENDADOS,
+  reminderSchedule,
+  reminderText,
+} from "@/constants/reminder";
+import {
+  sleepReminderSchedule,
+  sleepReminderText,
+  sleepTakesOverFocus,
+} from "@/constants/sleepReminder";
+import { getToday, localStore, store } from "./database";
 import { useJourney } from "./useJourney";
 
 // Lembrete diário do hábito em foco (#364).
@@ -44,6 +53,9 @@ const isNative = () => Platform.OS === "ios" || Platform.OS === "android";
 /** Prefixo dos agendamentos do lembrete do foco. */
 const PREFIXO_FOCO = "foco-";
 
+/** Prefixo dos agendamentos do lembrete do sono (#368). */
+const PREFIXO_SONO = "sono-";
+
 /** Cancela só os agendamentos cujo identificador começa com `prefixo`. */
 async function cancelarPorPrefixo(prefixo) {
   const agendados = await Notifications.getAllScheduledNotificationsAsync();
@@ -60,6 +72,11 @@ async function cancelarPorPrefixo(prefixo) {
  * O Android 13+ exige `POST_NOTIFICATIONS` em runtime; antes disso a
  * permissão vinha com a instalação. O `requestPermissionsAsync` cobre os dois.
  *
+ * ⚠️ **Só chamar em resposta a um toque da pessoa**, que hoje é o interruptor
+ * de Ajustes. Os hooks de agendamento chamavam esta função e o app pedia
+ * permissão na abertura, sem contexto nenhum. Pra agendar, use
+ * `hasNotificationPermission`, que consulta sem pedir.
+ *
  * @returns {Promise<boolean>} concedida?
  */
 export async function ensureNotificationPermission() {
@@ -71,6 +88,45 @@ export async function ensureNotificationPermission() {
   if (!atual.canAskAgain) return false;
   const pedido = await Notifications.requestPermissionsAsync();
   return Boolean(pedido.granted);
+}
+
+/** A permissão está concedida? Consulta, e nunca pede. */
+export async function hasNotificationPermission() {
+  if (!isNative()) return false;
+  const atual = await Notifications.getPermissionsAsync();
+  return Boolean(atual.granted);
+}
+
+/**
+ * Estado da permissão, reconsultado quando o app volta ao primeiro plano.
+ *
+ * Voltar ao primeiro plano é o momento em que ela muda: a pessoa sai pras
+ * configurações do aparelho, libera ou revoga, e volta. Sem a reconsulta, os
+ * lembretes só voltariam no próximo registro, e Ajustes mostraria o estado
+ * antigo.
+ *
+ * @returns {{granted: boolean|null, refresh: () => Promise<void>}} `null`
+ *   enquanto a primeira consulta não volta
+ */
+export function useNotificationPermission() {
+  const [granted, setGranted] = useState(/** @type {boolean|null} */ (null));
+  const refresh = useCallback(async () => {
+    try {
+      setGranted(await hasNotificationPermission());
+    } catch {
+      setGranted(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    refresh();
+    const sub = AppState.addEventListener("change", (estado) => {
+      if (estado === "active") refresh();
+    });
+    return () => sub?.remove?.();
+  }, [refresh]);
+
+  return { granted, refresh };
 }
 
 /** Canal do Android. Sem canal, a notificação não aparece no 8.0+. */
@@ -102,24 +158,61 @@ export async function rescheduleFocusReminder(estado) {
   await cancelarPorPrefixo(PREFIXO_FOCO);
   if (datas.length === 0) return [];
 
-  if (!(await ensureNotificationPermission())) return [];
+  // Consulta, e não pede: quem pede é o interruptor de Ajustes.
+  if (!(await hasNotificationPermission())) return [];
   await ensureCanal();
 
-  const { title, body } = reminderText(estado.focus, CATEGORY_MAP);
+  const conteudo = reminderText(estado.focus, CATEGORY_MAP);
   await Promise.all(
-    datas.map((quando, i) =>
-      Notifications.scheduleNotificationAsync({
-        identifier: `${PREFIXO_FOCO}${i}`,
-        content: { title, body },
-        trigger: {
-          type: Notifications.SchedulableTriggerInputTypes.DATE,
-          date: new Date(quando),
-          ...(Platform.OS === "android" ? { channelId: CANAL } : {}),
-        },
-      }),
-    ),
+    datas.map((quando, i) => agendar(`${PREFIXO_FOCO}${i}`, conteudo, quando)),
   );
   return datas;
+}
+
+/** Uma ocorrência avulsa, no canal dos lembretes. */
+function agendar(identifier, content, quando) {
+  return Notifications.scheduleNotificationAsync({
+    identifier,
+    content,
+    trigger: {
+      type: Notifications.SchedulableTriggerInputTypes.DATE,
+      date: new Date(quando),
+      ...(Platform.OS === "android" ? { channelId: CANAL } : {}),
+    },
+  });
+}
+
+/**
+ * Reagenda os lembretes do sono (#368), cancelando só os dele.
+ *
+ * A regra de QUANDO é toda do `sleepReminderSchedule`: horário típico,
+ * mínimo de noites, folga de 30 min e noites já registradas.
+ *
+ * @param {{records: Array<object>, enabled: boolean}} estado linhas cruas
+ * @returns {Promise<Array<{kind: string, at: number}>>}
+ */
+export async function rescheduleSleepReminder({ records, enabled }) {
+  if (!isNative()) return [];
+
+  const agenda = sleepReminderSchedule({
+    records,
+    enabled,
+    dias: DIAS_AGENDADOS,
+  });
+
+  await cancelarPorPrefixo(PREFIXO_SONO);
+  if (agenda.length === 0) return [];
+
+  // Consulta, e não pede: quem pede é o interruptor de Ajustes.
+  if (!(await hasNotificationPermission())) return [];
+  await ensureCanal();
+
+  await Promise.all(
+    agenda.map(({ kind, at }, i) =>
+      agendar(`${PREFIXO_SONO}${kind}-${i}`, sleepReminderText(kind), at),
+    ),
+  );
+  return agenda;
 }
 
 /**
@@ -129,10 +222,14 @@ export async function rescheduleFocusReminder(estado) {
  * em foco, e as duas preferências. Chamar no root, uma vez.
  */
 export function useFocusReminder() {
-  const enabled = useValue("reminderEnabled", store);
-  const hhmm = useValue("reminderTime", store);
+  const enabled = useValue("reminderEnabled", localStore);
+  const hhmm = useValue("reminderTime", localStore);
+  const sleepEnabled = useValue("sleepReminderEnabled", localStore);
   const records = useTable("records", store);
   const { focus } = useJourney();
+  // Gatilho: liberar a permissão nas configurações do aparelho e voltar tem
+  // que reagendar na hora, e não só no próximo registro.
+  const { granted } = useNotificationPermission();
 
   useEffect(() => {
     if (!isNative()) return;
@@ -142,8 +239,16 @@ export function useFocusReminder() {
     const hoje = getToday();
     const registeredToday = (hoje?.[focus]?.length ?? 0) > 0;
 
+    // Com o foco no sono e o lembrete do sono ativo e com noites, o fixo se
+    // cala: seriam dois lembretes sobre a mesma noite (#368).
+    const assumido = sleepTakesOverFocus({
+      focus,
+      enabled: Boolean(sleepEnabled),
+      records: Object.values(records ?? {}),
+    });
+
     rescheduleFocusReminder({
-      enabled: Boolean(enabled),
+      enabled: Boolean(enabled) && !assumido,
       hhmm: String(hhmm ?? ""),
       focus,
       registeredToday,
@@ -152,5 +257,35 @@ export function useFocusReminder() {
       // sem serviços, o lembrete simplesmente não existe.
       console.warn("[reminders] não consegui reagendar:", e?.message ?? e);
     });
-  }, [enabled, hhmm, focus, records]);
+  }, [enabled, hhmm, focus, records, sleepEnabled, granted]);
+}
+
+/**
+ * Mantém os lembretes do sono em dia enquanto o app estiver montado (#368).
+ *
+ * Reage a registro novo e ao interruptor. Chamar no root, uma vez, ao lado do
+ * `useFocusReminder`.
+ *
+ * ⚠️ Passa as LINHAS CRUAS do `useTable`, com `bed` e `wake` presos no
+ * `details`. O `sleepReminderSchedule` lê pelo `bedOf`/`wakeOf`, que aceitam
+ * esse formato. Ler `registro.bed` direto aqui devolveria `undefined` sem erro,
+ * que foi como o #344 ficou sem efeito em produção (#356).
+ */
+export function useSleepReminder() {
+  const enabled = useValue("sleepReminderEnabled", localStore);
+  const records = useTable("records", store);
+  const { granted } = useNotificationPermission();
+
+  useEffect(() => {
+    if (!isNative()) return;
+    rescheduleSleepReminder({
+      records: Object.values(records ?? {}),
+      enabled: Boolean(enabled),
+    }).catch((e) => {
+      console.warn(
+        "[reminders] não consegui reagendar o sono:",
+        e?.message ?? e,
+      );
+    });
+  }, [enabled, records, granted]);
 }

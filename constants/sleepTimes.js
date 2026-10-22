@@ -52,11 +52,29 @@ export function parseHHMM(hhmm) {
  * @returns {string|undefined} o "HH:MM" como gravado, sem validar
  */
 export function bedOf(registro) {
-  if (registro?.bed != null) return registro.bed;
+  return campoDoRegistro(registro, "bed");
+}
+
+/**
+ * O horário de acordar de um registro, em qualquer dos dois formatos.
+ *
+ * Mesma armadilha do `bedOf`: na linha crua do `useTable` o `wake` está preso
+ * no `details`, e ler `registro.wake` devolve `undefined` sem erro nenhum.
+ *
+ * @param {{wake?: string, details?: string}|null|undefined} registro
+ * @returns {string|undefined}
+ */
+export function wakeOf(registro) {
+  return campoDoRegistro(registro, "wake");
+}
+
+/** Campo do topo do registro hidratado, ou de dentro do `details` cru. */
+function campoDoRegistro(registro, campo) {
+  if (registro?.[campo] != null) return registro[campo];
   const details = registro?.details;
   if (typeof details !== "string" || details === "") return undefined;
   try {
-    return JSON.parse(details)?.bed;
+    return JSON.parse(details)?.[campo];
   } catch {
     return undefined;
   }

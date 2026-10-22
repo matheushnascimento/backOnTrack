@@ -1,6 +1,7 @@
 import { createLocalPersister } from "tinybase/persisters/persister-browser";
 import { useCreatePersister } from "tinybase/ui-react";
-import { ensureGoals, ensureSyncRoomId, store } from "./database";
+import { migrateLocalPrefs } from "@/constants/localPrefs";
+import { ensureGoals, ensureSyncRoomId, localStore, store } from "./database";
 
 /**
  * Versão web de useRegistrosPersistencia.
@@ -22,10 +23,25 @@ export function useRegistrosPersistencia() {
     async (persister) => {
       await persister.startAutoLoad();
       await persister.startAutoSave();
+      // Mesmo motivo da versão native: preferências do aparelho à parte, e a
+      // migração só depois de os dois stores carregarem.
+      await carregarPreferenciasLocais();
+      migrateLocalPrefs(store, localStore);
       // Mesmo motivo da versão native: só gerar syncRoomId depois do autoLoad.
       ensureSyncRoomId();
       // Depois do load, mesmo motivo do ensureSyncRoomId acima (#285).
       ensureGoals();
     },
   );
+}
+
+/** @type {ReturnType<typeof createLocalPersister> | null} */
+let persisterLocal = null;
+
+/** Ver a versão native. Chave própria no localStorage. */
+async function carregarPreferenciasLocais() {
+  if (persisterLocal) return;
+  persisterLocal = createLocalPersister(localStore, "back_on_track_local");
+  await persisterLocal.startAutoLoad();
+  await persisterLocal.startAutoSave();
 }

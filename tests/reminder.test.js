@@ -12,6 +12,7 @@ import {
   nextReminderAt,
   reminderSchedule,
   reminderText,
+  reminderToggleState,
 } from "@/constants/reminder";
 
 // Base fixa, passada explicitamente, pelo mesmo motivo do habit-signals: sem
@@ -183,5 +184,39 @@ describe("reminderSchedule", () => {
       const d = new Date(ms);
       expect([d.getHours(), d.getMinutes()]).toEqual([21, 0]);
     }
+  });
+});
+
+describe("reminderToggleState", () => {
+  // Recusar o pedido do Android deixava o interruptor aceso, e nada era
+  // agendado: a tela prometia o que não acontecia.
+
+  it("ligado só quando a pessoa quer e o sistema deixa", () => {
+    expect(reminderToggleState({ enabled: true, granted: true })).toEqual({
+      ligado: true,
+      semPermissao: false,
+    });
+  });
+
+  it("sem permissão aparece desligado, com o aviso", () => {
+    expect(reminderToggleState({ enabled: true, granted: false })).toEqual({
+      ligado: false,
+      semPermissao: true,
+    });
+  });
+
+  it("desligado pela pessoa não mostra aviso de permissão", () => {
+    for (const granted of [true, false, null]) {
+      expect(reminderToggleState({ enabled: false, granted })).toEqual({
+        ligado: false,
+        semPermissao: false,
+      });
+    }
+  });
+
+  it("enquanto consulta, vale a preferência, pra não piscar", () => {
+    expect(reminderToggleState({ enabled: true, granted: null }).ligado).toBe(
+      true,
+    );
   });
 });

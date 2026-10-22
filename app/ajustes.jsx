@@ -1,6 +1,7 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 import { useEffect, useMemo, useState } from "react";
 import {
+  Linking,
   Modal,
   Pressable,
   ScrollView,
@@ -18,7 +19,11 @@ import { goBack } from "@/constants/navigation";
 import MyView from "@/components/MyView";
 import SkipLevelSheet from "@/components/journey/SkipLevelSheet";
 import TimePickerField from "@/components/metrics/TimePickerField";
-import { DEFAULT_REMINDER_TIME } from "@/constants/reminder";
+import {
+  DEFAULT_REMINDER_TIME,
+  reminderToggleState,
+} from "@/constants/reminder";
+import { MIN_NOITES, sleepReminderStatus } from "@/constants/sleepReminder";
 
 import {
   clearAll,
@@ -33,7 +38,9 @@ import {
   setDisplayName,
   setReminderEnabled,
   setReminderTime,
+  setSleepReminderEnabled,
   store,
+  localStore,
 } from "@/infra/database";
 import { useSession } from "@/infra/session";
 import { AUTH_ENABLED } from "@/infra/supabase";
@@ -45,7 +52,10 @@ import {
   SYNC_ONLINE,
   useSyncStatus,
 } from "@/infra/sync";
-import { ensureNotificationPermission } from "@/infra/reminders";
+import {
+  ensureNotificationPermission,
+  useNotificationPermission,
+} from "@/infra/reminders";
 import { saveThemePreference } from "@/infra/theme";
 import { confirmAction } from "@/constants/dialogs";
 import { getEnvironmentInfo, isDevSurface } from "@/constants/environment";
@@ -111,11 +121,33 @@ export default function Ajustes() {
   const t = useThemeTokens();
 
   const displayName = useValue("displayName", store);
-  const reminderEnabled = useValue("reminderEnabled", store);
-  const reminderTime = useValue("reminderTime", store);
+  const reminderEnabled = useValue("reminderEnabled", localStore);
+  const reminderTime = useValue("reminderTime", localStore);
+  const sleepReminderEnabled = useValue("sleepReminderEnabled", localStore);
   // Só pra explicar o toggle que não liga. Sem isto a pessoa clica, nada
   // acontece, e não há como saber que o sistema negou.
-  const [reminderDenied, setReminderDenied] = useState(false);
+  // O interruptor mostra ligado só com a preferência E a permissão. Recusar o
+  // pedido do Android deixava ele aceso, e nada era agendado.
+  const { granted: permissao, refresh: reconsultarPermissao } =
+    useNotificationPermission();
+  const foco = reminderToggleState({
+    enabled: Boolean(reminderEnabled),
+    granted: permissao,
+  });
+  const sono = reminderToggleState({
+    enabled: Boolean(sleepReminderEnabled),
+    granted: permissao,
+  });
+  /** Liga ou desliga, pedindo a permissão só quando é a pessoa que liga. */
+  async function alternarLembrete(next, salvar) {
+    if (next) {
+      await ensureNotificationPermission();
+      await reconsultarPermissao();
+    }
+    // A preferência guarda a intenção mesmo sem permissão: liberando nas
+    // configurações do aparelho, os lembretes voltam sem ligar de novo.
+    salvar(next);
+  }
   const [nameModalOpen, setNameModalOpen] = useState(false);
   // `useTable` assina a tabela: metas semeadas depois do load do persister
   // chegam sozinhas, sem precisar reabrir a tela.
@@ -127,6 +159,12 @@ export default function Ajustes() {
   // histórico com o MESMO critério do portão e concede, ou diz que observa.
   const [skipMetric, setSkipMetric] = useState(null);
   const recordsTable = useTable("records", store);
+  // Linhas cruas, como o hook do lembrete recebe: o status tem que dizer o
+  // mesmo que o agendamento faz.
+  const sleepStatus = useMemo(
+    () => sleepReminderStatus(Object.values(recordsTable ?? {})),
+    [recordsTable],
+  );
   const grantedValue = useValue("journeyGranted", store);
   const skipInfo = useMemo(() => {
     if (!skipMetric) return null;
@@ -246,32 +284,14 @@ export default function Ajustes() {
               </Text>
             </View>
             <Switch
-              value={Boolean(reminderEnabled)}
-              onValueChange={async (next) => {
-                if (!next) {
-                  setReminderDenied(false);
-                  setReminderEnabled(false);
-                  return;
-                }
-                // Pede permissão ANTES de ligar: ligar sem permissão deixaria
-                // o switch aceso prometendo o que não acontece.
-                const ok = await ensureNotificationPermission();
-                setReminderDenied(!ok);
-                setReminderEnabled(ok);
-              }}
+              value={foco.ligado}
+              onValueChange={(next) =>
+                alternarLembrete(next, setReminderEnabled)
+              }
               accessibilityLabel="Ativar lembrete diário"
             />
           </View>
-          {reminderDenied && (
-            <Text
-              className="border-t border-surface-subtle px-4 py-3 text-xs text-body-secondary dark:text-body-secondary-dark"
-              style={{ fontFamily: "Inter_400Regular" }}
-            >
-              O sistema não deu permissão de notificação. Dá pra liberar nos
-              ajustes do aparelho e tentar de novo.
-            </Text>
-          )}
-          {Boolean(reminderEnabled) && (
+          {foco.ligado && (
             <View className="flex-row items-center justify-between border-t border-surface-subtle px-4 py-3">
               <Text
                 className="text-sm text-ink dark:text-ink-dark"
@@ -285,6 +305,70 @@ export default function Ajustes() {
                 placeholder={DEFAULT_REMINDER_TIME}
                 accessibilityLabel="Horário do lembrete"
               />
+            </View>
+          )}
+          {/* Lembrete do sono (#368): horário aprendido, sem campo pra
+              escolher. Interruptor próprio porque notifica mesmo quando o foco
+              é outro hábito. */}
+          <View className="flex-row items-center justify-between border-t border-surface-subtle px-4 py-3">
+            <View className="flex-1 pr-3">
+              <Text
+                className="text-sm text-ink dark:text-ink-dark"
+                style={{ fontFamily: "Inter_400Regular" }}
+              >
+                Lembretes do sono
+              </Text>
+              <Text
+                className="text-xs text-body-secondary dark:text-body-secondary-dark"
+                style={{ fontFamily: "Inter_400Regular", marginTop: 2 }}
+              >
+                Antes de deitar e depois de acordar, no horário que você costuma
+                ter
+              </Text>
+            </View>
+            <Switch
+              value={sono.ligado}
+              onValueChange={(next) =>
+                alternarLembrete(next, setSleepReminderEnabled)
+              }
+              accessibilityLabel="Ativar lembretes do sono"
+            />
+          </View>
+          {sono.ligado && (
+            <Text
+              className="border-t border-surface-subtle px-4 py-3 text-xs text-body-secondary dark:text-body-secondary-dark"
+              style={{ fontFamily: "Inter_400Regular" }}
+            >
+              {sleepStatus.deitar == null
+                ? `Aprendendo seu horário: faltam ${sleepStatus.faltam} de ${MIN_NOITES} noites com hora de deitar nas últimas duas semanas.`
+                : sleepStatus.acordar == null
+                  ? `Aviso de deitar às ${sleepStatus.deitar}. O de acordar aparece quando houver noites suficientes com hora de acordar.`
+                  : `Aviso de deitar às ${sleepStatus.deitar} e de acordar às ${sleepStatus.acordar}.`}
+            </Text>
+          )}
+          {(foco.semPermissao || sono.semPermissao) && (
+            <View className="gap-2 border-t border-surface-subtle px-4 py-3">
+              <Text
+                className="text-xs text-body-secondary dark:text-body-secondary-dark"
+                style={{ fontFamily: "Inter_400Regular" }}
+              >
+                O sistema não deu permissão de notificação, então nenhum
+                lembrete vai chegar. Liberando nas configurações do aparelho,
+                eles voltam sozinhos.
+              </Text>
+              <Pressable
+                accessibilityRole="button"
+                accessibilityLabel="Abrir configurações do aparelho"
+                onPress={() => Linking.openSettings()}
+                className="self-start active:opacity-70"
+              >
+                <Text
+                  className="text-xs text-primary dark:text-primary-dark"
+                  style={{ fontFamily: "Inter_500Medium" }}
+                >
+                  Abrir configurações do aparelho
+                </Text>
+              </Pressable>
             </View>
           )}
         </Section>
@@ -700,9 +784,9 @@ function SyncRow() {
 function SignalsBlock({ goals }) {
   const records = useTable("records", store);
   const peak = useValue("journeyPeakLevel", store);
-  const demo = Number(useValue("journeyDemoLevel", store) ?? -1);
+  const demo = Number(useValue("journeyDemoLevel", localStore) ?? -1);
   const emDemo = demo >= 0;
-  const retomadaDemo = useValue("retomadaDemo", store);
+  const retomadaDemo = useValue("retomadaDemo", localStore);
 
   const jornada = useMemo(
     () =>

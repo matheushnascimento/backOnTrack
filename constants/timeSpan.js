@@ -109,7 +109,7 @@ function fmtDur(total) {
 }
 
 /** minutos do dia → "23:40", com 2 dígitos na hora, que é formato de relógio. */
-function fmtClock(total) {
+export function fmtClock(total) {
   const t = ((total % MIN_POR_DIA) + MIN_POR_DIA) % MIN_POR_DIA;
   return `${String(Math.floor(t / 60)).padStart(2, "0")}:${String(t % 60).padStart(2, "0")}`;
 }
