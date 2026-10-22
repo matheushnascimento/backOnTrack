@@ -6,22 +6,58 @@ import { router } from "expo-router";
 import Svg, { Path } from "react-native-svg";
 
 import { goBack } from "@/constants/navigation";
+import { codigoCompleto, limparCodigo, OTP_MAX } from "@/constants/otp";
 import MyView from "@/components/MyView";
 
 import { useSession } from "@/infra/session";
 import { AUTH_ENABLED, supabase } from "@/infra/supabase";
 import { useThemeTokens } from "@/constants/themeTokens";
 
-// Login por magic link (M6 auth fatia A, #207, ADR-010).
-// Sync continua anônimo por baixo, e só a fatia B passa a usar o JWT.
+// Login por e-mail sem senha (M6 auth fatia A, #207, ADR-010).
+//
+// O e-mail traz um link E um código (#376). O link sozinho falhava quando
+// abria num navegador diferente do que pediu: o fluxo PKCE guarda uma chave no
+// navegador que pediu, e só ele troca o link pela sessão. No iPhone isso é
+// comum, porque o Gmail abre o link no Safari e o pedido pode ter saído do app
+// da tela inicial, que tem armazenamento próprio. O código é digitado aqui, no
+// mesmo lugar que pediu, e não depende de onde o link abre.
+//
+// ⚠️ O código só existe se os modelos "Magic Link" e "Confirm signup" do
+// Supabase incluírem `{{ .Token }}`. Sem isso o e-mail chega só com o link.
 
 export default function Login() {
   const t = useThemeTokens();
   const { user } = useSession();
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState("idle"); // idle | sending | sent | error
+  // idle | sending | sent | error, e no passo do código: verifying | codeError
+  const [status, setStatus] = useState("idle");
+  const [code, setCode] = useState("");
 
   const canSend = AUTH_ENABLED && status !== "sending" && email.includes("@");
+  const canVerify = status !== "verifying" && codigoCompleto(code);
+
+  async function handleVerify() {
+    if (!canVerify || !supabase) return;
+    setStatus("verifying");
+    try {
+      // `email` cobre os dois modelos: o de quem já tem conta (Magic Link) e o
+      // do primeiro acesso (Confirm signup).
+      const { error } = await supabase.auth.verifyOtp({
+        email: email.trim(),
+        token: code,
+        type: "email",
+      });
+      if (error) throw error;
+      // A sessão chega pelo onAuthStateChange do SessionProvider. `replace`,
+      // como no callback do link, pra o voltar não cair de novo aqui.
+      router.replace("/");
+    } catch (e) {
+      // O Supabase responde igual pra código errado e vencido, então a
+      // mensagem cobre os dois.
+      console.error("[login] verifyOtp falhou:", e);
+      setStatus("codeError");
+    }
+  }
 
   async function handleSend() {
     if (!canSend || !supabase) return;
@@ -35,6 +71,7 @@ export default function Login() {
         options: { emailRedirectTo },
       });
       if (error) throw error;
+      setCode("");
       setStatus("sent");
     } catch (e) {
       // Detalhes técnicos ficam no console, e a UI mostra só mensagem genérica.
@@ -91,11 +128,60 @@ export default function Login() {
               onPress={() => router.navigate("/")}
             />
           </View>
-        ) : status === "sent" ? (
+        ) : ["sent", "verifying", "codeError"].includes(status) ? (
           <View className="gap-4">
             <SoftMessage
               title="Verifique seu email 📬"
-              body={`Enviamos um link mágico pra ${email}. Toque no link do email pra entrar, e o app abre logado sozinho.`}
+              body={`Enviamos um código pra ${email}. Digite aqui, ou toque no link do email.`}
+            />
+
+            <View>
+              <Text
+                className="mb-3 text-xs uppercase tracking-wider text-label dark:text-label-dark"
+                style={{ fontFamily: "JetBrainsMono_500Medium" }}
+              >
+                Código
+              </Text>
+              {/* `oneTimeCode` deixa o iOS sugerir o código vindo do Mail em
+                  cima do teclado. No Android o equivalente é o autoComplete. */}
+              <TextInput
+                value={code}
+                onChangeText={(v) => {
+                  setCode(limparCodigo(v));
+                  if (status === "codeError") setStatus("sent");
+                }}
+                placeholder="000000"
+                placeholderTextColor={t.iconDim}
+                keyboardType="number-pad"
+                textContentType="oneTimeCode"
+                autoComplete="one-time-code"
+                maxLength={OTP_MAX}
+                accessibilityLabel="Código do email"
+                className="rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark px-4"
+                style={{
+                  fontFamily: "JetBrainsMono_500Medium",
+                  fontSize: 22,
+                  letterSpacing: 4,
+                  color: t.ink,
+                  paddingVertical: 12,
+                }}
+              />
+            </View>
+
+            {status === "codeError" && (
+              <Text
+                className="text-sm text-danger"
+                style={{ fontFamily: "Inter_400Regular" }}
+              >
+                Esse código não funcionou. Confere os números, ou peça um código
+                novo: ele vale por um tempo curto e só uma vez.
+              </Text>
+            )}
+
+            <PrimaryAction
+              label={status === "verifying" ? "Entrando…" : "Entrar"}
+              onPress={handleVerify}
+              disabled={!canVerify}
             />
             <SecondaryAction
               label="Não recebi, enviar de novo"
@@ -115,8 +201,8 @@ export default function Login() {
                 className="text-sm text-body-secondary dark:text-body-secondary-dark"
                 style={{ fontFamily: "Inter_400Regular", marginTop: 2 }}
               >
-                Sem senha: mandamos um link pro seu email; abrindo o link, você
-                entra.
+                Sem senha: mandamos um código pro seu email, e você entra com
+                ele.
               </Text>
             </View>
 
@@ -151,13 +237,13 @@ export default function Login() {
                 className="text-sm text-danger"
                 style={{ fontFamily: "Inter_400Regular" }}
               >
-                Não consegui enviar o link agora. Confere o email e tenta de
+                Não consegui enviar o email agora. Confere o endereço e tenta de
                 novo em alguns minutos.
               </Text>
             )}
 
             <PrimaryAction
-              label={status === "sending" ? "Enviando…" : "Enviar magic link"}
+              label={status === "sending" ? "Enviando…" : "Enviar código"}
               onPress={handleSend}
               disabled={!canSend}
             />
