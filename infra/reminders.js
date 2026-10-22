@@ -15,7 +15,7 @@ import {
   sleepReminderText,
   sleepTakesOverFocus,
 } from "@/constants/sleepReminder";
-import { getToday, store } from "./database";
+import { getToday, localStore, store } from "./database";
 import { useJourney } from "./useJourney";
 
 // Lembrete diário do hábito em foco (#364).
@@ -176,9 +176,9 @@ export async function rescheduleSleepReminder({ records, enabled }) {
  * em foco, e as duas preferências. Chamar no root, uma vez.
  */
 export function useFocusReminder() {
-  const enabled = useValue("reminderEnabled", store);
-  const hhmm = useValue("reminderTime", store);
-  const sleepEnabled = useValue("sleepReminderEnabled", store);
+  const enabled = useValue("reminderEnabled", localStore);
+  const hhmm = useValue("reminderTime", localStore);
+  const sleepEnabled = useValue("sleepReminderEnabled", localStore);
   const records = useTable("records", store);
   const { focus } = useJourney();
 
@@ -223,7 +223,7 @@ export function useFocusReminder() {
  * que foi como o #344 ficou sem efeito em produção (#356).
  */
 export function useSleepReminder() {
-  const enabled = useValue("sleepReminderEnabled", store);
+  const enabled = useValue("sleepReminderEnabled", localStore);
   const records = useTable("records", store);
 
   useEffect(() => {

@@ -1,7 +1,8 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
-import { createMergeableStore } from "tinybase";
+import { createMergeableStore, createStore } from "tinybase";
 
 import { DEFAULT_GOALS } from "@/constants/goals";
+import { LOCAL_PREFS_SCHEMA } from "@/constants/localPrefs";
 import { maisRecentesPrimeiro } from "@/constants/recordOrder";
 import { withTimeOfDay } from "@/constants/recordTime";
 
@@ -44,16 +45,18 @@ export const store = createMergeableStore()
     // Room ID por install pra sync WS (M6 fatia 3, #202). Gerado no 1º launch
     // (ver infra/persistence.js). Default vazio = sync ainda não inicializado.
     syncRoomId: { type: "string", default: "" },
-    // Lembrete diário do hábito em foco (#364). Desligado por padrão: o app
-    // não notifica ninguém sem a pessoa pedir.
-    reminderEnabled: { type: "boolean", default: false },
-    // Horário do lembrete, "HH:MM". 21:00 é um default de fim de dia, com
-    // folga pra ainda dar tempo de registrar antes de dormir.
-    reminderTime: { type: "string", default: "21:00" },
-    // Lembrete do sono que aprende o horário (#368). Desligado por padrão pelo
-    // mesmo motivo do de cima, e separado dele porque notifica mesmo quando o
-    // foco é outro hábito.
-    sleepReminderEnabled: { type: "boolean", default: false },
+    // ⚠️ LEGADO, só pra migração (ver `constants/localPrefs.js`). Lembretes e
+    // prévias de dev são do APARELHO e moram no `localStore`, que não
+    // sincroniza. Ficam declarados aqui pra que o valor antigo ainda carregue
+    // do disco e possa ser copiado, e SEM default de propósito: com default, o
+    // `delValue` da migração não apaga, só volta ao padrão, e o padrão seguiria
+    // viajando pela sala da conta.
+    reminderEnabled: { type: "boolean" },
+    reminderTime: { type: "string" },
+    sleepReminderEnabled: { type: "boolean" },
+    journeyDemoLevel: { type: "number" },
+    retomadaDemo: { type: "boolean" },
+
     // Como o usuário quer ser chamado no cumprimento da Home. Preferido em
     // relação à derivação do email, que quando presente cai no primeiro nome
     // (antes do primeiro ponto). Editável em Ajustes.
@@ -70,17 +73,6 @@ export const store = createMergeableStore()
     // a pessoa tocasse "Entendi", e o design mostra "em pausa" DEPOIS disso.
     // -1 = nunca reconheceu nada, pra distinguir de "reconheceu o lvl 0".
     journeyAckLevel: { type: "number", default: -1 },
-    // Nível forçado pra PREVISUALIZAR telas (#293). -1 = desligado.
-    //
-    // Existe porque os momentos são inobserváveis com histórico curto, e
-    // afrouxar os limiares não resolveria: com 21% de consistência e ±207min
-    // de dispersão, o portão teria que cair tão fundo que deixaria de ser o
-    // mesmo portão. Forçar o nível testa a TELA; o modelo continua sendo
-    // testado por `tests/journey.test.js`, com dado sintético.
-    //
-    // Enquanto ligado, o peak NÃO sobe, senão sair do demo deixaria o app
-    // permanentemente "regredido".
-    journeyDemoLevel: { type: "number", default: -1 },
     // Hábitos graduados por CONFERÊNCIA do histórico (#295), separados por
     // vírgula. Graduar normalmente exige a barra alta e semanas de observação;
     // pular concede com a evidência do portão: mesma exigência, sem espera.
@@ -92,15 +84,22 @@ export const store = createMergeableStore()
     // 24 dias". Some quando o hábito deixa de ser estável, pra recomeçar a
     // contagem se ele for reconquistado.
     journeyGraduatedAt: { type: "string", default: "" },
-    // Força a tela de retomada a aparecer, pra previsualização (#320).
-    //
-    // Ela depende de 3+ dias sem nenhum registro, condição que quem usa o app
-    // diariamente não consegue produzir sem apagar os próprios dados. Sem isto
-    // a mudança da #320 seria mergeada sem ninguém ter visto a tela.
-    //
-    // Como os outros controles de demo, só existe em superfície de dev.
-    retomadaDemo: { type: "boolean", default: false },
   });
+
+// Preferências do APARELHO (lembretes, prévias de dev). Store comum, e não
+// mergeable, e fora do synchronizer: o que mora aqui não viaja pra sala da
+// conta. Persistido à parte pelo `useRegistrosPersistencia`. Ver
+// `constants/localPrefs.js`.
+//
+// O porquê das duas prévias, que vieram do schema principal:
+//
+// - `journeyDemoLevel` (#293): os momentos de nível são inobserváveis com
+//   histórico curto, e afrouxar os limiares mudaria o portão. Forçar o nível
+//   testa a TELA; o modelo segue testado por `tests/journey.test.js`. Enquanto
+//   ligado, o peak NÃO sobe, senão sair do demo deixaria o app "regredido".
+// - `retomadaDemo` (#320): a retomada depende de 3+ dias sem registro, que
+//   quem usa o app todo dia não produz sem apagar os próprios dados.
+export const localStore = createStore().setValuesSchema(LOCAL_PREFS_SCHEMA);
 
 // Espalha `details` (JSON) de volta pro topo. É espalhado por último de
 // propósito: registros antigos (schema frouxo, com quantity/observation
@@ -276,15 +275,15 @@ export function setDisplayName(name) {
 // --- Lembrete do hábito em foco (#364) ---
 
 export function setReminderEnabled(on) {
-  store.setValue("reminderEnabled", Boolean(on));
+  localStore.setValue("reminderEnabled", Boolean(on));
 }
 
 export function setReminderTime(hhmm) {
-  store.setValue("reminderTime", String(hhmm ?? "").trim());
+  localStore.setValue("reminderTime", String(hhmm ?? "").trim());
 }
 
 export function setSleepReminderEnabled(on) {
-  store.setValue("sleepReminderEnabled", Boolean(on));
+  localStore.setValue("sleepReminderEnabled", Boolean(on));
 }
 
 // --- Sync (M6 fatia 3, #202) ---
@@ -392,14 +391,14 @@ export function toggleDemoStable(metric) {
  * @returns {boolean} o estado novo.
  */
 export function toggleRetomadaDemo() {
-  const novo = !store.getValue("retomadaDemo");
-  store.setValue("retomadaDemo", novo);
+  const novo = !localStore.getValue("retomadaDemo");
+  localStore.setValue("retomadaDemo", novo);
   return novo;
 }
 
 export function setJourneyDemoLevel(level, realLevel) {
   const alvo = Number.isFinite(level) ? level : -1;
-  store.setValue("journeyDemoLevel", alvo);
+  localStore.setValue("journeyDemoLevel", alvo);
   if (alvo < 0 && Number.isFinite(realLevel)) {
     store.setValue("journeyPeakLevel", realLevel);
     store.setValue("journeyAckLevel", realLevel);

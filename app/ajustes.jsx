@@ -36,6 +36,7 @@ import {
   setReminderTime,
   setSleepReminderEnabled,
   store,
+  localStore,
 } from "@/infra/database";
 import { useSession } from "@/infra/session";
 import { AUTH_ENABLED } from "@/infra/supabase";
@@ -113,9 +114,9 @@ export default function Ajustes() {
   const t = useThemeTokens();
 
   const displayName = useValue("displayName", store);
-  const reminderEnabled = useValue("reminderEnabled", store);
-  const reminderTime = useValue("reminderTime", store);
-  const sleepReminderEnabled = useValue("sleepReminderEnabled", store);
+  const reminderEnabled = useValue("reminderEnabled", localStore);
+  const reminderTime = useValue("reminderTime", localStore);
+  const sleepReminderEnabled = useValue("sleepReminderEnabled", localStore);
   // Só pra explicar o toggle que não liga. Sem isto a pessoa clica, nada
   // acontece, e não há como saber que o sistema negou.
   const [reminderDenied, setReminderDenied] = useState(false);
@@ -755,9 +756,9 @@ function SyncRow() {
 function SignalsBlock({ goals }) {
   const records = useTable("records", store);
   const peak = useValue("journeyPeakLevel", store);
-  const demo = Number(useValue("journeyDemoLevel", store) ?? -1);
+  const demo = Number(useValue("journeyDemoLevel", localStore) ?? -1);
   const emDemo = demo >= 0;
-  const retomadaDemo = useValue("retomadaDemo", store);
+  const retomadaDemo = useValue("retomadaDemo", localStore);
 
   const jornada = useMemo(
     () =>

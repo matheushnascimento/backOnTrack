@@ -1,7 +1,8 @@
 import { openDatabaseSync } from "expo-sqlite";
 import { createExpoSqlitePersister } from "tinybase/persisters/persister-expo-sqlite";
 import { useCreatePersister } from "tinybase/ui-react";
-import { ensureGoals, ensureSyncRoomId, store } from "./database";
+import { migrateLocalPrefs } from "@/constants/localPrefs";
+import { ensureGoals, ensureSyncRoomId, localStore, store } from "./database";
 
 const db = openDatabaseSync("back_on_track.db");
 
@@ -28,6 +29,10 @@ export function useRegistrosPersistencia() {
     async (persister) => {
       await persister.startAutoLoad();
       await persister.startAutoSave();
+      // Preferências do aparelho: tabela própria, fora do synchronizer. Só
+      // depois de os DOIS stores carregarem a migração enxerga o que copiar.
+      await carregarPreferenciasLocais();
+      migrateLocalPrefs(store, localStore);
       // Room ID de sync (M6 fatia 3): só gerar/persistir DEPOIS do autoLoad,
       // senão um roomId gerado vira roomId antigo carregado do SQLite.
       ensureSyncRoomId();
@@ -35,4 +40,24 @@ export function useRegistrosPersistencia() {
       ensureGoals();
     },
   );
+}
+
+/** @type {ReturnType<typeof createExpoSqlitePersister> | null} */
+let persisterLocal = null;
+
+/**
+ * Carrega o `localStore` do disco, uma vez por processo.
+ *
+ * Fora do `useCreatePersister` de propósito: a migração precisa esperar este
+ * load terminar, e dois hooks independentes não dão essa ordem.
+ */
+async function carregarPreferenciasLocais() {
+  if (persisterLocal) return;
+  persisterLocal = createExpoSqlitePersister(
+    localStore,
+    db,
+    "back_on_track_local",
+  );
+  await persisterLocal.startAutoLoad();
+  await persisterLocal.startAutoSave();
 }
