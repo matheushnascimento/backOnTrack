@@ -15,7 +15,11 @@ import Svg, { Path } from "react-native-svg";
 import { goBack } from "@/constants/navigation";
 import MyView from "@/components/MyView";
 
-import { FEEDBACK_ENDPOINT, FEEDBACK_KEY } from "@/constants/feedback";
+import {
+  FEEDBACK_ENDPOINT,
+  FEEDBACK_KEY,
+  falhaDoEnvio,
+} from "@/constants/feedback";
 import { getEnvironmentInfo } from "@/constants/environment";
 import { useThemeTokens } from "@/constants/themeTokens";
 //#endregion
@@ -31,6 +35,7 @@ export default function Feedback() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("idle"); // idle | sending | ok | error
+  const [falha, setFalha] = useState("conexao"); // conexao | servidor
   const [result, setResult] = useState(null); // { number, url }
 
   const canSend =
@@ -39,8 +44,9 @@ export default function Feedback() {
   async function handleSend() {
     if (!canSend) return;
     setStatus("sending");
+    let res = null;
     try {
-      const res = await fetch(FEEDBACK_ENDPOINT, {
+      res = await fetch(FEEDBACK_ENDPOINT, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -61,6 +67,7 @@ export default function Feedback() {
       // Detalhe técnico só no console (mesma regra do login #216), o que evita
       // vazar shape do backend pro usuário e não ajuda quem tá vendo.
       console.error("feedback send failed:", e);
+      setFalha(falhaDoEnvio(res));
       setStatus("error");
     }
   }
@@ -200,7 +207,9 @@ export default function Feedback() {
                 className="text-sm text-danger"
                 style={{ fontFamily: "Inter_400Regular" }}
               >
-                Não consegui enviar agora. Tenta de novo em instantes.
+                {falha === "servidor"
+                  ? "O problema foi do nosso lado, e não da sua internet. Seu texto continua aqui: tenta de novo mais tarde, ou manda um print pra quem te convidou."
+                  : "Não consegui falar com o servidor. Confere a internet e tenta de novo."}
               </Text>
             )}
 

@@ -175,14 +175,16 @@ describe("resultado", () => {
     });
   });
 
-  test("erro do GitHub → 502", async () => {
+  // 500, e não 502: a Cloudflare na frente do domínio troca a resposta de
+  // origem 502 pela própria página, e o `status` do GitHub some.
+  test("erro do GitHub → 500 com o status do GitHub", async () => {
     global.fetch = jest.fn(async () => ({
       ok: false,
       status: 422,
       text: async () => "boom",
     }));
     const res = await call({ body: { title: "ok" } });
-    expect(res.statusCode).toBe(502);
-    expect(res.body.error).toBe("github_error");
+    expect(res.statusCode).toBe(500);
+    expect(res.body).toEqual({ error: "github_error", status: 422 });
   });
 });
