@@ -13,6 +13,11 @@
 //
 //   node scripts/notify-testers.mjs --send --text-file caminho/msg.txt
 //
+// Pra mandar só a alguns (ex: tester que entrou depois do anúncio), passe os
+// nomes, separados por vírgula. Nome que não está na lista aborta o envio:
+//
+//   node scripts/notify-testers.mjs --send --only "Nome"
+//
 // O envio é opt-in porque manda mensagem real e irreversível pros testers. Não
 // existe lista de transmissão via API (a Evolution API não suporta: issue #2081),
 // então o disparo é um DM por tester, em loop e com delay, o que também é mais
@@ -28,10 +33,13 @@
 // scripts/testers.json, gitignored, porque é PII.
 
 import { execFileSync } from "node:child_process";
+import { createRequire } from "node:module";
 import { readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createInterface } from "node:readline/promises";
+
+const { filtrarTesters } = createRequire(import.meta.url)("./tester-filter.js");
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const TESTERS_FILE = join(ROOT, "scripts", "testers.json");
@@ -211,10 +219,31 @@ async function sendText(cfg, phone, text) {
   }
 }
 
+/**
+ * Aplica o `--only`, quando houver. Aborta se algum nome não existir, ANTES de
+ * qualquer envio: mensagem enviada não volta.
+ *
+ * @param {{ name: string, phone: string }[]} todos
+ */
+function escolherTesters(todos) {
+  const i = process.argv.indexOf("--only");
+  if (i === -1) return todos;
+  const pedido = process.argv[i + 1];
+  if (!pedido || pedido.startsWith("--")) fail("--only precisa dos nomes.");
+  const { testers, faltando } = filtrarTesters(todos, pedido);
+  if (faltando.length > 0) {
+    fail(
+      `não achei na lista: ${faltando.join(", ")}.\n  Nomes disponíveis: ` +
+        todos.map((t) => t.name).join(", "),
+    );
+  }
+  return testers;
+}
+
 /** @param {string} message */
 async function runSend(message) {
   const cfg = readEvoConfig();
-  const testers = readTesters();
+  const testers = escolherTesters(readTesters());
 
   console.log(message);
   console.log("\n" + "─".repeat(40));
