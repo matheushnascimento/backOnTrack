@@ -24,6 +24,7 @@
     "@expo-google-fonts/inter": "^0.4.2",
     "@expo-google-fonts/jetbrains-mono": "^0.4.1",
     "@expo/metro-runtime": "~57.0.2",
+    "@noble/ciphers": "2.4.0",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-vector-icons/material-design-icons": "^13.1.2",
     "@supabase/supabase-js": "^2.111.0",
