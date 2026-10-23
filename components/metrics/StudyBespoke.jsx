@@ -9,6 +9,7 @@ import { minutesToHHMM } from "@/constants/duration";
 import { useThemeTokens } from "@/constants/themeTokens";
 import { SPAN_NAMES, horaAgora, spanRecord } from "@/constants/timeSpan";
 
+import TimerCard from "./TimerCard";
 import TimeSpanFields, { useSpanEdits, useTimeSpan } from "./TimeSpanFields";
 
 // UI bespoke da tela de estudo (M5-B fatia 2c, mockup 2a·6).
@@ -86,6 +87,18 @@ function StudyCreate({ onAfterAdd }) {
   return (
     <View className="gap-4">
       <DoneToggle value={studied} onToggle={() => setStudied((v) => !v)} />
+
+      {/* Timer (#369): parar preenche início e fim pelo mesmo caminho da
+          digitação, e limpa a duração, pra ela não virar um terceiro campo
+          em conflito com os horários do timer. */}
+      <TimerCard
+        metric="study"
+        onStop={({ start: ini, end: fim }) => {
+          marcar("start", setStart)(ini);
+          marcar("end", setEnd)(fim);
+          setDuration("");
+        }}
+      />
 
       <TimeSpanFields
         span={span}

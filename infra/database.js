@@ -286,6 +286,24 @@ export function setSleepReminderEnabled(on) {
   localStore.setValue("sleepReminderEnabled", Boolean(on));
 }
 
+// --- Timer de exercício e estudo (#369) ---
+
+/** Começa o timer de `metric`. Um por vez: quem chama confere antes. */
+export function startTimer(metric, now = Date.now()) {
+  localStore.transaction(() => {
+    localStore.setValue("timerMetric", String(metric));
+    localStore.setValue("timerStartedAt", Number(now));
+  });
+}
+
+/** Desliga o timer, seja ao parar, seja ao descartar. */
+export function clearTimer() {
+  localStore.transaction(() => {
+    localStore.setValue("timerMetric", "");
+    localStore.setValue("timerStartedAt", 0);
+  });
+}
+
 // --- Sync (M6 fatia 3, #202) ---
 
 // UUID-like local: 22 chars alfanuméricos, ~130 bits. Não é criptograficamente
