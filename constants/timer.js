@@ -15,9 +15,10 @@
  * 19:30"), e o `reconcileTimes` deriva a duração delas. O timer é só mais um
  * jeito de digitar dois dos três campos da fatia 1.
  *
- * O preço é perder os segundos: 18:30:50 a 18:31:10 vira "18:30 a 18:31", um
- * minuto. Sessão de menos de um minuto vira duração zero e não salva, o que é
- * correto pra um registro de hábito.
+ * O preço é perder os segundos, e o arredondamento depende de cruzar a virada
+ * do minuto: 18:30:50 a 18:31:10 são 20 segundos e viram um minuto, enquanto
+ * 10:00:05 a 10:00:50 são 45 e viram zero. A diferença máxima é de um minuto,
+ * irrelevante pra registro de hábito, e duração zero não salva.
  *
  * ## Só exercício e estudo
  *
