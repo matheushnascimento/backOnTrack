@@ -102,17 +102,22 @@ export default function AuthCallback() {
               >
                 Não deu certo
               </Text>
+              {/* A mensagem falava em link vencido pra qualquer falha. A causa comum é
+                  outra (#376): o fluxo PKCE só troca o link pela sessão no navegador
+                  que pediu, e no iPhone o Gmail abre no Safari. A pessoa ainda tem,
+                  onde pediu, a tela esperando o código do mesmo email. */}
               <Text
                 className="text-sm text-body-secondary dark:text-body-secondary-dark"
                 style={{ fontFamily: "Inter_400Regular" }}
               >
-                O link pode ter expirado ou já foi usado. Peça um novo pela tela
-                de entrar.
+                Isso costuma acontecer quando o link abre num navegador
+                diferente do que pediu o login. Volte onde você pediu e digite o
+                código que veio no mesmo email.
               </Text>
             </View>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel="Tentar de novo"
+              accessibilityLabel="Pedir um código novo"
               onPress={() => router.replace("/login")}
               className="items-center rounded-2xl bg-primary dark:bg-primary-dark py-4 active:opacity-70"
             >
@@ -120,7 +125,7 @@ export default function AuthCallback() {
                 className="text-base text-white dark:text-on-primary-dark"
                 style={{ fontFamily: "Inter_600SemiBold" }}
               >
-                Tentar de novo
+                Pedir um código novo
               </Text>
             </Pressable>
           </View>
