@@ -8,6 +8,7 @@ import { minutesToHHMM } from "@/constants/duration";
 import { SPAN_NAMES, horaAgora, spanRecord } from "@/constants/timeSpan";
 import { useThemeTokens } from "@/constants/themeTokens";
 
+import TimerCard from "./TimerCard";
 import TimeSpanFields, { useSpanEdits, useTimeSpan } from "./TimeSpanFields";
 
 // UI bespoke da tela de exercício (M5-B fatia 2c, mockup 2a·4).
@@ -142,6 +143,18 @@ function ExerciseCreate({ onAfterAdd }) {
         cardio={cardio}
         onTraining={() => setTraining((v) => !v)}
         onCardio={() => setCardio((v) => !v)}
+      />
+
+      {/* Timer (#369): parar preenche início e fim pelo mesmo caminho da
+          digitação, e limpa a duração, pra ela não virar um terceiro campo
+          em conflito com os horários do timer. */}
+      <TimerCard
+        metric="exercise"
+        onStop={({ start: ini, end: fim }) => {
+          marcar("start", setStartTime)(ini);
+          marcar("end", setEndTime)(fim);
+          setDuration("");
+        }}
       />
 
       <TimeSpanFields

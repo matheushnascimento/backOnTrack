@@ -41,12 +41,27 @@ export const LOCAL_PREFS_SCHEMA = {
   retomadaDemo: { type: "boolean", default: false },
   // Marca de que a migração do store sincronizado já rodou neste aparelho.
   localPrefsMigrated: { type: "boolean", default: false },
+  // Timer de exercício ou estudo rodando (#369). Vazio = nenhum. Guarda o
+  // INSTANTE de início, e não um contador: o decorrido é sempre agora menos
+  // início, e fechar o app não perde nada. Ver `constants/timer.js`.
+  timerMetric: { type: "string", default: "" },
+  timerStartedAt: { type: "number", default: 0 },
 };
 
-/** As chaves que a migração traz do store sincronizado. */
-export const LOCAL_PREF_KEYS = Object.keys(LOCAL_PREFS_SCHEMA).filter(
-  (k) => k !== "localPrefsMigrated",
-);
+/**
+ * As chaves que a migração traz do store sincronizado.
+ *
+ * Lista fechada, e não derivada do schema: são as que existiam no store
+ * sincronizado antes da mudança. Chave nova do aparelho nasce aqui no local e
+ * não tem o que migrar.
+ */
+export const LOCAL_PREF_KEYS = [
+  "reminderEnabled",
+  "reminderTime",
+  "sleepReminderEnabled",
+  "journeyDemoLevel",
+  "retomadaDemo",
+];
 
 /**
  * Traz as preferências do store sincronizado pro local, uma vez por aparelho.
