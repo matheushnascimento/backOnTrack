@@ -90,7 +90,11 @@ export default async function handler(req, res) {
   if (!gh.ok) {
     const detail = await gh.text();
     console.error("GitHub issue create failed", gh.status, detail);
-    return res.status(502).json({ error: "github_error", status: gh.status });
+    // 500, e não 502, de propósito. O domínio passa pela Cloudflare, que troca
+    // a resposta de origem 502 pela própria página ("error code: 502"), e o
+    // `status` do GitHub abaixo sumia. Foi assim que o token vencido de
+    // out/2026 ficou invisível: só dava pra ver o 502 genérico.
+    return res.status(500).json({ error: "github_error", status: gh.status });
   }
 
   const issue = await gh.json();
