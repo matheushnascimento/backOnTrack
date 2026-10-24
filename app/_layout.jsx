@@ -116,8 +116,8 @@ function AppTree() {
         {/* Rota de admin (testers): acesso só por deep link backontrack://admin */}
         <Stack.Screen name="admin" options={{ title: "Admin" }} />
         <Stack.Screen name="login" options={{ title: "Entrar" }} />
-        {/* Proteção dos dados sensíveis (#388). Até a fatia 3 só abre pela
-            área de desenvolvimento de Ajustes. */}
+        {/* Proteção dos dados sensíveis (#388): por Ajustes e pelo
+            autocuidado. */}
         <Stack.Screen name="protecao" options={{ title: "Proteção" }} />
         {/* Callback do magic link: headless, autopropulsão pra /. */}
         <Stack.Screen

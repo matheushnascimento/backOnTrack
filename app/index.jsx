@@ -33,6 +33,7 @@ import {
   headerCopy,
   levelChip,
   restBadge,
+  foraDaJornada,
   splitZones,
 } from "@/constants/journeyHome";
 import {
@@ -57,6 +58,8 @@ function formatValue(unit, total) {
   if (unit === "refeição")
     return `${total} ${total === 1 ? "refeição" : "refeições"}`;
   if (unit === "ml") return `${total.toLocaleString("pt-BR")} ml`;
+  if (unit === "registro")
+    return `${total} ${total === 1 ? "registro" : "registros"}`;
   return `${total} ${unit}`;
 }
 
@@ -161,6 +164,7 @@ export default function Home() {
   }, [chaveEstaveis, emDemo]);
 
   const { focus, rest } = splitZones(journey);
+  const extras = foraDaJornada(METRICS);
   const copy = headerCopy(journey);
 
   // Momento pendente (#293). O ack é o que garante "uma vez e some": sem ele
@@ -421,6 +425,34 @@ export default function Home() {
             Tudo continua registrável. A ordem é sugerida.
           </Text>
         </View>
+
+        {/* Fora da jornada (#374): hoje só o autocuidado. Sem esta zona ele
+            sumiria da Home, porque foco e resto saem da ordem da jornada. Sem
+            selo de nível, porque não é hábito da jornada. O valor é só a
+            contagem do dia: o tipo vai cifrado, e a Home não decifra. */}
+        {extras.length > 0 ? (
+          <View className="gap-2">
+            <View className="flex-row items-center gap-2">
+              <Text
+                className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
+                style={{ fontFamily: "JetBrainsMono_500Medium" }}
+              >
+                fora da jornada
+              </Text>
+              <View className="h-px flex-1 bg-border-subtle dark:bg-border-subtle-dark" />
+            </View>
+            {extras.map((metric) => (
+              <CompactRow
+                key={metric}
+                metric={metric}
+                name={porMetrica[metric].name}
+                value={porMetrica[metric].value}
+                badge={null}
+                onPress={() => router.navigate(`/(metrics)/${metric}`)}
+              />
+            ))}
+          </View>
+        ) : null}
 
         {/* Obter o app (só web: QR no desktop, download no celular) */}
         <InstallApp />

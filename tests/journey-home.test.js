@@ -8,6 +8,7 @@ import {
   quickAddLabel,
   restBadge,
   splitZones,
+  foraDaJornada,
 } from "@/constants/journeyHome";
 import { JOURNEY_ORDER } from "@/constants/goals";
 import { BUILDING, GRADUATED, LOCKED, PAUSED } from "@/constants/journey";
@@ -168,5 +169,19 @@ describe("METRIC_TINT", () => {
       expect(METRIC_TINT[m]).toBeDefined();
       expect(METRIC_TINT[m]).toMatch(/dark:/);
     }
+  });
+});
+
+describe("foraDaJornada", () => {
+  // Sem esta lista o autocuidado sumiria da Home, porque as zonas de foco e de
+  // resto saem da ordem da jornada (#374).
+  it("o autocuidado existe no app e não está na jornada", () => {
+    expect(foraDaJornada()).toEqual(["selfcare"]);
+  });
+
+  it("as cinco métricas da jornada não aparecem aqui", () => {
+    expect(
+      foraDaJornada(["sleep", "water", "feeding", "exercise", "study"]),
+    ).toEqual([]);
   });
 });

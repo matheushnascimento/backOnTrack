@@ -18,6 +18,9 @@ const PATHS = {
   ],
   feeding: ["M4 4c0 8 4 10 8 10s8-2 8-10", "M4 14c0 4 4 6 8 6s8-2 8-6"],
   study: ["M3 6l9-3 9 3v10l-9 3-9-3z", "M12 3v18"],
+  selfcare: [
+    "M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z",
+  ],
 };
 
 export default function MetricIcon({ metric, size = 22, color = "#2E5A88" }) {
