@@ -52,6 +52,7 @@
 
 import { xchacha20poly1305 } from "@noble/ciphers/chacha.js";
 import {
+  bytesToHex,
   bytesToUtf8,
   concatBytes,
   randomBytes,
@@ -60,8 +61,14 @@ import {
 
 export const E2E_VERSION = 1;
 
-/** Prefixo dos campos cifrados, com a versão do formato. */
+/**
+ * Prefixo dos campos cifrados, com a versão do formato. O campo inteiro é
+ * `e2e1:<kid>:<base64 de nonce + texto cifrado>`.
+ */
 const PREFIXO = "e2e1:";
+
+/** Bytes do identificador de chave (`kid`), em hexadecimal no pacote e no campo. */
+const TAM_KID = 8;
 
 /**
  * PBKDF2-SHA256, 600 mil iterações: o mínimo da OWASP pra SHA-256, e o padrão
@@ -77,7 +84,7 @@ const TAM_RECUPERACAO = 20; // 160 bits = 32 caracteres base32
 
 /** Erro com motivo legível pela tela. */
 export class E2eError extends Error {
-  /** @param {"senha-vazia"|"nao-destrancou"|"codigo-invalido"|"dado-corrompido"|"versao-desconhecida"|"sem-webcrypto"} code */
+  /** @param {"senha-vazia"|"nao-destrancou"|"codigo-invalido"|"dado-corrompido"|"versao-desconhecida"|"sem-webcrypto"|"chave-ausente"} code */
   constructor(code, message) {
     super(message ?? code);
     this.name = "E2eError";
@@ -243,7 +250,7 @@ async function chaveDoCodigo(codigoBytes, sal) {
 const AAD = {
   senha: utf8ToBytes("bot-e2e-v1:tranca:senha"),
   recuperacao: utf8ToBytes("bot-e2e-v1:tranca:recuperacao"),
-  campo: (contexto) => utf8ToBytes(`bot-e2e-v1:campo:${contexto}`),
+  campo: (contexto, kid) => utf8ToBytes(`bot-e2e-v1:campo:${kid}:${contexto}`),
 };
 
 function trancar(chave, conteudo, aad, random) {
@@ -287,6 +294,10 @@ export async function createKeyBundle(
   const sal = random(TAM_SAL);
   const bundle = {
     v: E2E_VERSION,
+    // Identifica esta chave. Os campos cifrados carregam o `kid`, e é assim que
+    // duas chaves da mesma conta convivem sem que uma torne a outra ilegível
+    // (ver `constants/e2eKeyring.js`).
+    kid: bytesToHex(random(TAM_KID)),
     kdf: { ...kdf, salt: toBase64(sal) },
     senha: trancar(
       await chaveDaSenha(senha, kdf, sal),
@@ -375,44 +386,62 @@ export async function rewrapPassword(
 
 /** O valor é um campo cifrado por este módulo? */
 export function isEncrypted(valor) {
-  return typeof valor === "string" && valor.startsWith(PREFIXO);
+  return typeof valor === "string" && /^e2e1:[0-9a-f]+:/.test(valor);
+}
+
+/** O `kid` da chave que cifrou o campo, ou `null` se não é campo cifrado. */
+export function kidOf(valor) {
+  return isEncrypted(valor) ? valor.split(":")[1] : null;
 }
 
 /**
  * Cifra um texto pra guardar num campo do registro.
  *
- * `contexto` entra como dado associado: um campo cifrado pra "selfcare.kind"
- * não decifra se for copiado pra outro lugar.
+ * `contexto` e o `kid` entram como dado associado: um campo cifrado pra
+ * "selfcare.kind" não decifra se for copiado pra outro lugar, nem se alguém
+ * trocar o `kid` do prefixo pra apontar pra outra chave.
  *
- * @param {Uint8Array} dataKey
+ * @param {{kid: string, dataKey: Uint8Array}} chave
  * @param {string} texto
  * @param {string} contexto
- * @returns {string} "e2e1:<base64 de nonce + texto cifrado>"
+ * @returns {string} "e2e1:<kid>:<base64 de nonce + texto cifrado>"
  */
 export function encryptField(
-  dataKey,
+  { kid, dataKey },
   texto,
   contexto,
   { random = randomBytes } = {},
 ) {
   const nonce = random(TAM_NONCE);
-  const ct = xchacha20poly1305(dataKey, nonce, AAD.campo(contexto)).encrypt(
-    utf8ToBytes(String(texto)),
-  );
-  return PREFIXO + toBase64(concatBytes(nonce, ct));
+  const ct = xchacha20poly1305(
+    dataKey,
+    nonce,
+    AAD.campo(contexto, kid),
+  ).encrypt(utf8ToBytes(String(texto)));
+  return `${PREFIXO}${kid}:${toBase64(concatBytes(nonce, ct))}`;
 }
 
-/** Decifra um campo; lança `dado-corrompido` se não fechar. */
-export function decryptField(dataKey, valor, contexto) {
-  if (!isEncrypted(valor)) {
-    throw new E2eError("versao-desconhecida", "campo sem prefixo e2e1");
-  }
-  const bruto = fromBase64(valor.slice(PREFIXO.length));
+/**
+ * Decifra um campo com a chave certa entre as que o aparelho tem.
+ *
+ * @param {Record<string, Uint8Array>} chaves `kid` → chave de dados
+ * @param {string} valor
+ * @param {string} contexto
+ * @returns {string}
+ * @throws {E2eError} `chave-ausente` quando o aparelho não tem a chave do
+ *   campo, e `dado-corrompido` quando tem e o campo não fecha
+ */
+export function decryptField(chaves, valor, contexto) {
+  const kid = kidOf(valor);
+  if (!kid) throw new E2eError("versao-desconhecida", "campo sem prefixo e2e1");
+  const dataKey = chaves?.[kid];
+  if (!dataKey) throw new E2eError("chave-ausente", `sem a chave ${kid}`);
+  const bruto = fromBase64(valor.slice(PREFIXO.length + kid.length + 1));
   try {
     const texto = xchacha20poly1305(
       dataKey,
       bruto.subarray(0, TAM_NONCE),
-      AAD.campo(contexto),
+      AAD.campo(contexto, kid),
     ).decrypt(bruto.subarray(TAM_NONCE));
     return bytesToUtf8(texto);
   } catch {

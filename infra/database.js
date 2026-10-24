@@ -9,6 +9,7 @@ import { withTimeOfDay } from "@/constants/recordTime";
 const TABLE = "records";
 const TESTERS = "testers";
 const GOALS = "goals";
+const E2E_KEYS = "e2eKeys";
 
 // MergeableStore em vez de Store puro: pré-requisito de qualquer sync (M6,
 // ADR-009). Carrega metadata de CRDT pra merge determinístico entre devices.
@@ -39,6 +40,16 @@ export const store = createMergeableStore()
     [GOALS]: {
       target: { type: "number" },
       updatedAt: { type: "number" },
+    },
+    // Pacotes de chave da criptografia ponta a ponta (#388). Um por linha, com
+    // o `kid` como id, e NUNCA num valor único: criar acrescenta e não
+    // sobrescreve, então uma corrida de criação entre aparelhos deixa duas
+    // chaves em vez de tornar uma ilegível. O pacote sincroniza de propósito,
+    // porque é trancado: sem a senha ou o código, não serve pra nada. Ver
+    // `constants/e2eKeyring.js`.
+    [E2E_KEYS]: {
+      bundle: { type: "string" },
+      createdAt: { type: "number" },
     },
   })
   .setValuesSchema({
@@ -507,4 +518,22 @@ export function addTester({ name, phone }) {
 
 export function removeTester(id) {
   store.delRow(TESTERS, id);
+}
+
+// --- Pacotes de chave da criptografia ponta a ponta (#388) ---
+
+/** Grava um pacote NOVO. Usa o `kid` como id da linha, então nunca colide. */
+export function addKeyBundle(bundle) {
+  store.setRow(E2E_KEYS, bundle.kid, {
+    bundle: JSON.stringify(bundle),
+    createdAt: Date.now(),
+  });
+}
+
+/**
+ * Regrava um pacote existente (troca de senha ou recuperação). Mantém o
+ * `createdAt`: é ele que decide qual pacote é o principal.
+ */
+export function updateKeyBundle(bundle) {
+  store.setCell(E2E_KEYS, bundle.kid, "bundle", JSON.stringify(bundle));
 }

@@ -1,5 +1,8 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 import "@/global.css";
+// Antes de tudo: o WebCrypto nativo tem que estar no global quando qualquer
+// módulo de criptografia rodar (#388). No navegador é um arquivo vazio.
+import "@/infra/cryptoSetup";
 
 import { useEffect } from "react";
 import { Stack } from "expo-router";
@@ -113,6 +116,9 @@ function AppTree() {
         {/* Rota de admin (testers): acesso só por deep link backontrack://admin */}
         <Stack.Screen name="admin" options={{ title: "Admin" }} />
         <Stack.Screen name="login" options={{ title: "Entrar" }} />
+        {/* Proteção dos dados sensíveis (#388). Até a fatia 3 só abre pela
+            área de desenvolvimento de Ajustes. */}
+        <Stack.Screen name="protecao" options={{ title: "Proteção" }} />
         {/* Callback do magic link: headless, autopropulsão pra /. */}
         <Stack.Screen
           name="auth/callback"
