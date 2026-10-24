@@ -18,6 +18,9 @@
 //
 //   node scripts/notify-testers.mjs --send --only "Nome"
 //
+// No modo de envio, toda mensagem ganha no topo a identificação do assistente
+// (#385), porque sai do número dedicado e não do WhatsApp do Matheus.
+//
 // O envio é opt-in porque manda mensagem real e irreversível pros testers. Não
 // existe lista de transmissão via API (a Evolution API não suporta: issue #2081),
 // então o disparo é um DM por tester, em loop e com delay, o que também é mais
@@ -39,7 +42,9 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createInterface } from "node:readline/promises";
 
-const { filtrarTesters } = createRequire(import.meta.url)("./tester-filter.js");
+const requireCjs = createRequire(import.meta.url);
+const { filtrarTesters } = requireCjs("./tester-filter.js");
+const { identificar } = requireCjs("./assistant-label.js");
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..");
 const TESTERS_FILE = join(ROOT, "scripts", "testers.json");
@@ -241,7 +246,11 @@ function escolherTesters(todos) {
 }
 
 /** @param {string} message */
-async function runSend(message) {
+async function runSend(mensagem) {
+  // Pelo número dedicado, quem fala é o assistente, e a mensagem diz isso
+  // (#385). O modo de impressão não passa por aqui: ali o Matheus manda do
+  // próprio WhatsApp.
+  const message = identificar(mensagem);
   const cfg = readEvoConfig();
   const testers = escolherTesters(readTesters());
 
