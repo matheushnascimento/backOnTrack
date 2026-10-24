@@ -480,6 +480,15 @@ export default function Ajustes() {
         {/* Avançado */}
         <Section title="Avançado">
           <SignalsBlock goals={goals} />
+          {/* Prévia da proteção (#388): sem o autocuidado (fatia 3) ainda não
+              há nada pra proteger, então os testers não veem. */}
+          {DEV_SURFACE ? (
+            <Row
+              label="Proteção dos dados sensíveis (prévia)"
+              valueChevron
+              onPress={() => router.navigate("/protecao")}
+            />
+          ) : null}
           <Row
             label="Limpar todos os dados"
             onPress={handleClear}

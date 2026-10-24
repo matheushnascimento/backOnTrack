@@ -14,6 +14,7 @@ import {
   formatRecoveryCode,
   fromBase64,
   isEncrypted,
+  kidOf,
   parseRecoveryCode,
   rewrapPassword,
   toBase64,
@@ -198,64 +199,85 @@ describe("trocar a senha", () => {
 });
 
 describe("campos cifrados", () => {
-  let dataKey, outraChave;
+  let minha, outra, chaves;
   beforeAll(async () => {
-    dataKey = (await createKeyBundle("x", opcoes)).dataKey;
-    outraChave = (await createKeyBundle("x", opcoes)).dataKey;
+    const a = await createKeyBundle("x", opcoes);
+    const b = await createKeyBundle("x", opcoes);
+    minha = { kid: a.bundle.kid, dataKey: a.dataKey };
+    outra = { kid: b.bundle.kid, dataKey: b.dataKey };
+    chaves = { [minha.kid]: minha.dataKey };
   });
 
   it("ida e volta, com acento", async () => {
-    const cifrado = encryptField(dataKey, "remédio às 08:10", "selfcare.kind");
+    const cifrado = encryptField(minha, "remédio às 08:10", "selfcare.kind");
     expect(isEncrypted(cifrado)).toBe(true);
-    expect(decryptField(dataKey, cifrado, "selfcare.kind")).toBe(
+    expect(decryptField(chaves, cifrado, "selfcare.kind")).toBe(
       "remédio às 08:10",
     );
   });
 
+  it("o campo diz qual chave o cifrou", async () => {
+    const cifrado = encryptField(minha, "remédio", "selfcare.kind");
+    expect(kidOf(cifrado)).toBe(minha.kid);
+    expect(cifrado.startsWith(`e2e1:${minha.kid}:`)).toBe(true);
+  });
+
   it("o texto não aparece no valor cifrado", async () => {
-    const cifrado = encryptField(dataKey, "remédio", "selfcare.kind");
+    const cifrado = encryptField(minha, "remédio", "selfcare.kind");
     expect(cifrado).not.toContain("rem");
   });
 
   it("cifrar duas vezes o mesmo texto dá valores diferentes", async () => {
     // Nonce aleatório: sem isso, quem lê o servidor saberia quais registros
     // têm o mesmo conteúdo.
-    const a = encryptField(dataKey, "remédio", "selfcare.kind");
-    const b = encryptField(dataKey, "remédio", "selfcare.kind");
+    const a = encryptField(minha, "remédio", "selfcare.kind");
+    const b = encryptField(minha, "remédio", "selfcare.kind");
     expect(a).not.toBe(b);
   });
 
   it("copiado pra outro contexto, não decifra", async () => {
-    const cifrado = encryptField(dataKey, "remédio", "selfcare.kind");
+    const cifrado = encryptField(minha, "remédio", "selfcare.kind");
     expect(
-      await codigoDoErro(() => decryptField(dataKey, cifrado, "selfcare.note")),
+      await codigoDoErro(() => decryptField(chaves, cifrado, "selfcare.note")),
     ).toBe("dado-corrompido");
   });
 
-  it("chave de outra pessoa não decifra", async () => {
-    const cifrado = encryptField(dataKey, "remédio", "selfcare.kind");
+  it("campo de uma chave que o aparelho não tem: chave-ausente", async () => {
+    // Diferente de dado corrompido: aqui o certo é pedir a senha, não acusar.
+    const cifrado = encryptField(outra, "remédio", "selfcare.kind");
     expect(
-      await codigoDoErro(() =>
-        decryptField(outraChave, cifrado, "selfcare.kind"),
-      ),
+      await codigoDoErro(() => decryptField(chaves, cifrado, "selfcare.kind")),
+    ).toBe("chave-ausente");
+  });
+
+  it("trocar o kid do prefixo pra outra chave não passa", async () => {
+    // O kid está no dado associado: apontar o campo pra outra chave que o
+    // aparelho tem não faz ele decifrar com ela.
+    const cifrado = encryptField(minha, "remédio", "selfcare.kind");
+    const trocado = cifrado.replace(minha.kid, outra.kid);
+    const ambas = { ...chaves, [outra.kid]: outra.dataKey };
+    expect(
+      await codigoDoErro(() => decryptField(ambas, trocado, "selfcare.kind")),
     ).toBe("dado-corrompido");
   });
 
   it("um caractere adulterado não passa", async () => {
-    const cifrado = encryptField(dataKey, "remédio", "selfcare.kind");
+    const cifrado = encryptField(minha, "remédio", "selfcare.kind");
     const i = cifrado.length - 5;
     const troca = cifrado[i] === "A" ? "B" : "A";
     const adulterado = cifrado.slice(0, i) + troca + cifrado.slice(i + 1);
     expect(
       await codigoDoErro(() =>
-        decryptField(dataKey, adulterado, "selfcare.kind"),
+        decryptField(chaves, adulterado, "selfcare.kind"),
       ),
     ).toBe("dado-corrompido");
   });
 
   it("texto em claro não é tratado como cifrado", async () => {
     expect(isEncrypted("remédio")).toBe(false);
+    expect(isEncrypted("e2e1:semkid")).toBe(false);
     expect(isEncrypted(undefined)).toBe(false);
+    expect(kidOf("remédio")).toBeNull();
   });
 });
 
