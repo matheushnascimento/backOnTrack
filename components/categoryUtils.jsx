@@ -25,6 +25,13 @@ export const CATEGORY_MAP = {
     unit: "min",
     subtitle: "Registrar o tempo de estudo.",
   },
+  // 6ª métrica (#374). Fica fora da jornada (`JOURNEY_ORDER`) por enquanto, e
+  // tipo e nota dos registros vão cifrados. Ver constants/selfcare.js.
+  selfcare: {
+    displayName: "autocuidado",
+    unit: "registro",
+    subtitle: "Remédio, skincare, terapia ou outro cuidado com você.",
+  },
 };
 
 export function getCategoryInfo(key) {

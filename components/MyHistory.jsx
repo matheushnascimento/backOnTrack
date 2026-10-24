@@ -13,6 +13,8 @@ import { minutesToHHMM } from "@/constants/duration";
 import { router } from "expo-router";
 import { maisRecentesPrimeiro } from "@/constants/recordOrder";
 import { spanLabel } from "@/constants/timeSpan";
+import { lerRegistro, rotuloDoTipo } from "@/constants/selfcare";
+import { useChaves } from "@/infra/useProtection";
 //#endregion
 
 function formatDate(date) {
@@ -55,6 +57,8 @@ export function HistoryCard({
   const id = obj.id;
   const note = obj.note ?? obj.observation;
   const value = formatQuantity(obj, unit);
+  // Autocuidado (#374): tipo e nota vêm cifrados, e o cartão decifra.
+  const selfcare = tableName === "selfcare";
   const faixa = spanLabel(obj, tableName);
 
   function handleEdit() {
@@ -123,8 +127,11 @@ export function HistoryCard({
         ) : null}
       </View>
 
-      {/* Valor principal (mono grande) */}
-      {value ? (
+      {/* Valor principal (mono grande). No autocuidado, o tipo decifrado:
+          "1 registro" não diria nada. */}
+      {selfcare ? (
+        <SelfcareDetalhe obj={obj} />
+      ) : value ? (
         <View className="flex-row items-baseline gap-1">
           <Text
             className="text-primary dark:text-primary-dark"
@@ -149,8 +156,9 @@ export function HistoryCard({
         </View>
       )}
 
-      {/* OBS */}
-      {note ? (
+      {/* OBS. O autocuidado mostra a nota decifrada no próprio detalhe; a
+          coluna `note` dele fica vazia de propósito, porque viaja em claro. */}
+      {!selfcare && note ? (
         <View>
           <Text
             className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
@@ -177,6 +185,67 @@ export function HistoryCard({
 }
 
 /** @param {{ label: string }} props */
+/**
+ * O que dá pra mostrar de um registro de autocuidado neste aparelho.
+ * @param {{ obj: object }} props
+ */
+function SelfcareDetalhe({ obj }) {
+  const chaves = useChaves();
+  const lido = lerRegistro(chaves, obj);
+
+  if (lido.estado === "aberto") {
+    return (
+      <View className="gap-2">
+        <Text
+          className="text-primary dark:text-primary-dark"
+          style={{ fontFamily: "JetBrainsMono_500Medium", fontSize: 20 }}
+        >
+          {rotuloDoTipo(lido.tipo)}
+        </Text>
+        {lido.nota ? (
+          <Text
+            className="text-sm text-body-secondary dark:text-body-secondary-dark"
+            style={{ fontFamily: "Inter_400Regular" }}
+          >
+            {lido.nota}
+          </Text>
+        ) : null}
+      </View>
+    );
+  }
+
+  if (lido.estado === "travado") {
+    // A chave existe, mas não está destrancada aqui. O certo é pedir a senha.
+    return (
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="Registro protegido. Destravar para ver."
+        onPress={() => router.navigate("/protecao")}
+        className="self-start active:opacity-70"
+      >
+        <Text
+          className="text-sm text-body-secondary dark:text-body-secondary-dark"
+          style={{ fontFamily: "Inter_400Regular" }}
+        >
+          🔒 Protegido.{" "}
+          <Text className="text-primary dark:text-primary-dark">
+            Destravar pra ver
+          </Text>
+        </Text>
+      </Pressable>
+    );
+  }
+
+  return (
+    <Text
+      className="text-sm text-body-secondary dark:text-body-secondary-dark"
+      style={{ fontFamily: "Inter_400Regular" }}
+    >
+      Este registro não pôde ser lido.
+    </Text>
+  );
+}
+
 function ExerciseChip({ label }) {
   return (
     <View className="rounded-full border border-primary dark:border-primary-dark bg-tint-blue dark:bg-tint-blue-dark px-3 py-1">

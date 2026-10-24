@@ -20,8 +20,8 @@ import { useProtection } from "@/infra/useProtection";
 //   ou recuperar com o código escolhendo senha nova;
 // - destravado: trocar a senha ou travar este aparelho.
 //
-// Até a fatia 3 a tela só abre pela área de desenvolvimento de Ajustes: sem o
-// autocuidado, ainda não há nada pra proteger.
+// Abre por Ajustes → Avançado, e pela tela do autocuidado quando a proteção
+// ainda não existe ou está travada.
 
 /** Mensagem pra pessoa a partir do erro do núcleo. */
 function mensagemDoErro(e, contexto) {

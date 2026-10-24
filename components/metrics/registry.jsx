@@ -11,6 +11,7 @@ import SleepBespoke from "./SleepBespoke";
 import ExerciseBespoke from "./ExerciseBespoke";
 import FeedingBespoke from "./FeedingBespoke";
 import StudyBespoke from "./StudyBespoke";
+import SelfcareBespoke from "./SelfcareBespoke";
 
 /**
  * @typedef {Object} MetricConfig
@@ -56,6 +57,15 @@ const REGISTRY = {
     History: MyHistory,
     renderCustom: ({ onAfterAdd, recordId }) => (
       <StudyBespoke onAfterAdd={onAfterAdd} recordId={recordId} />
+    ),
+  },
+
+  // 6ª métrica (#374). O histórico é o comum: o `HistoryCard` reconhece o
+  // autocuidado e decifra o registro.
+  selfcare: {
+    History: MyHistory,
+    renderCustom: ({ onAfterAdd, recordId }) => (
+      <SelfcareBespoke onAfterAdd={onAfterAdd} recordId={recordId} />
     ),
   },
 };
