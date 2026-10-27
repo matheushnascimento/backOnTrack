@@ -14,6 +14,7 @@ import MetricRegisterHeaderRaw from "@/components/MetricRegisterHeader";
 
 import { getCategoryInfo } from "@/components/categoryUtils";
 import getDate from "@/constants/getDate";
+import { goBack } from "@/constants/navigation";
 import { getMetricConfig } from "./registry";
 
 const MyView = /** @type {any} */ (MyViewRaw);
@@ -49,7 +50,16 @@ export default function MetricScreen({ metric, recordId }) {
 
   const { History, renderCustom, cardClass } = config;
 
+  // Edição é uma tela só do registro (#396): sem o histórico embaixo, que
+  // repetia os cartões com "Editar" e deixava dúvida sobre o que estava sendo
+  // alterado. Salvar volta pra onde a pessoa estava.
+  const editando = Boolean(recordId);
+
   function afterSave() {
+    if (editando) {
+      goBack(`/(metrics)/${metric}`);
+      return;
+    }
     setVisible(true);
     setReloadKey((prev) => prev + 1);
   }
@@ -78,8 +88,8 @@ export default function MetricScreen({ metric, recordId }) {
         <MetricRegisterHeader
           metric={metric}
           title={title}
-          subtitle={subtitle}
-          label={navLabelFor(metric, date.ISOdate)}
+          subtitle={editando ? "Alterando um registro." : subtitle}
+          label={editando ? "EDITANDO" : navLabelFor(metric, date.ISOdate)}
         />
 
         {renderCustom && (
@@ -88,7 +98,7 @@ export default function MetricScreen({ metric, recordId }) {
           </Card>
         )}
 
-        <History tableName={metric} reload={reloadKey} />
+        {editando ? null : <History tableName={metric} reload={reloadKey} />}
       </ScrollView>
     </MyView>
   );

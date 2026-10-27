@@ -3,11 +3,12 @@
 import { useEffect, useState } from "react";
 
 import { Pressable, Text, View } from "react-native";
+import { useTable } from "tinybase/ui-react";
 
 import MyView from "./MyView";
 import { getCategoryInfo } from "./categoryUtils";
 
-import { get, getByMonth, remove } from "@/infra/database";
+import { get, getByMonth, remove, store } from "@/infra/database";
 import { confirmAction } from "@/constants/dialogs";
 import { minutesToHHMM } from "@/constants/duration";
 import { router } from "expo-router";
@@ -66,7 +67,9 @@ export function HistoryCard({
   const faixa = ritual ? null : spanLabel(obj, tableName);
 
   function handleEdit() {
-    router.navigate(`/(metrics)/${tableName}?id=${id}`);
+    // `push`, e não `navigate` (#396): a edição é uma tela por cima, e salvar
+    // volta pra de baixo, que é o histórico de onde a pessoa veio.
+    router.push(`/(metrics)/${tableName}?id=${id}`);
   }
 
   function handleDelete() {
@@ -327,10 +330,13 @@ export default function MyHistory({ cardStyle, tableName, reload }) {
   const { displayName, unit } = getCategoryInfo(tableName);
   const [data, setData] = useState({});
   const [tick, setTick] = useState(0);
+  // Assina a tabela: voltar da edição, que agora é outra tela (#396), tem que
+  // mostrar o registro já alterado.
+  const tabela = useTable("records", store);
 
   useEffect(() => {
     setData(get(tableName) ?? {});
-  }, [reload, tick, tableName]);
+  }, [reload, tick, tableName, tabela]);
 
   return (
     <HistoryList

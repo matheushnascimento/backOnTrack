@@ -11,7 +11,7 @@ import {
 } from "@/constants/sleepHygiene";
 import { useSleepHygiene } from "@/infra/useSleepHygiene";
 
-import TimePickerField from "./TimePickerField";
+import TimeFieldRow from "./TimeFieldRow";
 
 // A frente da tela do sono desde o #396: a regra da higiene do sono que se
 // cumpre hoje. Deitar, acordar, duração e qualidade ficam embaixo, opcionais.
@@ -56,15 +56,13 @@ function Configurar({ h }) {
         titulo="Higiene do sono"
         texto="O que forma o hábito é o que você faz antes de deitar. Uma regra por vez, contada a partir do horário em que você quer deitar."
       />
-      <View className="gap-2">
-        <Rotulo>Quero deitar às</Rotulo>
-        <TimePickerField
-          value={alvo}
-          onChangeText={setAlvo}
-          placeholder="23:00"
-          accessibilityLabel="Horário-alvo de deitar"
-        />
-      </View>
+      <TimeFieldRow
+        label="Quero deitar às"
+        value={alvo}
+        onChange={setAlvo}
+        placeholder="23:00"
+        accessibilityLabel="Horário-alvo de deitar"
+      />
       <View className="gap-2">
         <Rotulo>Escolha por onde começar</Rotulo>
         {REGRAS.map((r) => (
@@ -163,9 +161,10 @@ function Rodape({ h }) {
       ) : null}
       {editando ? (
         <View className="gap-2">
-          <TimePickerField
+          <TimeFieldRow
+            label="Deitar às"
             value={alvo}
-            onChangeText={setAlvo}
+            onChange={setAlvo}
             placeholder="23:00"
             accessibilityLabel="Horário-alvo de deitar"
           />

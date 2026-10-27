@@ -13,7 +13,7 @@ import { useThemeTokens } from "@/constants/themeTokens";
 import { ritualDe, textoDaRegra } from "@/constants/sleepHygiene";
 
 import SleepHygieneCard from "./SleepHygieneCard";
-import TimePickerField from "./TimePickerField";
+import TimeFieldRow from "./TimeFieldRow";
 import TimeSpanFields, { useSpanEdits, useTimeSpan } from "./TimeSpanFields";
 
 // UI bespoke da tela de sono (M5-B fatia 2b, mockup 2a·3 do Claude Design).
@@ -262,26 +262,27 @@ function RitualEdit({ recordId, ritual, onAfterSave }) {
 
   return (
     <View className="gap-4">
-      <Text
-        className="text-base text-ink dark:text-ink-dark"
-        style={{ fontFamily: "Inter_600SemiBold" }}
-      >
-        {textoDaRegra(ritual.regra, "")}
-      </Text>
-      <View className="gap-2">
+      <View className="gap-1">
         <Text
           className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
           style={{ fontFamily: "JetBrainsMono_500Medium" }}
         >
-          Cumpriu às
+          Regra cumprida
         </Text>
-        <TimePickerField
-          value={at}
-          onChangeText={setAt}
-          placeholder="22:00"
-          accessibilityLabel="Horário em que cumpriu a regra"
-        />
+        <Text
+          className="text-base text-ink dark:text-ink-dark"
+          style={{ fontFamily: "Inter_600SemiBold" }}
+        >
+          {textoDaRegra(ritual.regra, "")}
+        </Text>
       </View>
+      <TimeFieldRow
+        label="Cumpriu às"
+        value={at}
+        onChange={setAt}
+        placeholder="22:00"
+        accessibilityLabel="Horário em que cumpriu a regra"
+      />
       <PrimaryButton
         label="Salvar alterações"
         onPress={handleSave}
