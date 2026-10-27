@@ -244,3 +244,164 @@ describe("deriveJourney", () => {
     expect(j.habits.sleep.signals.regularity.n).toBe(28);
   });
 });
+
+// Higiene do sono (#396, fatia 3). Configurada a escada, o sono passa o portão
+// pela primeira regra formada, e ninguém cai de nível por configurar.
+describe("deriveJourney com a escada da higiene do sono", () => {
+  /** Ritual cumprido N dias atrás, às 22:00, com o horário no `details`. */
+  function ritual(regra, diasAtras) {
+    const d = new Date(AGORA - diasAtras * DIA);
+    d.setHours(22, 0, 0, 0);
+    return {
+      type: "sleep",
+      quantity: 0,
+      createdAt: d.getTime(),
+      details: JSON.stringify({ regra, at: "22:00" }),
+    };
+  }
+
+  const aguaCheia = serieCheia("water", 2000);
+  const sonoCheio = serieCheia("sleep", 480, 28, 23);
+
+  it("sem escada configurada, nada muda: o sono segue pelas noites", () => {
+    const sem = deriveJourney({ records: [...sonoCheio], now: AGORA });
+    const comAlvoSoh = deriveJourney({
+      records: [...sonoCheio],
+      now: AGORA,
+      hygiene: { alvo: "23:00", degraus: [] },
+    });
+    expect(comAlvoSoh.level).toBe(sem.level);
+    expect(comAlvoSoh.habits.sleep.escada).toBeUndefined();
+  });
+
+  it("quem passava pelo sono antigo não cai ao configurar", () => {
+    // Configurou hoje e ainda não cumpriu nenhuma regra.
+    const j = deriveJourney({
+      records: [...sonoCheio, ...aguaCheia],
+      now: AGORA,
+      previousLevel: 3,
+      hygiene: {
+        alvo: "23:00",
+        degraus: [{ regra: "1", startedAt: AGORA, conqueredAt: null }],
+      },
+    });
+    expect(j.habits.sleep.gated).toBe(true);
+    expect(j.regressed).toBe(false);
+  });
+
+  it("e não cai depois, por parar de registrar o deitar", () => {
+    // Configurou há 40 dias com o sono antigo em dia. Desde então, nada de
+    // deitar: o portão antigo é lido no instante da configuração.
+    const antigas = serieCheia("sleep", 480, 28, 23).map((r) => ({
+      ...r,
+      createdAt: r.createdAt - 40 * DIA,
+    }));
+    const j = deriveJourney({
+      records: antigas,
+      now: AGORA,
+      hygiene: {
+        alvo: "23:00",
+        degraus: [
+          { regra: "1", startedAt: AGORA - 40 * DIA, conqueredAt: null },
+        ],
+      },
+    });
+    expect(j.habits.sleep.gated).toBe(true);
+  });
+
+  it("quem começa do zero passa o nível 1 com a primeira regra formada", () => {
+    const degrau = {
+      regra: "1",
+      startedAt: AGORA - 20 * DIA,
+      conqueredAt: null,
+    };
+    const antes = deriveJourney({
+      records: [],
+      now: AGORA,
+      hygiene: { alvo: "23:00", degraus: [degrau] },
+    });
+    expect(antes.level).toBe(1);
+    expect(antes.focus).toBe("sleep");
+
+    const depois = deriveJourney({
+      records: [],
+      now: AGORA,
+      hygiene: {
+        alvo: "23:00",
+        degraus: [{ ...degrau, conqueredAt: AGORA - DIA }],
+      },
+    });
+    expect(depois.habits.sleep.gated).toBe(true);
+    expect(depois.level).toBe(2);
+    expect(depois.focus).toBe("water");
+  });
+
+  it("a regra ativa consistente já conta, antes de a conquista ser gravada", () => {
+    const rituais = Array.from({ length: 14 }, (_, i) => ritual("1", i));
+    const j = deriveJourney({
+      records: rituais,
+      now: AGORA,
+      hygiene: {
+        alvo: "23:00",
+        degraus: [
+          { regra: "1", startedAt: AGORA - 20 * DIA, conqueredAt: null },
+        ],
+      },
+    });
+    expect(j.habits.sleep.escada.pronta).toBe(true);
+    expect(j.level).toBe(2);
+  });
+
+  it("as regras seguintes não derrubam o nível", () => {
+    // A 1 formada, a 10 ativa e nunca cumprida.
+    const j = deriveJourney({
+      records: aguaCheia,
+      now: AGORA,
+      hygiene: {
+        alvo: "23:00",
+        degraus: [
+          {
+            regra: "1",
+            startedAt: AGORA - 40 * DIA,
+            conqueredAt: AGORA - 20 * DIA,
+          },
+          { regra: "10", startedAt: AGORA - 20 * DIA, conqueredAt: null },
+        ],
+      },
+    });
+    expect(j.habits.sleep.gated).toBe(true);
+    expect(j.habits.sleep.broken).toBe(false);
+    expect(j.habits.sleep.status).toBe(BUILDING);
+    expect(j.level).toBeGreaterThanOrEqual(2);
+  });
+
+  it("as cinco formadas: o sono fica estável", () => {
+    const degraus = ["10", "3", "2", "1", "0"].map((regra, i) => ({
+      regra,
+      startedAt: AGORA - (100 - i) * DIA,
+      conqueredAt: AGORA - (90 - i) * DIA,
+    }));
+    const j = deriveJourney({
+      records: [],
+      now: AGORA,
+      hygiene: { alvo: "23:00", degraus },
+    });
+    expect(j.habits.sleep.status).toBe(GRADUATED);
+  });
+
+  it("os sinais do sono passam a ser os da regra ativa", () => {
+    const rituais = Array.from({ length: 5 }, (_, i) => ritual("1", i));
+    const j = deriveJourney({
+      records: rituais,
+      now: AGORA,
+      hygiene: {
+        alvo: "23:00",
+        degraus: [
+          { regra: "1", startedAt: AGORA - 5 * DIA, conqueredAt: null },
+        ],
+      },
+    });
+    expect(j.habits.sleep.signals.consistency.hits).toBe(5);
+    expect(j.habits.sleep.signals.consistency.days).toBe(14);
+  });
+});

@@ -4,6 +4,7 @@ import { createMergeableStore, createStore } from "tinybase";
 import { DEFAULT_GOALS } from "@/constants/goals";
 import { LOCAL_PREFS_SCHEMA } from "@/constants/localPrefs";
 import { maisRecentesPrimeiro } from "@/constants/recordOrder";
+import { degrausDaTabela } from "@/constants/sleepHygiene";
 import { withTimeOfDay } from "@/constants/recordTime";
 
 const TABLE = "records";
@@ -509,6 +510,14 @@ export function acknowledgeJourneyLevel(level) {
 /** O horário-alvo de deitar, "HH:MM", ou vazio. */
 export function getHygieneTarget() {
   return String(store.getValue("hygieneTarget") ?? "");
+}
+
+/** A escada como a jornada recebe: `{alvo, degraus}`. */
+export function getHygiene() {
+  return {
+    alvo: getHygieneTarget(),
+    degraus: degrausDaTabela(store.getTable(HYGIENE_STEPS)),
+  };
 }
 
 export function setHygieneTarget(hhmm) {

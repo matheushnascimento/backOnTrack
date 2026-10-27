@@ -30,6 +30,7 @@ import {
   getGoals,
   acknowledgeJourneyLevel,
   getGrantedHabits,
+  getHygiene,
   grantHabit,
   raiseJourneyPeak,
   setJourneyDemoLevel,
@@ -180,6 +181,7 @@ export default function Ajustes() {
       records: lista,
       goals,
       granted: getGrantedHabits(),
+      hygiene: getHygiene(),
     });
     return {
       signals,
@@ -794,6 +796,8 @@ function SignalsBlock({ goals }) {
   const demo = Number(useValue("journeyDemoLevel", localStore) ?? -1);
   const emDemo = demo >= 0;
   const retomadaDemo = useValue("retomadaDemo", localStore);
+  const hygieneTarget = useValue("hygieneTarget", store);
+  const hygieneSteps = useTable("hygieneSteps", store);
 
   const jornada = useMemo(
     () =>
@@ -801,8 +805,11 @@ function SignalsBlock({ goals }) {
         records: Object.values(records ?? {}),
         goals,
         previousLevel: Number(peak) || null,
+        hygiene: getHygiene(),
       }),
-    [records, goals, peak],
+    // `hygieneSteps` e `hygieneTarget` são a assinatura do `getHygiene`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [records, goals, peak, hygieneSteps, hygieneTarget],
   );
 
   // Escrita no store vive em efeito, nunca em render.
@@ -813,12 +820,11 @@ function SignalsBlock({ goals }) {
   const linhas = useMemo(() => {
     const lista = Object.values(records ?? {});
     return JOURNEY_ORDER.map((metric) => {
-      const s = habitSignals(
-        lista,
-        metric,
-        goalFor(goals, metric),
-        JANELA_SINAIS,
-      );
+      // Com a escada da higiene do sono configurada (#396), o sono se mede
+      // pela regra ativa, na janela da escada, e não pela presença.
+      const s = jornada.habits[metric]?.escada
+        ? jornada.habits[metric].signals
+        : habitSignals(lista, metric, goalFor(goals, metric), JANELA_SINAIS);
       const consist = `${Math.round(s.consistency.rate * 100)}%`;
       const sd = s.regularity.sdMinutes;
       // n<2 não produz desvio: dizer "0 min" seria afirmar regularidade

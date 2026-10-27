@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { useTable, useValue } from "tinybase/ui-react";
 
 import { deriveJourney } from "@/constants/journey";
-import { getGoals, getGrantedHabits, store } from "./database";
+import { getGoals, getGrantedHabits, getHygiene, store } from "./database";
 
 // Origem única do estado da jornada (#297).
 //
@@ -34,9 +34,11 @@ export function useJourney(opts = {}) {
   const records = useTable("records", store);
   const goalsTable = useTable("goals", store);
   const peak = useValue("journeyPeakLevel", store);
-  // Estes dois não são lidos no corpo do memo, mas SÃO a assinatura: os
-  // getters leem o store direto, e sem eles nas deps o estado congelaria.
+  // Estes não são lidos no corpo do memo, mas SÃO a assinatura: os getters
+  // leem o store direto, e sem eles nas deps o estado congelaria.
   const grantedValue = useValue("journeyGranted", store);
+  const hygieneTarget = useValue("hygieneTarget", store);
+  const hygieneSteps = useTable("hygieneSteps", store);
 
   return useMemo(
     () =>
@@ -44,12 +46,21 @@ export function useJourney(opts = {}) {
         records: Object.values(records ?? {}),
         goals: getGoals(),
         granted: getGrantedHabits(),
+        hygiene: getHygiene(),
         previousLevel:
           opts.previousLevel !== undefined
             ? opts.previousLevel
             : Number(peak) || null,
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [records, goalsTable, peak, grantedValue, opts.previousLevel],
+    [
+      records,
+      goalsTable,
+      peak,
+      grantedValue,
+      hygieneTarget,
+      hygieneSteps,
+      opts.previousLevel,
+    ],
   );
 }
