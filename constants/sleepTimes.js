@@ -68,8 +68,16 @@ export function wakeOf(registro) {
   return campoDoRegistro(registro, "wake");
 }
 
-/** Campo do topo do registro hidratado, ou de dentro do `details` cru. */
-function campoDoRegistro(registro, campo) {
+/**
+ * Campo do topo do registro hidratado, ou de dentro do `details` cru.
+ *
+ * É o que o `bedOf` e o `wakeOf` fazem, pra qualquer campo. A higiene do sono
+ * (#396) lê a regra e o horário do ritual por aqui.
+ *
+ * @param {object|null|undefined} registro
+ * @param {string} campo
+ */
+export function campoDoRegistro(registro, campo) {
   if (registro?.[campo] != null) return registro[campo];
   const details = registro?.details;
   if (typeof details !== "string" || details === "") return undefined;

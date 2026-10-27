@@ -28,6 +28,7 @@ import { useThemeTokens } from "@/constants/themeTokens";
 import { CATEGORY_MAP } from "@/components/categoryUtils";
 import { minutesToHHMM } from "@/constants/duration";
 import { latestBed } from "@/constants/sleepTimes";
+import { ritualDe } from "@/constants/sleepHygiene";
 import { getGreeting } from "@/constants/greeting";
 import {
   headerCopy,
@@ -221,8 +222,11 @@ export default function Home() {
       // foi registrado. Remendo de fatia: centrar a Home no comportamento
       // pertence à fatia das ocasiões.
       const semDuracao = type === "sleep" && total === 0;
+      // Sem deitar, sobra o ritual da higiene do sono (#396), que também
+      // não tem duração.
       const valor = semDuracao
-        ? latestBed(registros)
+        ? (latestBed(registros) ??
+          (registros.some((r) => ritualDe(r)) ? "regra cumprida" : null))
         : formatValue(unit, total);
       return [
         type,

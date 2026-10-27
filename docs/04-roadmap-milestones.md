@@ -162,6 +162,7 @@ A referência declarada é o Fabulous, com uma recusa explícita: a progressão 
 **Reajuste de rota de 26/10:**
 
 - ⬜ **O sono vira higiene do sono** (#396). O modelo já gateava pelo horário de deitar, e não pela duração; o produto não acompanhou, e seguia mostrando a duração e cobrando 8 horas. O hábito do nível 1 passa a ser o método **10-3-2-1-0** em escada: a pessoa define o horário-alvo de deitar, escolhe por qual regra começa, e a próxima entra quando a anterior estiver consistente. Regularidade pelo horário do ritual; deitar, acordar, duração e qualidade ficam como informação opcional; as noites já registradas contam durante a transição, pra ninguém cair de nível por mudança do modelo. Revisão no §4.3 do modelo
+  - 🟡 **Modelo e tela** (fatias 1 e 2, PR a abrir). A escada existe como dado (horário-alvo, um degrau por regra, conquista que não se perde) e a tela do sono abre com a regra de hoje e "cumpri"; a noite ficou embaixo, opcional. Limiar próprio da escada, mais leve que o do portão (80% em 14 noites). Ainda **não mexe na jornada**: o nível 1 segue contando as noites com deitar até a fatia 3
 
 **Dívida reconhecida, aberta:**
 

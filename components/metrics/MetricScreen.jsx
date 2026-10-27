@@ -14,17 +14,18 @@ import MetricRegisterHeaderRaw from "@/components/MetricRegisterHeader";
 
 import { getCategoryInfo } from "@/components/categoryUtils";
 import getDate from "@/constants/getDate";
+import { goBack } from "@/constants/navigation";
 import { getMetricConfig } from "./registry";
 
 const MyView = /** @type {any} */ (MyViewRaw);
 const Card = /** @type {any} */ (CardRaw);
 const MetricRegisterHeader = /** @type {any} */ (MetricRegisterHeaderRaw);
 
-// Nav label mono. Sono ganha "NOITE PASSADA" na mockup (contexto do registro
-// é a noite anterior); outras métricas usam "HOJE · <data>".
+// Nav label mono, "HOJE · <data>". O sono tinha "NOITE PASSADA", da mockup,
+// enquanto a tela era só a noite anterior. Desde o #396 ela abre com a regra
+// de hoje.
 /** @param {string} metric @param {string} dateISO */
 function navLabelFor(metric, dateISO) {
-  if (metric === "sleep") return "NOITE PASSADA";
   const d = new Date(dateISO);
   const day = d.getDate();
   const month = d
@@ -37,10 +38,11 @@ function navLabelFor(metric, dateISO) {
  * @param {{ metric: string, recordId?: string }} props
  */
 export default function MetricScreen({ metric, recordId }) {
-  const { displayName, subtitle } = getCategoryInfo(metric);
+  const { displayName, screenTitle, subtitle } = getCategoryInfo(metric);
   const config = getMetricConfig(metric);
   // Título capitalizado (design v2 mostra "Água" e não "água").
-  const title = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+  const nome = screenTitle || displayName;
+  const title = nome.charAt(0).toUpperCase() + nome.slice(1);
 
   const [date] = useState(getDate());
   const [reloadKey, setReloadKey] = useState(0);
@@ -48,7 +50,16 @@ export default function MetricScreen({ metric, recordId }) {
 
   const { History, renderCustom, cardClass } = config;
 
+  // Edição é uma tela só do registro (#396): sem o histórico embaixo, que
+  // repetia os cartões com "Editar" e deixava dúvida sobre o que estava sendo
+  // alterado. Salvar volta pra onde a pessoa estava.
+  const editando = Boolean(recordId);
+
   function afterSave() {
+    if (editando) {
+      goBack(`/(metrics)/${metric}`);
+      return;
+    }
     setVisible(true);
     setReloadKey((prev) => prev + 1);
   }
@@ -77,8 +88,8 @@ export default function MetricScreen({ metric, recordId }) {
         <MetricRegisterHeader
           metric={metric}
           title={title}
-          subtitle={subtitle}
-          label={navLabelFor(metric, date.ISOdate)}
+          subtitle={editando ? "Alterando um registro." : subtitle}
+          label={editando ? "EDITANDO" : navLabelFor(metric, date.ISOdate)}
         />
 
         {renderCustom && (
@@ -87,7 +98,7 @@ export default function MetricScreen({ metric, recordId }) {
           </Card>
         )}
 
-        <History tableName={metric} reload={reloadKey} />
+        {editando ? null : <History tableName={metric} reload={reloadKey} />}
       </ScrollView>
     </MyView>
   );

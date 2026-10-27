@@ -3,17 +3,19 @@
 import { useEffect, useState } from "react";
 
 import { Pressable, Text, View } from "react-native";
+import { useTable } from "tinybase/ui-react";
 
 import MyView from "./MyView";
 import { getCategoryInfo } from "./categoryUtils";
 
-import { get, getByMonth, remove } from "@/infra/database";
+import { get, getByMonth, remove, store } from "@/infra/database";
 import { confirmAction } from "@/constants/dialogs";
 import { minutesToHHMM } from "@/constants/duration";
 import { router } from "expo-router";
 import { maisRecentesPrimeiro } from "@/constants/recordOrder";
 import { spanLabel } from "@/constants/timeSpan";
 import { lerRegistro, rotuloDoTipo } from "@/constants/selfcare";
+import { ritualDe, textoDaRegra } from "@/constants/sleepHygiene";
 import { useChaves } from "@/infra/useProtection";
 //#endregion
 
@@ -59,10 +61,15 @@ export function HistoryCard({
   const value = formatQuantity(obj, unit);
   // Autocuidado (#374): tipo e nota vêm cifrados, e o cartão decifra.
   const selfcare = tableName === "selfcare";
-  const faixa = spanLabel(obj, tableName);
+  // Ritual da higiene do sono (#396): não tem duração, e formatar o zero
+  // daria "0:00 min", que lê como uma noite sem sono.
+  const ritual = tableName === "sleep" ? ritualDe(obj) : null;
+  const faixa = ritual ? null : spanLabel(obj, tableName);
 
   function handleEdit() {
-    router.navigate(`/(metrics)/${tableName}?id=${id}`);
+    // `push`, e não `navigate` (#396): a edição é uma tela por cima, e salvar
+    // volta pra de baixo, que é o histórico de onde a pessoa veio.
+    router.push(`/(metrics)/${tableName}?id=${id}`);
   }
 
   function handleDelete() {
@@ -131,6 +138,14 @@ export function HistoryCard({
           "1 registro" não diria nada. */}
       {selfcare ? (
         <SelfcareDetalhe obj={obj} />
+      ) : ritual ? (
+        <Text
+          className="text-sm text-ink dark:text-ink-dark"
+          style={{ fontFamily: "Inter_400Regular" }}
+        >
+          {textoDaRegra(ritual.regra, "")}
+          {ritual.at ? `, cumprida às ${ritual.at}` : ""}
+        </Text>
       ) : value ? (
         <View className="flex-row items-baseline gap-1">
           <Text
@@ -315,10 +330,13 @@ export default function MyHistory({ cardStyle, tableName, reload }) {
   const { displayName, unit } = getCategoryInfo(tableName);
   const [data, setData] = useState({});
   const [tick, setTick] = useState(0);
+  // Assina a tabela: voltar da edição, que agora é outra tela (#396), tem que
+  // mostrar o registro já alterado.
+  const tabela = useTable("records", store);
 
   useEffect(() => {
     setData(get(tableName) ?? {});
-  }, [reload, tick, tableName]);
+  }, [reload, tick, tableName, tabela]);
 
   return (
     <HistoryList

@@ -7,8 +7,11 @@ export const CATEGORY_MAP = {
   },
   sleep: {
     displayName: "sono",
+    // A tela fala do hábito, e não do desfecho (#396). O resto do app segue
+    // chamando a métrica de sono.
+    screenTitle: "higiene do sono",
     unit: "min",
-    subtitle: "Quando dormiu e acordou?",
+    subtitle: "A regra de hoje e, se quiser, a noite.",
   },
   exercise: {
     displayName: "exercício",
@@ -37,6 +40,7 @@ export const CATEGORY_MAP = {
 export function getCategoryInfo(key) {
   return {
     displayName: CATEGORY_MAP[key]?.displayName ?? key,
+    screenTitle: CATEGORY_MAP[key]?.screenTitle ?? null,
     exists: !!CATEGORY_MAP[key],
     key: CATEGORY_MAP[key]?.key ?? key,
     unit: CATEGORY_MAP[key]?.unit ?? null,

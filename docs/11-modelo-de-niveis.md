@@ -154,6 +154,13 @@ O §4 e o §4.2 já separavam o comportamento (deitar) do desfecho (duração), 
 
 **Honestidade sobre a evidência.** O 10-3-2-1-0 é uma regra popular, e não um protocolo testado como conjunto. Cada parte tem apoio isolado: cafeína à tarde, álcool e refeição tarde, luz de tela e soneca atrapalham o sono. Higiene do sono como pacote tem efeito pequeno quando aplicada sozinha, e nos estudos de terapia pra insônia costuma ser o grupo de controle; o componente com mais apoio é o horário regular. A escada é o jeito de usar o método sem prometer mais do que ele entrega.
 
+**Decisões de 27/10/2026**, que estavam em aberto:
+
+- **A primeira regra consistente passa o portão do nível 1** e libera a água. As regras seguintes sobem em paralelo e não derrubam nível. Assim a pessoa forma no máximo dois hábitos por vez, que é o teto do §3.
+- **A escada tem limiar próprio, mais leve que o do portão:** 80% em 14 noites, horário estável e nenhuma falta dupla. Com a barra do portão, cada regra levaria umas quatro semanas e as cinco quase meio ano. É provisório como os outros, e mora em `LIMIAR_DA_ESCADA` (`constants/sleepHygiene.js`).
+- **A regra 0 (soneca) é marcada à noite, sobre o dia que passou**, junto das outras. Continua sendo uma ocasião e um momento de registro por noite.
+- **A noite de um ritual vai até 6 horas depois do horário-alvo.** Quem deita às 23h e larga as telas às 00h10 ainda está na mesma noite, e a regra 10 marcada de tarde é da noite daquele dia.
+
 Implementação na #396.
 
 ---
