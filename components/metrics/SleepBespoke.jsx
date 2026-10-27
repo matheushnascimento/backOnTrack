@@ -10,6 +10,10 @@ import { formatGoal } from "@/constants/goals";
 import { SPAN_NAMES, horaAgora, spanRecord } from "@/constants/timeSpan";
 import { useThemeTokens } from "@/constants/themeTokens";
 
+import { ritualDe, textoDaRegra } from "@/constants/sleepHygiene";
+
+import SleepHygieneCard from "./SleepHygieneCard";
+import TimePickerField from "./TimePickerField";
 import TimeSpanFields, { useSpanEdits, useTimeSpan } from "./TimeSpanFields";
 
 // UI bespoke da tela de sono (M5-B fatia 2b, mockup 2a·3 do Claude Design).
@@ -54,7 +58,7 @@ const QUALITY = [
  */
 export default function SleepBespoke({ onAfterAdd, recordId }) {
   if (recordId)
-    return <SleepEdit recordId={recordId} onAfterSave={onAfterAdd} />;
+    return <SleepOrRitualEdit recordId={recordId} onAfterSave={onAfterAdd} />;
   return <SleepCreate onAfterAdd={onAfterAdd} />;
 }
 
@@ -108,6 +112,17 @@ function SleepCreate({ onAfterAdd }) {
 
   return (
     <View className="gap-4">
+      {/* Higiene do sono (#396): a regra de hoje vem primeiro, porque é ela o
+          hábito. A noite fica embaixo, como informação opcional (§4.3). */}
+      <SleepHygieneCard />
+
+      <Text
+        className="mt-2 text-xs uppercase tracking-wider text-label dark:text-label-dark"
+        style={{ fontFamily: "JetBrainsMono_500Medium" }}
+      >
+        A noite (opcional)
+      </Text>
+
       {/* "deitou", e não "dormiu": dormir é desfecho, deitar é o
           comportamento que o §4.2 nomeia.
 
@@ -143,10 +158,10 @@ function SleepCreate({ onAfterAdd }) {
 
       {/* registrar */}
       <PrimaryButton
-        label="Registrar"
+        label="Registrar a noite"
         onPress={handleSave}
         disabled={!canSave}
-        accessibilityLabel="Registrar sono"
+        accessibilityLabel="Registrar a noite"
       />
     </View>
   );
@@ -199,6 +214,82 @@ function camposDaNoite({
       onChange: marcar("duration", setDuration),
     },
   ];
+}
+
+/**
+ * O registro aberto pelo histórico é um ritual da higiene do sono (#396) ou
+ * uma noite? Cada um tem o seu formulário.
+ *
+ * @param {{ recordId: string, onAfterSave?: () => void }} props
+ */
+function SleepOrRitualEdit({ recordId, onAfterSave }) {
+  const [ritual, setRitual] = useState(/** @type {any} */ (undefined));
+  useEffect(() => {
+    setRitual(ritualDe(getById(recordId)));
+  }, [recordId]);
+  if (ritual === undefined) return null;
+  return ritual ? (
+    <RitualEdit recordId={recordId} ritual={ritual} onAfterSave={onAfterSave} />
+  ) : (
+    <SleepEdit recordId={recordId} onAfterSave={onAfterSave} />
+  );
+}
+
+/**
+ * Edição de um ritual: só o horário em que a regra foi cumprida.
+ *
+ * Serve pra quem esqueceu de tocar "cumpri" na hora e marcou depois: corrigir
+ * o horário põe o ritual na noite certa (ver `instanteDoRitual`).
+ *
+ * @param {{ recordId: string, ritual: {regra: string, at: string|null}, onAfterSave?: () => void }} props
+ */
+function RitualEdit({ recordId, ritual, onAfterSave }) {
+  const [at, setAt] = useState(ritual.at ?? "");
+  const canSave = parseHHMM(at) != null;
+
+  function handleSave() {
+    if (!canSave) return;
+    // O `update` reconstrói o details (#328, #332): a regra tem que vir junto.
+    update(recordId, {
+      unit: "regra",
+      quantity: 0,
+      note: "",
+      regra: ritual.regra,
+      at,
+    });
+    onAfterSave?.();
+  }
+
+  return (
+    <View className="gap-4">
+      <Text
+        className="text-base text-ink dark:text-ink-dark"
+        style={{ fontFamily: "Inter_600SemiBold" }}
+      >
+        {textoDaRegra(ritual.regra, "")}
+      </Text>
+      <View className="gap-2">
+        <Text
+          className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
+          style={{ fontFamily: "JetBrainsMono_500Medium" }}
+        >
+          Cumpriu às
+        </Text>
+        <TimePickerField
+          value={at}
+          onChangeText={setAt}
+          placeholder="22:00"
+          accessibilityLabel="Horário em que cumpriu a regra"
+        />
+      </View>
+      <PrimaryButton
+        label="Salvar alterações"
+        onPress={handleSave}
+        disabled={!canSave}
+        accessibilityLabel="Salvar alterações"
+      />
+    </View>
+  );
 }
 
 /**

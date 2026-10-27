@@ -122,7 +122,10 @@ export function summarizeWeek() {
         perMetricRaw.water.daysActive.add(key);
         break;
       case "sleep":
-        perMetricRaw.sleep.minutes.push(q);
+        // Só noite com duração entra na média. Registro só com o deitar
+        // (#349) e o ritual da higiene do sono (#396) têm zero, e puxariam
+        // a média pra baixo como se fossem noites sem sono.
+        if (q > 0) perMetricRaw.sleep.minutes.push(q);
         perMetricRaw.sleep.daysActive.add(key);
         break;
       case "exercise":
@@ -161,9 +164,11 @@ export function summarizeWeek() {
     sleep: {
       label: "Sono",
       stat:
-        perMetricRaw.sleep.minutes.length === 0
-          ? "sem registros"
-          : `média ${formatMinutes(avg(perMetricRaw.sleep.minutes))}`,
+        perMetricRaw.sleep.minutes.length > 0
+          ? `média ${formatMinutes(avg(perMetricRaw.sleep.minutes))}`
+          : perMetricRaw.sleep.daysActive.size > 0
+            ? `${perMetricRaw.sleep.daysActive.size}/7 dias`
+            : "sem registros",
     },
     exercise: {
       label: "Exercício",

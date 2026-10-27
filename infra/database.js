@@ -10,6 +10,7 @@ const TABLE = "records";
 const TESTERS = "testers";
 const GOALS = "goals";
 const E2E_KEYS = "e2eKeys";
+const HYGIENE_STEPS = "hygieneSteps";
 
 // MergeableStore em vez de Store puro: pré-requisito de qualquer sync (M6,
 // ADR-009). Carrega metadata de CRDT pra merge determinístico entre devices.
@@ -50,6 +51,14 @@ export const store = createMergeableStore()
     [E2E_KEYS]: {
       bundle: { type: "string" },
       createdAt: { type: "number" },
+    },
+    // Degraus da escada da higiene do sono (#396). Uma linha por regra, com a
+    // regra ("10", "3", "2", "1", "0") como id. Linha e não valor único: dois
+    // aparelhos mexendo ao mesmo tempo juntam célula por célula. Conquista só
+    // se escreve, nunca se apaga. Ver `constants/sleepHygiene.js`.
+    [HYGIENE_STEPS]: {
+      startedAt: { type: "number" },
+      conqueredAt: { type: "number" },
     },
   })
   .setValuesSchema({
@@ -95,6 +104,9 @@ export const store = createMergeableStore()
     // 24 dias". Some quando o hábito deixa de ser estável, pra recomeçar a
     // contagem se ele for reconquistado.
     journeyGraduatedAt: { type: "string", default: "" },
+    // Horário-alvo de deitar da higiene do sono (#396), "HH:MM". É dele que
+    // saem os horários das cinco regras. Vazio = método não configurado.
+    hygieneTarget: { type: "string", default: "" },
   });
 
 // Preferências do APARELHO (lembretes, prévias de dev). Store comum, e não
@@ -490,6 +502,33 @@ export function syncGraduatedAt(estaveis, agora = Date.now()) {
 export function acknowledgeJourneyLevel(level) {
   if (!Number.isFinite(level)) return;
   store.setValue("journeyAckLevel", level);
+}
+
+// --- Higiene do sono (#396) ---
+
+/** O horário-alvo de deitar, "HH:MM", ou vazio. */
+export function getHygieneTarget() {
+  return String(store.getValue("hygieneTarget") ?? "");
+}
+
+export function setHygieneTarget(hhmm) {
+  store.setValue("hygieneTarget", hhmm ?? "");
+}
+
+/**
+ * Começa uma regra da escada. Quem confere se pode (uma por vez, regra ainda
+ * não iniciada) é o `podeComecar`; aqui só não se reescreve degrau existente.
+ */
+export function startHygieneRule(regra, now = Date.now()) {
+  if (store.hasRow(HYGIENE_STEPS, regra)) return;
+  store.setRow(HYGIENE_STEPS, regra, { startedAt: now });
+}
+
+/** Marca a regra como conquistada. Idempotente: a primeira data fica. */
+export function conquerHygieneRule(regra, now = Date.now()) {
+  if (!store.hasRow(HYGIENE_STEPS, regra)) return;
+  if (store.getCell(HYGIENE_STEPS, regra, "conqueredAt") > 0) return;
+  store.setCell(HYGIENE_STEPS, regra, "conqueredAt", now);
 }
 
 // --- Testers (tela de admin, Track A do M3-5) ---

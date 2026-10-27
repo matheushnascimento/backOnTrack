@@ -14,6 +14,7 @@ import { router } from "expo-router";
 import { maisRecentesPrimeiro } from "@/constants/recordOrder";
 import { spanLabel } from "@/constants/timeSpan";
 import { lerRegistro, rotuloDoTipo } from "@/constants/selfcare";
+import { ritualDe, textoDaRegra } from "@/constants/sleepHygiene";
 import { useChaves } from "@/infra/useProtection";
 //#endregion
 
@@ -59,7 +60,10 @@ export function HistoryCard({
   const value = formatQuantity(obj, unit);
   // Autocuidado (#374): tipo e nota vêm cifrados, e o cartão decifra.
   const selfcare = tableName === "selfcare";
-  const faixa = spanLabel(obj, tableName);
+  // Ritual da higiene do sono (#396): não tem duração, e formatar o zero
+  // daria "0:00 min", que lê como uma noite sem sono.
+  const ritual = tableName === "sleep" ? ritualDe(obj) : null;
+  const faixa = ritual ? null : spanLabel(obj, tableName);
 
   function handleEdit() {
     router.navigate(`/(metrics)/${tableName}?id=${id}`);
@@ -131,6 +135,14 @@ export function HistoryCard({
           "1 registro" não diria nada. */}
       {selfcare ? (
         <SelfcareDetalhe obj={obj} />
+      ) : ritual ? (
+        <Text
+          className="text-sm text-ink dark:text-ink-dark"
+          style={{ fontFamily: "Inter_400Regular" }}
+        >
+          {textoDaRegra(ritual.regra, "")}
+          {ritual.at ? `, cumprida às ${ritual.at}` : ""}
+        </Text>
       ) : value ? (
         <View className="flex-row items-baseline gap-1">
           <Text

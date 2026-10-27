@@ -155,10 +155,22 @@ export function regularity(records, metric, days, now = Date.now()) {
   // regularidade volta a "sem amostra suficiente" até acumular de novo. Dizer
   // "ainda não tenho a medida certa" é melhor que responder com a errada.
   const base = comEvento.length > 0 ? comEvento : naJanela;
-  const angulos = base.map((r) => {
-    const min = minutoDoEvento(r) ?? minutoDoDia(Number(r.createdAt));
-    return (2 * Math.PI * min) / 1440;
-  });
+  return dispersaoCircular(
+    base.map((r) => minutoDoEvento(r) ?? minutoDoDia(Number(r.createdAt))),
+  );
+}
+
+/**
+ * Concentração de uma lista de horários no relógio de 24h.
+ *
+ * A estatística circular que a `regularity` explica, separada pra servir a
+ * quem tem horário de outra fonte, como o ritual da higiene do sono (#396).
+ *
+ * @param {number[]} minutos Minutos desde a meia-noite.
+ * @returns {{resultant: number, sdMinutes: number|null, n: number}}
+ */
+export function dispersaoCircular(minutos) {
+  const angulos = (minutos ?? []).map((min) => (2 * Math.PI * min) / 1440);
 
   const n = angulos.length;
   if (n < 2) return { resultant: n === 1 ? 1 : 0, sdMinutes: null, n };

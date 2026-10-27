@@ -20,11 +20,11 @@ const MyView = /** @type {any} */ (MyViewRaw);
 const Card = /** @type {any} */ (CardRaw);
 const MetricRegisterHeader = /** @type {any} */ (MetricRegisterHeaderRaw);
 
-// Nav label mono. Sono ganha "NOITE PASSADA" na mockup (contexto do registro
-// é a noite anterior); outras métricas usam "HOJE · <data>".
+// Nav label mono, "HOJE · <data>". O sono tinha "NOITE PASSADA", da mockup,
+// enquanto a tela era só a noite anterior. Desde o #396 ela abre com a regra
+// de hoje.
 /** @param {string} metric @param {string} dateISO */
 function navLabelFor(metric, dateISO) {
-  if (metric === "sleep") return "NOITE PASSADA";
   const d = new Date(dateISO);
   const day = d.getDate();
   const month = d
@@ -37,10 +37,11 @@ function navLabelFor(metric, dateISO) {
  * @param {{ metric: string, recordId?: string }} props
  */
 export default function MetricScreen({ metric, recordId }) {
-  const { displayName, subtitle } = getCategoryInfo(metric);
+  const { displayName, screenTitle, subtitle } = getCategoryInfo(metric);
   const config = getMetricConfig(metric);
   // Título capitalizado (design v2 mostra "Água" e não "água").
-  const title = displayName.charAt(0).toUpperCase() + displayName.slice(1);
+  const nome = screenTitle || displayName;
+  const title = nome.charAt(0).toUpperCase() + nome.slice(1);
 
   const [date] = useState(getDate());
   const [reloadKey, setReloadKey] = useState(0);
