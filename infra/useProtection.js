@@ -67,21 +67,21 @@ async function guardar(conta, chaves) {
  *   travar: () => Promise<void>,
  * }}
  */
-export function useProtection() {
-  const tabela = useTable("e2eKeys", store);
-  const bundles = useMemo(() => bundlesDaTabela(tabela), [tabela]);
+/**
+ * As chaves destrancadas neste aparelho, pra quem só precisa LER.
+ *
+ * Mais leve que o `useProtection`: não olha a tabela de pacotes nem o sync.
+ * É o que cada cartão do histórico usa pra decifrar o próprio registro.
+ *
+ * @returns {Record<string, Uint8Array>} `kid` → chave de dados
+ */
+export function useChaves() {
   const { user } = useSession();
-  const { status: sync } = useSyncStatus();
   const conta = user?.id ?? "local";
-
   const estado = useSyncExternalStore(assinar, () => atual);
-  // Memorizado: um `{}` novo a cada render invalidaria as ações abaixo.
-  const chaves = useMemo(
-    () => (estado.conta === conta ? estado.chaves : SEM_CHAVES),
-    [estado, conta],
-  );
 
-  // Carrega o cofre da conta. Trocar de conta troca as chaves.
+  // Carrega o cofre da conta. Trocar de conta troca as chaves. O estado é de
+  // módulo, então só o primeiro componente montado de fato lê o cofre.
   useEffect(() => {
     if (atual.conta === conta) return;
     let vivo = true;
@@ -90,12 +90,27 @@ export function useProtection() {
         if (vivo) publicar({ conta, chaves: lerChaves(json) });
       })
       .catch(() => {
-        if (vivo) publicar({ conta, chaves: {} });
+        if (vivo) publicar({ conta, chaves: SEM_CHAVES });
       });
     return () => {
       vivo = false;
     };
   }, [conta]);
+
+  // Memorizado: um `{}` novo a cada render invalidaria quem depende dele.
+  return useMemo(
+    () => (estado.conta === conta ? estado.chaves : SEM_CHAVES),
+    [estado, conta],
+  );
+}
+
+export function useProtection() {
+  const tabela = useTable("e2eKeys", store);
+  const bundles = useMemo(() => bundlesDaTabela(tabela), [tabela]);
+  const { user } = useSession();
+  const { status: sync } = useSyncStatus();
+  const conta = user?.id ?? "local";
+  const chaves = useChaves();
 
   const criacao = podeCriar({
     bundles,

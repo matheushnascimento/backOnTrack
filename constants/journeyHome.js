@@ -135,6 +135,20 @@ export function splitZones(journey) {
 }
 
 /**
+ * Métricas que existem no app e não estão na jornada (#374).
+ *
+ * Hoje é só o autocuidado. Sem esta lista ele sumiria da Home, porque as
+ * zonas de foco e de resto saem do `JOURNEY_ORDER`, e "nada some" é a regra
+ * central da Home (ver `splitZones`).
+ *
+ * @param {string[]} [metricas] todas as métricas do app, na ordem do mapa
+ * @returns {string[]}
+ */
+export function foraDaJornada(metricas = Object.keys(CATEGORY_MAP)) {
+  return metricas.filter((m) => !JOURNEY_ORDER.includes(m));
+}
+
+/**
  * Legenda de estado da linha compacta. `null` quando não há o que dizer —
  * silêncio é melhor que rótulo redundante.
  */
