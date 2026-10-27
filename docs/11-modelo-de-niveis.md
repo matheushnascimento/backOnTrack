@@ -130,6 +130,34 @@ Base: auto-eficácia e o modelo do Fogg convergem em que hábito pega quando a h
 
 ---
 
+### 4.3 O sono vira higiene do sono (revisão de 26/10/2026)
+
+O §4 e o §4.2 já separavam o comportamento (deitar) do desfecho (duração), e o portão já era o horário de deitar. O produto não acompanhou: a tela continuava pedindo deitar e acordar, a Home mostrava a duração como número principal, e a meta era de 8 horas. O nome da métrica, "sono", era o próprio desfecho.
+
+**O hábito passa a ser a higiene do sono**, pelo método **10-3-2-1-0**, contado a partir de um horário-alvo de deitar que a pessoa define:
+
+| regra | o quê                                 | com deitar às 23h |
+| ----- | ------------------------------------- | ----------------- |
+| 10    | sem cafeína 10h antes                 | até 13h           |
+| 3     | sem comida pesada nem álcool 3h antes | até 20h           |
+| 2     | sem trabalho 2h antes                 | até 21h           |
+| 1     | sem telas 1h antes                    | até 22h           |
+| 0     | nenhuma soneca                        | de manhã          |
+
+**São cinco comportamentos, e o modelo forma um por vez.** Cobrar os cinco toda noite seria a lista de tarefas que o §1.5 recusa, e quebraria a fricção mínima do §4.2. Por isso o método vira uma **escada dentro do sono**: a pessoa escolhe por qual regra começa, e a próxima entra quando a anterior estiver consistente, pelo mesmo sinal que decide os níveis. A ocasião continua sendo **uma por noite**: a regra ativa cumprida.
+
+**Regularidade pelo horário do ritual.** O §5 mede consistência de contexto, e o contexto agora é o momento em que a pessoa cumpre a regra, e não mais o deitar. O horário-alvo dá a referência.
+
+**O desfecho continua, sem destaque.** Deitar, acordar, duração e qualidade seguem registráveis e lidos contra a faixa de suficiência (#341), como o §4.2 já dizia. Só deixam de ocupar a frente da tela.
+
+**Transição.** As noites já registradas com "deitou" contam como ocasiões até a pessoa configurar o método. Mudar o que o nível 1 mede não pode derrubar ninguém de nível: seria rebaixar por algo que a pessoa não fez, que é o que o §4 chama de punição por azar.
+
+**Honestidade sobre a evidência.** O 10-3-2-1-0 é uma regra popular, e não um protocolo testado como conjunto. Cada parte tem apoio isolado: cafeína à tarde, álcool e refeição tarde, luz de tela e soneca atrapalham o sono. Higiene do sono como pacote tem efeito pequeno quando aplicada sozinha, e nos estudos de terapia pra insônia costuma ser o grupo de controle; o componente com mais apoio é o horário regular. A escada é o jeito de usar o método sem prometer mais do que ele entrega.
+
+Implementação na #396.
+
+---
+
 ## 5. Como medir "perto de automático" com o dado que já temos
 
 Lally mediu automaticidade com questionário (SRHI). Não temos isso, e não queremos: questionário é fricção, e o app inteiro é construído em cima de registro rápido.
@@ -223,14 +251,14 @@ Regredir do lvl 1 não teria pra onde ir, e é justamente no primeiro nível que
 
 ### A escada
 
-| nível | hábito                  | portão (comportamento)            |
-| ----- | ----------------------- | --------------------------------- |
-| 0     | registrar algo todo dia | piso, não se perde                |
-| 1     | sono                    | consistência do horário de deitar |
-| 2     | água                    | ingestão no alvo                  |
-| 3     | alimentação             | número de refeições               |
-| 4     | exercício               | frequência semanal                |
-| 5     | estudo                  | frequência semanal                |
+| nível | hábito                  | portão (comportamento)                                 |
+| ----- | ----------------------- | ------------------------------------------------------ |
+| 0     | registrar algo todo dia | piso, não se perde                                     |
+| 1     | higiene do sono (§4.3)  | escada do 10-3-2-1-0: a regra ativa cumprida por noite |
+| 2     | água                    | ingestão no alvo                                       |
+| 3     | alimentação             | número de refeições                                    |
+| 4     | exercício               | frequência semanal                                     |
+| 5     | estudo                  | frequência semanal                                     |
 
 Água em 2 por ser o mais controlável dos restantes, com vitória fácil logo depois do nível difícil. Exercício e estudo por último porque exigem bloco de tempo e agenda, que é o que mais falha.
 

@@ -159,6 +159,10 @@ A referência declarada é o Fabulous, com uma recusa explícita: a progressão 
 
 **Fora de escopo, consciente:** os controles de previsualização de nível/estabilidade existem só em superfície de dev (`isDevSurface()`, ou seja `__DEV__` ou canal `staging`) e **não chegam ao APK dos testers**.
 
+**Reajuste de rota de 26/10:**
+
+- ⬜ **O sono vira higiene do sono** (#396). O modelo já gateava pelo horário de deitar, e não pela duração; o produto não acompanhou, e seguia mostrando a duração e cobrando 8 horas. O hábito do nível 1 passa a ser o método **10-3-2-1-0** em escada: a pessoa define o horário-alvo de deitar, escolhe por qual regra começa, e a próxima entra quando a anterior estiver consistente. Regularidade pelo horário do ritual; deitar, acordar, duração e qualidade ficam como informação opcional; as noites já registradas contam durante a transição, pra ninguém cair de nível por mudança do modelo. Revisão no §4.3 do modelo
+
 **Dívida reconhecida, aberta:**
 
 - 🟡 **Limiares ainda provisórios.** Dois levantamentos feitos, ambos no §12 do modelo. O de **11/09** (108 registros, 38 dias) revelou que em métrica `sum` a consistência mede o quanto foi registrado, e que a regularidade media a hora de abrir o app. Saíram dele a faixa de suficiência do sono (#341) e a regularidade por hora de deitar (#343, #344). O de **18/09** (#357) refez a conta depois do #356, que descobriu que aquela correção nunca chegou ao app: o código lia `bed` no formato hidratado, e os sinais recebem a linha crua do store. Com a medição certa, a dispersão do sono cai de 139min para **27min**, folgadamente dentro do teto de 120, e o que barra o portão passa a ser consistência (0,64 contra 0,80), amostras (5 contra 8) e falhas duplas (4 contra 0). A série de dado correto começa em **18/09**, e a janela de 28 dias só fecha por volta de meados de outubro
