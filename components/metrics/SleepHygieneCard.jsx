@@ -94,7 +94,7 @@ function RegraAtiva({ h }) {
         className="text-sm text-body-secondary dark:text-body-secondary-dark"
         style={{ fontFamily: "Inter_400Regular" }}
       >
-        {noites} de {LIMIAR_DA_ESCADA.window} noites nas últimas duas semanas
+        {noites} das últimas {LIMIAR_DA_ESCADA.window} noites
       </Text>
       {h.cumpridaHoje ? (
         <View className="items-center rounded-2xl border border-border-strong dark:border-border-strong-dark py-4">
@@ -168,42 +168,71 @@ function Rodape({ h }) {
             placeholder="23:00"
             accessibilityLabel="Horário-alvo de deitar"
           />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Salvar horário-alvo"
-            disabled={parseHHMM(alvo) == null}
-            onPress={() => {
-              h.mudarAlvo(alvo);
-              setEditando(false);
-            }}
-            className="self-start rounded-full border border-border-strong dark:border-border-strong-dark px-4 py-2"
-          >
-            <Text
-              className="text-xs text-primary dark:text-primary-dark"
-              style={{ fontFamily: "Inter_600SemiBold" }}
-            >
-              Salvar
-            </Text>
-          </Pressable>
+          <View className="flex-row gap-2">
+            <BotaoPilula
+              rotulo="Salvar"
+              accessibilityLabel="Salvar horário-alvo"
+              desativado={parseHHMM(alvo) == null}
+              onPress={() => {
+                h.mudarAlvo(alvo);
+                setEditando(false);
+              }}
+            />
+            <BotaoPilula
+              rotulo="Cancelar"
+              accessibilityLabel="Cancelar alteração do horário-alvo"
+              onPress={() => setEditando(false)}
+            />
+          </View>
         </View>
       ) : (
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Alterar horário-alvo"
-          onPress={() => {
-            setAlvo(h.alvo);
-            setEditando(true);
-          }}
-        >
+        <View className="flex-row items-center justify-between gap-3">
           <Text
-            className="text-xs text-body-secondary dark:text-body-secondary-dark"
-            style={{ fontFamily: "JetBrainsMono_400Regular" }}
+            className="text-sm text-body-secondary dark:text-body-secondary-dark"
+            style={{ fontFamily: "Inter_400Regular" }}
           >
-            deitar às {h.alvo} · alterar
+            Deitar às{" "}
+            <Text
+              className="text-ink dark:text-ink-dark"
+              style={{ fontFamily: "JetBrainsMono_500Medium" }}
+            >
+              {h.alvo}
+            </Text>
           </Text>
-        </Pressable>
+          <BotaoPilula
+            rotulo="Alterar"
+            accessibilityLabel="Alterar horário-alvo"
+            onPress={() => {
+              setAlvo(h.alvo);
+              setEditando(true);
+            }}
+          />
+        </View>
       )}
     </View>
+  );
+}
+
+// Ação secundária do cartão. Antes era um texto pequeno no fim da linha
+// ("deitar às 23:00 · alterar") e não parecia tocável.
+/** @param {{ rotulo: string, accessibilityLabel: string, desativado?: boolean, onPress: () => void }} props */
+function BotaoPilula({ rotulo, accessibilityLabel, desativado, onPress }) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={accessibilityLabel}
+      accessibilityState={{ disabled: Boolean(desativado) }}
+      disabled={desativado}
+      onPress={onPress}
+      className={`rounded-full border border-border-strong dark:border-border-strong-dark bg-white dark:bg-card-dark px-4 py-2 active:opacity-70 ${desativado ? "opacity-40" : ""}`}
+    >
+      <Text
+        className="text-sm text-primary dark:text-primary-dark"
+        style={{ fontFamily: "Inter_600SemiBold" }}
+      >
+        {rotulo}
+      </Text>
+    </Pressable>
   );
 }
 

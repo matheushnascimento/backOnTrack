@@ -15,6 +15,7 @@ import {
   regularity,
   resilience,
 } from "./habitSignals";
+import { estadoDaEscada } from "./sleepHygiene";
 
 /**
  * ⚠️ LIMIARES PROVISÓRIOS: nenhum destes números tem dado que o sustente.
@@ -141,6 +142,63 @@ export function isBroken(verdicts, cadence, porSemana = 3) {
 }
 
 /**
+ * O sono na jornada depois que a pessoa configura a higiene do sono (#396).
+ *
+ * `null` quando o método não está configurado: aí o sono segue como sempre
+ * foi, contando as noites com deitar. É a transição do §4.3.
+ *
+ * Configurado, quem decide é a escada, e não mais a presença:
+ *
+ * - **Portão:** a primeira regra formada passa o portão do nível 1 (decisão
+ *   de 27/10). As seguintes sobem em paralelo e não derrubam nível, porque
+ *   conquista não se perde.
+ * - **Estável:** as cinco regras formadas.
+ * - **Ninguém cai por configurar.** Quem já passava o portão (ou já era
+ *   estável) pelas noites com deitar continua passando: os sinais antigos são
+ *   avaliados no instante da configuração, e não hoje. Avaliar hoje faria a
+ *   pessoa perder o nível por ter parado de registrar o deitar, que é
+ *   justamente o que o método novo dispensa.
+ * - **Quebra:** nunca. Com conquista permanente, não há o que quebrar.
+ *
+ * Os sinais devolvidos são os da regra ativa, ou os antigos congelados quando
+ * não há regra ativa, pra quem lê `signals` ter sempre o mesmo formato.
+ */
+function sonoPelaEscada({ hygiene, records, target, janela, now, thresholds }) {
+  if (!hygiene) return null;
+  const escada = estadoDaEscada({
+    alvo: hygiene.alvo,
+    degraus: hygiene.degraus,
+    records,
+    now,
+  });
+  if (!escada.configurada) return null;
+
+  const desde = escada.desde;
+  const veredictosAntes = dailyVerdicts(
+    records,
+    "sleep",
+    target,
+    janela,
+    desde,
+  );
+  const antes = {
+    consistency: consistency(veredictosAntes),
+    regularity: regularity(records, "sleep", janela, desde),
+    resilience: resilience(veredictosAntes),
+  };
+
+  return {
+    escada,
+    signals: escada.sinais ?? antes,
+    gated:
+      escada.conquistadas.length > 0 ||
+      escada.pronta ||
+      passesGate(antes, thresholds),
+    graduated: escada.completa || passesGraduation(antes, thresholds),
+  };
+}
+
+/**
  * Estado completo da jornada.
  *
  * ## Por que precisa de `previousLevel`
@@ -164,7 +222,10 @@ export function isBroken(verdicts, cadence, porSemana = 3) {
  * topo, larga-se a carga mais nova e o foco volta pro hábito que está
  * sofrendo, que é a copy do design ("o foco volta pra água por um tempo").
  *
- * @param {{records: Array, goals?: object, now?: number, previousLevel?: number|null, granted?: string[], thresholds?: object}} args
+ * `hygiene` é a escada da higiene do sono (#396), `{alvo, degraus}`, e muda
+ * como o sono passa o portão. Ver `sonoPelaEscada`.
+ *
+ * @param {{records: Array, goals?: object, now?: number, previousLevel?: number|null, granted?: string[], thresholds?: object, hygiene?: {alvo: string, degraus: Array}|null}} args
  * @returns {{level: number, habits: object, focus: string|null, regressed: boolean}}
  */
 export function deriveJourney({
@@ -174,6 +235,7 @@ export function deriveJourney({
   previousLevel = null,
   granted = [],
   thresholds = THRESHOLDS,
+  hygiene = null,
 }) {
   const janela = thresholds.window;
   const lista = records ?? [];
@@ -196,6 +258,30 @@ export function deriveJourney({
     // barra alta. A evidência exigida foi a do portão, avaliada sobre o mesmo
     // histórico: é reconhecimento antecipado, e não atalho.
     const concedido = (granted ?? []).includes(metric);
+
+    const escada =
+      metric === "sleep"
+        ? sonoPelaEscada({
+            hygiene,
+            records: lista,
+            target,
+            janela,
+            now,
+            thresholds,
+          })
+        : null;
+    if (escada) {
+      porMetrica[metric] = {
+        signals: escada.signals,
+        escada: escada.escada,
+        granted: concedido,
+        graduated: concedido || escada.graduated,
+        gated: concedido || escada.gated,
+        broken: false,
+      };
+      continue;
+    }
+
     porMetrica[metric] = {
       signals,
       granted: concedido,

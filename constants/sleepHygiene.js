@@ -56,14 +56,15 @@ export function isRegra(key) {
  *
  * Mais leve que o portão de nível de propósito (decisão de 27/10): com a barra
  * do portão, cada regra levaria umas quatro semanas, e as cinco quase meio ano.
- * Mesma família de sinal, janela de 14 dias. Calibra-se aqui quando houver
- * dado, sem tocar em lógica.
+ * Em 28/10 a janela caiu de 14 pra 3 noites: as três precisam estar cumpridas,
+ * num horário parecido. Mesma família de sinal; calibra-se aqui, sem tocar em
+ * lógica.
  */
 export const LIMIAR_DA_ESCADA = {
   /** Janela, em noites. */
-  window: 14,
-  consistency: 0.8,
-  regularityMinSamples: 8,
+  window: 3,
+  consistency: 1,
+  regularityMinSamples: 3,
   regularityMaxSd: 120,
 };
 

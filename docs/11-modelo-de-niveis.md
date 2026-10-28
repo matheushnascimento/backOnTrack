@@ -157,7 +157,7 @@ O §4 e o §4.2 já separavam o comportamento (deitar) do desfecho (duração), 
 **Decisões de 27/10/2026**, que estavam em aberto:
 
 - **A primeira regra consistente passa o portão do nível 1** e libera a água. As regras seguintes sobem em paralelo e não derrubam nível. Assim a pessoa forma no máximo dois hábitos por vez, que é o teto do §3.
-- **A escada tem limiar próprio, mais leve que o do portão:** 80% em 14 noites, horário estável e nenhuma falta dupla. Com a barra do portão, cada regra levaria umas quatro semanas e as cinco quase meio ano. É provisório como os outros, e mora em `LIMIAR_DA_ESCADA` (`constants/sleepHygiene.js`).
+- **A escada tem limiar próprio, mais leve que o do portão:** as 3 últimas noites cumpridas, num horário parecido (dispersão de até 2h). Com a barra do portão, cada regra levaria umas quatro semanas e as cinco quase meio ano. Começou em 80% de 14 noites e caiu pra 3 noites em 28/10, porque 14 já era longo demais pra cada fase. É provisório como os outros, e mora em `LIMIAR_DA_ESCADA` (`constants/sleepHygiene.js`).
 - **A regra 0 (soneca) é marcada à noite, sobre o dia que passou**, junto das outras. Continua sendo uma ocasião e um momento de registro por noite.
 - **A noite de um ritual vai até 6 horas depois do horário-alvo.** Quem deita às 23h e larga as telas às 00h10 ainda está na mesma noite, e a regra 10 marcada de tarde é da noite daquele dia.
 
