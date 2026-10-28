@@ -15,7 +15,7 @@ import {
   sleepReminderText,
   sleepTakesOverFocus,
 } from "@/constants/sleepReminder";
-import { getToday, localStore, store } from "./database";
+import { getHygiene, getToday, localStore, store } from "./database";
 import { useJourney } from "./useJourney";
 
 // Lembrete diário do hábito em foco (#364).
@@ -186,18 +186,25 @@ function agendar(identifier, content, quando) {
  * Reagenda os lembretes do sono (#368), cancelando só os dele.
  *
  * A regra de QUANDO é toda do `sleepReminderSchedule`: horário típico,
- * mínimo de noites, folga de 30 min e noites já registradas.
+ * mínimo de noites, folga de 30 min, noites já registradas e, com a escada da
+ * higiene do sono configurada, o prazo da regra ativa (#396).
  *
- * @param {{records: Array<object>, enabled: boolean}} estado linhas cruas
+ * @param {{records: Array<object>, enabled: boolean, hygiene?: object|null}} estado
+ *   linhas cruas; `hygiene` no formato do `getHygiene`
  * @returns {Promise<Array<{kind: string, at: number}>>}
  */
-export async function rescheduleSleepReminder({ records, enabled }) {
+export async function rescheduleSleepReminder({
+  records,
+  enabled,
+  hygiene = null,
+}) {
   if (!isNative()) return [];
 
   const agenda = sleepReminderSchedule({
     records,
     enabled,
     dias: DIAS_AGENDADOS,
+    hygiene,
   });
 
   await cancelarPorPrefixo(PREFIXO_SONO);
@@ -208,8 +215,12 @@ export async function rescheduleSleepReminder({ records, enabled }) {
   await ensureCanal();
 
   await Promise.all(
-    agenda.map(({ kind, at }, i) =>
-      agendar(`${PREFIXO_SONO}${kind}-${i}`, sleepReminderText(kind), at),
+    agenda.map(({ kind, at, regra }, i) =>
+      agendar(
+        `${PREFIXO_SONO}${kind}-${i}`,
+        sleepReminderText(kind, regra),
+        at,
+      ),
     ),
   );
   return agenda;
@@ -263,8 +274,8 @@ export function useFocusReminder() {
 /**
  * Mantém os lembretes do sono em dia enquanto o app estiver montado (#368).
  *
- * Reage a registro novo e ao interruptor. Chamar no root, uma vez, ao lado do
- * `useFocusReminder`.
+ * Reage a registro novo, ao interruptor e à escada da higiene do sono (alvo e
+ * regra ativa). Chamar no root, uma vez, ao lado do `useFocusReminder`.
  *
  * ⚠️ Passa as LINHAS CRUAS do `useTable`, com `bed` e `wake` presos no
  * `details`. O `sleepReminderSchedule` lê pelo `bedOf`/`wakeOf`, que aceitam
@@ -274,6 +285,10 @@ export function useFocusReminder() {
 export function useSleepReminder() {
   const enabled = useValue("sleepReminderEnabled", localStore);
   const records = useTable("records", store);
+  // Assinatura do `getHygiene`: trocar o alvo ou começar outra regra mexe no
+  // aviso da regra sem nenhum registro novo.
+  const hygieneTarget = useValue("hygieneTarget", store);
+  const hygieneSteps = useTable("hygieneSteps", store);
   const { granted } = useNotificationPermission();
 
   useEffect(() => {
@@ -281,11 +296,12 @@ export function useSleepReminder() {
     rescheduleSleepReminder({
       records: Object.values(records ?? {}),
       enabled: Boolean(enabled),
+      hygiene: getHygiene(),
     }).catch((e) => {
       console.warn(
         "[reminders] não consegui reagendar o sono:",
         e?.message ?? e,
       );
     });
-  }, [enabled, records, granted]);
+  }, [enabled, records, granted, hygieneTarget, hygieneSteps]);
 }

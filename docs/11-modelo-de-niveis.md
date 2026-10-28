@@ -160,6 +160,7 @@ O §4 e o §4.2 já separavam o comportamento (deitar) do desfecho (duração), 
 - **A escada tem limiar próprio, mais leve que o do portão:** as 3 últimas noites cumpridas, num horário parecido (dispersão de até 2h). Com a barra do portão, cada regra levaria umas quatro semanas e as cinco quase meio ano. Começou em 80% de 14 noites e caiu pra 3 noites em 28/10, porque 14 já era longo demais pra cada fase. É provisório como os outros, e mora em `LIMIAR_DA_ESCADA` (`constants/sleepHygiene.js`).
 - **A regra 0 (soneca) é marcada à noite, sobre o dia que passou**, junto das outras. Continua sendo uma ocasião e um momento de registro por noite.
 - **A noite de um ritual vai até 6 horas depois do horário-alvo.** Quem deita às 23h e larga as telas às 00h10 ainda está na mesma noite, e a regra 10 marcada de tarde é da noite daquele dia.
+- **O lembrete do sono avisa a regra ativa**, meia hora antes do prazo ("Em meia hora, hora de largar as telas"). O horário sai do alvo escolhido, então o aviso existe desde a primeira noite, sem esperar o horário aprendido. Noite em que a regra já foi cumprida fica sem aviso. A regra 0 não tem prazo de relógio e não ganha aviso próprio.
 
 Implementação na #396.
 

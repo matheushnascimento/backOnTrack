@@ -136,7 +136,7 @@ function fronteiraEmMs(alvo) {
 }
 
 /** O dia-calendário da noite a que um instante pertence. */
-function noiteDe(ms, alvo) {
+export function noiteDe(ms, alvo) {
   return diaLocal(ms - fronteiraEmMs(alvo));
 }
 
@@ -175,6 +175,23 @@ export function noiteDoRitual(registro, alvo) {
 }
 
 /**
+ * As noites em que a regra foi cumprida, como chaves "AAAA-MM-DD".
+ *
+ * Dois registros na mesma noite são uma ocasião só.
+ *
+ * @returns {Set<string>}
+ */
+export function noitesCumpridas(records, regra, alvo) {
+  const cumpridas = new Set();
+  for (const r of records ?? []) {
+    if (ritualDe(r)?.regra !== regra) continue;
+    const noite = noiteDoRitual(r, alvo);
+    if (noite) cumpridas.add(noite);
+  }
+  return cumpridas;
+}
+
+/**
  * Veredito de uma regra por noite, da mais antiga pra mais recente.
  *
  * Mesmo formato do `dailyVerdicts`, pra `consistency` e `resilience` lerem
@@ -191,12 +208,7 @@ export function veredictosDaRegra(
   days,
   now = Date.now(),
 ) {
-  const cumpridas = new Set();
-  for (const r of records ?? []) {
-    if (ritualDe(r)?.regra !== regra) continue;
-    const noite = noiteDoRitual(r, alvo);
-    if (noite) cumpridas.add(noite);
-  }
+  const cumpridas = noitesCumpridas(records, regra, alvo);
   const out = [];
   for (let i = days - 1; i >= 0; i--) {
     const dia = noiteDe(now - i * MS_DIA, alvo);

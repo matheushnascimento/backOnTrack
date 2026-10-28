@@ -162,9 +162,18 @@ export default function Ajustes() {
   const recordsTable = useTable("records", store);
   // Linhas cruas, como o hook do lembrete recebe: o status tem que dizer o
   // mesmo que o agendamento faz.
+  const hygieneTarget = useValue("hygieneTarget", store);
+  const hygieneSteps = useTable("hygieneSteps", store);
   const sleepStatus = useMemo(
-    () => sleepReminderStatus(Object.values(recordsTable ?? {})),
-    [recordsTable],
+    () =>
+      sleepReminderStatus(
+        Object.values(recordsTable ?? {}),
+        undefined,
+        getHygiene(),
+      ),
+    // `hygieneSteps` e `hygieneTarget` são a assinatura do `getHygiene`.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [recordsTable, hygieneSteps, hygieneTarget],
   );
   const grantedValue = useValue("journeyGranted", store);
   const skipInfo = useMemo(() => {
@@ -341,6 +350,9 @@ export default function Ajustes() {
               className="border-t border-surface-subtle px-4 py-3 text-xs text-body-secondary dark:text-body-secondary-dark"
               style={{ fontFamily: "Inter_400Regular" }}
             >
+              {sleepStatus.regra
+                ? `Aviso da regra de hoje às ${sleepStatus.regra}. `
+                : ""}
               {sleepStatus.deitar == null
                 ? `Aprendendo seu horário: faltam ${sleepStatus.faltam} de ${MIN_NOITES} noites com hora de deitar nas últimas duas semanas.`
                 : sleepStatus.acordar == null
