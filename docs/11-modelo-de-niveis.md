@@ -142,7 +142,7 @@ O §4 e o §4.2 já separavam o comportamento (deitar) do desfecho (duração), 
 | 3     | sem comida pesada nem álcool 3h antes | até 20h           |
 | 2     | sem trabalho 2h antes                 | até 21h           |
 | 1     | sem telas 1h antes                    | até 22h           |
-| 0     | nenhuma soneca                        | de manhã          |
+| 0     | zero soneca no despertador            | ao acordar        |
 
 **São cinco comportamentos, e o modelo forma um por vez.** Cobrar os cinco toda noite seria a lista de tarefas que o §1.5 recusa, e quebraria a fricção mínima do §4.2. Por isso o método vira uma **escada dentro do sono**: a pessoa escolhe por qual regra começa, e a próxima entra quando a anterior estiver consistente, pelo mesmo sinal que decide os níveis. A ocasião continua sendo **uma por noite**: a regra ativa cumprida.
 
@@ -158,7 +158,7 @@ O §4 e o §4.2 já separavam o comportamento (deitar) do desfecho (duração), 
 
 - **A primeira regra consistente passa o portão do nível 1** e libera a água. As regras seguintes sobem em paralelo e não derrubam nível. Assim a pessoa forma no máximo dois hábitos por vez, que é o teto do §3.
 - **A escada tem limiar próprio, mais leve que o do portão:** as 3 últimas noites cumpridas, num horário parecido (dispersão de até 2h). Com a barra do portão, cada regra levaria umas quatro semanas e as cinco quase meio ano. Começou em 80% de 14 noites e caiu pra 3 noites em 28/10, porque 14 já era longo demais pra cada fase. É provisório como os outros, e mora em `LIMIAR_DA_ESCADA` (`constants/sleepHygiene.js`).
-- **A regra 0 (soneca) é marcada à noite, sobre o dia que passou**, junto das outras. Continua sendo uma ocasião e um momento de registro por noite.
+- ~~A regra 0 (soneca) é marcada à noite, sobre o dia que passou.~~ Revisto em 28/10: a decisão partiu de ler "soneca" como cochilo durante o dia. No método, o 0 é **zero soneca no despertador**: levantar no primeiro toque (referência: o vídeo "O Método 10-3-2-1-0", de Laércio Refundini, capítulo "Método 0: acordar sem soneca"). Ela se cumpre ao acordar e conta pro dia do calendário em que a pessoa acordou, e não pela fronteira da noite: quem acorda antes dela cairia na véspera e o cartão pediria de novo. Não tem aviso próprio, porque a deixa é o próprio despertador.
 - **A noite de um ritual vai até 6 horas depois do horário-alvo.** Quem deita às 23h e larga as telas às 00h10 ainda está na mesma noite, e a regra 10 marcada de tarde é da noite daquele dia.
 - **O lembrete do sono avisa a regra ativa**, meia hora antes do prazo ("Em meia hora, hora de largar as telas"). O horário sai do alvo escolhido, então o aviso existe desde a primeira noite, sem esperar o horário aprendido. Noite em que a regra já foi cumprida fica sem aviso. A regra 0 não tem prazo de relógio e não ganha aviso próprio.
 

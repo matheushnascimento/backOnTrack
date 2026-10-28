@@ -53,7 +53,9 @@ describe("as regras no relógio da pessoa", () => {
 
   it("a regra 0 não tem prazo de relógio", () => {
     expect(prazoDaRegra("0", "23:00")).toBeNull();
-    expect(textoDaRegra("0", "23:00")).toBe("Nenhuma soneca durante o dia");
+    expect(textoDaRegra("0", "23:00")).toBe(
+      "Levantar no primeiro despertador, sem soneca",
+    );
   });
 
   it("o texto leva o horário", () => {
@@ -110,8 +112,13 @@ describe("a que noite o ritual pertence", () => {
     );
   });
 
-  it("a regra 0 marcada à noite é sobre o dia que passou", () => {
-    expect(noiteDoRitual(ritual(10, "0", "22:40"), "23:00")).toBe("2026-10-10");
+  it("a regra 0 é do dia em que a pessoa acordou", () => {
+    expect(noiteDoRitual(ritual(11, "0", "07:10"), "23:00")).toBe("2026-10-11");
+  });
+
+  it("a regra 0 antes da fronteira da noite não cai na véspera", () => {
+    // Alvo 01:00 põe a fronteira às 07:00; o despertador das 06:30 é de hoje.
+    expect(noiteDoRitual(ritual(11, "0", "06:30"), "01:00")).toBe("2026-10-11");
   });
 
   it("quem deita tarde tem a fronteira mais tarde", () => {
@@ -160,6 +167,20 @@ describe("veredictosDaRegra", () => {
       em(10, 23),
     );
     expect(v[0].hit).toBe(false);
+  });
+
+  it("a regra 0 cumprida de manhã vale pelo resto do dia", () => {
+    const v = veredictosDaRegra(
+      [ritual(20, "0", "07:00")],
+      "0",
+      "23:00",
+      2,
+      em(20, 22),
+    );
+    expect(v).toEqual([
+      { dia: "2026-10-19", hit: false },
+      { dia: "2026-10-20", hit: true },
+    ]);
   });
 
   it("dois registros na mesma noite são uma ocasião", () => {

@@ -31,7 +31,8 @@
  * Com a escada configurada, entra um terceiro aviso: meia hora antes do prazo
  * da regra ativa ("Em meia hora, hora de largar as telas"). O horário vem do
  * alvo que a pessoa escolheu, e não do aprendido, então ele existe desde a
- * primeira noite. A regra 0 (soneca) não tem prazo de relógio e não ganha
+ * primeira noite. A regra 0 (sem soneca no despertador) não tem prazo de
+ * relógio e não ganha aviso: a deixa dela é o próprio despertador.
  * aviso: ela é marcada à noite, junto do deitar.
  *
  * Isolado como função pura pelo motivo de sempre: o `expo-notifications` não
@@ -40,8 +41,8 @@
 
 import { diaLocal } from "./habitSignals";
 import {
+  diaDaRegra,
   estadoDaEscada,
-  noiteDe,
   noitesCumpridas,
   prazoDaRegra,
 } from "./sleepHygiene";
@@ -293,7 +294,8 @@ export function sleepReminderSchedule({
     // A noite aqui é a da escada (fronteira 6h depois do alvo), a mesma em
     // que o "cumpri" cai. Quem já marcou a regra da noite não é avisado.
     const cumpridas = noitesCumpridas(records, regra.regra, regra.alvo);
-    const resolvida = (at) => cumpridas.has(noiteDe(at, regra.alvo));
+    const resolvida = (at) =>
+      cumpridas.has(diaDaRegra(regra.regra, at, regra.alvo));
     for (const at of proximas(regra.minuto, now, dias, resolvida)) {
       agenda.push({ kind: "rule", at, regra: regra.regra });
     }

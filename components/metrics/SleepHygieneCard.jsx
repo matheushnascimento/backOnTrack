@@ -240,7 +240,7 @@ function BotaoPilula({ rotulo, accessibilityLabel, desativado, onPress }) {
 function OpcaoDeRegra({ regra, alvo, desativado, onPress }) {
   const prazo = alvo ? prazoDaRegra(regra, alvo) : null;
   const quando =
-    regra === "0" ? "durante o dia" : prazo ? `depois das ${prazo}` : "";
+    regra === "0" ? "ao acordar" : prazo ? `depois das ${prazo}` : "";
   return (
     <Pressable
       accessibilityRole="button"

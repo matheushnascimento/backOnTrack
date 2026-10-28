@@ -13,8 +13,10 @@
 // - A primeira regra consistente passa o portão do nível 1 e libera a água.
 //   As seguintes sobem em paralelo e não derrubam nível.
 // - A escada tem limiar próprio, mais leve que o do portão (`LIMIAR_DA_ESCADA`).
-// - A regra 0 (soneca) é marcada à noite, sobre o dia que passou, junto das
-//   outras: uma ocasião e um momento de registro por noite.
+// - A regra 0 é zero soneca no despertador: levantar no primeiro toque. Ela
+//   se cumpre ao acordar e conta pro dia do calendário em que a pessoa
+//   acordou (`diaDaRegra`). Até 28/10 o app a lia como "nenhuma soneca
+//   durante o dia", marcada à noite, o que não é o método.
 //
 // O ritual cumprido é um registro do tipo `sleep`, com `regra` e `at` (o
 // horário em que a pessoa cumpriu) no `details`, e sem duração.
@@ -41,7 +43,7 @@ export const REGRAS = [
   { key: "3", titulo: "Sem comida pesada nem álcool", antes: 180 },
   { key: "2", titulo: "Sem trabalho", antes: 120 },
   { key: "1", titulo: "Sem telas", antes: 60 },
-  { key: "0", titulo: "Nenhuma soneca", antes: null },
+  { key: "0", titulo: "Sem soneca no despertador", antes: null },
 ];
 
 const POR_CHAVE = Object.fromEntries(REGRAS.map((r) => [r.key, r]));
@@ -101,7 +103,7 @@ export function prazoDaRegra(regra, alvo) {
 export function textoDaRegra(regra, alvo) {
   const r = POR_CHAVE[regra];
   if (!r) return "";
-  if (r.antes == null) return "Nenhuma soneca durante o dia";
+  if (r.antes == null) return "Levantar no primeiro despertador, sem soneca";
   const prazo = prazoDaRegra(regra, alvo);
   return prazo ? `${r.titulo} depois das ${prazo}` : r.titulo;
 }
@@ -141,6 +143,19 @@ export function noiteDe(ms, alvo) {
 }
 
 /**
+ * O dia a que um instante pertence, pra uma regra.
+ *
+ * As regras 10, 3, 2 e 1 vivem na noite (`noiteDe`). A 0 se cumpre ao acordar,
+ * e o dia dela é o do calendário: quem levantou sem soneca às 07:00 cumpriu a
+ * de hoje, e o cartão tem que dizer "cumprida hoje" pelo resto do dia. Pela
+ * fronteira da noite, quem acorda antes dela (alvo 01:00 e despertador às
+ * 06:30) cairia na véspera, e o cartão pediria de novo meia hora depois.
+ */
+export function diaDaRegra(regra, ms, alvo) {
+  return String(regra) === "0" ? diaLocal(ms) : noiteDe(ms, alvo);
+}
+
+/**
  * O instante em que o ritual aconteceu: a ocorrência do `at` mais perto do
  * registro, até 12 horas pra trás ou pra frente. Sem `at`, o próprio registro.
  *
@@ -163,7 +178,8 @@ function instanteDoRitual(registro, at) {
 }
 
 /**
- * A noite de um ritual, como chave "AAAA-MM-DD".
+ * A noite de um ritual, como chave "AAAA-MM-DD". Pra regra 0, o dia em que a
+ * pessoa acordou (`diaDaRegra`).
  *
  * @returns {string|null}
  */
@@ -171,7 +187,7 @@ export function noiteDoRitual(registro, alvo) {
   const ritual = ritualDe(registro);
   if (!ritual) return null;
   const ms = instanteDoRitual(registro, ritual.at);
-  return ms == null ? null : noiteDe(ms, alvo);
+  return ms == null ? null : diaDaRegra(ritual.regra, ms, alvo);
 }
 
 /**
@@ -211,7 +227,7 @@ export function veredictosDaRegra(
   const cumpridas = noitesCumpridas(records, regra, alvo);
   const out = [];
   for (let i = days - 1; i >= 0; i--) {
-    const dia = noiteDe(now - i * MS_DIA, alvo);
+    const dia = diaDaRegra(regra, now - i * MS_DIA, alvo);
     out.push({ dia, hit: cumpridas.has(dia) });
   }
   return out;
