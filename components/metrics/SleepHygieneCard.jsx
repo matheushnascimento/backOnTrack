@@ -94,7 +94,7 @@ function RegraAtiva({ h }) {
         className="text-sm text-body-secondary dark:text-body-secondary-dark"
         style={{ fontFamily: "Inter_400Regular" }}
       >
-        {noites} de {LIMIAR_DA_ESCADA.window} noites nas últimas duas semanas
+        {noites} das últimas {LIMIAR_DA_ESCADA.window} noites
       </Text>
       {h.cumpridaHoje ? (
         <View className="items-center rounded-2xl border border-border-strong dark:border-border-strong-dark py-4">

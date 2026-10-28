@@ -390,7 +390,7 @@ describe("deriveJourney com a escada da higiene do sono", () => {
   });
 
   it("os sinais do sono passam a ser os da regra ativa", () => {
-    const rituais = Array.from({ length: 5 }, (_, i) => ritual("1", i));
+    const rituais = Array.from({ length: 2 }, (_, i) => ritual("1", i));
     const j = deriveJourney({
       records: rituais,
       now: AGORA,
@@ -401,7 +401,7 @@ describe("deriveJourney com a escada da higiene do sono", () => {
         ],
       },
     });
-    expect(j.habits.sleep.signals.consistency.hits).toBe(5);
-    expect(j.habits.sleep.signals.consistency.days).toBe(14);
+    expect(j.habits.sleep.signals.consistency.hits).toBe(2);
+    expect(j.habits.sleep.signals.consistency.days).toBe(3);
   });
 });

@@ -177,21 +177,22 @@ describe("veredictosDaRegra", () => {
 describe("a regra fica consistente", () => {
   const agora = em(20, 23);
 
-  it("14 noites seguidas, mesmo horário: pronta", () => {
+  it("3 noites seguidas, mesmo horário: pronta", () => {
     const sinais = sinaisDaRegra(
-      noites(14, "1", "22:00", 20),
+      noites(3, "1", "22:00", 20),
       "1",
       "23:00",
       agora,
     );
-    expect(sinais.consistency.hits).toBe(14);
+    expect(sinais.consistency.hits).toBe(3);
+    expect(sinais.consistency.days).toBe(LIMIAR_DA_ESCADA.window);
     expect(regraConsistente(sinais)).toBe(true);
   });
 
-  it("menos de 14 noites na regra ainda não", () => {
-    // As noites antes do começo contam como falta, e duas seguidas reprovam.
+  it("menos de 3 noites na regra ainda não", () => {
+    // A noite antes do começo conta como falta.
     const sinais = sinaisDaRegra(
-      noites(10, "1", "22:00", 20),
+      noites(2, "1", "22:00", 20),
       "1",
       "23:00",
       agora,
@@ -199,29 +200,28 @@ describe("a regra fica consistente", () => {
     expect(regraConsistente(sinais)).toBe(false);
   });
 
-  it("uma falta isolada passa", () => {
-    const registros = noites(14, "1", "22:00", 20).filter((_, i) => i !== 6);
-    const sinais = sinaisDaRegra(registros, "1", "23:00", agora);
-    expect(sinais.resilience.doubleMisses).toBe(0);
-    expect(regraConsistente(sinais)).toBe(true);
-  });
-
-  it("duas faltas seguidas não", () => {
-    const registros = noites(14, "1", "22:00", 20).filter(
-      (_, i) => i !== 6 && i !== 7,
-    );
+  it("uma falta entre as 3 últimas noites ainda não", () => {
+    const registros = noites(3, "1", "22:00", 20).filter((_, i) => i !== 1);
     expect(
       regraConsistente(sinaisDaRegra(registros, "1", "23:00", agora)),
     ).toBe(false);
   });
 
+  it("falta mais antiga que a janela não pesa", () => {
+    // Cumpriu nos dias 15, 16, 18, 19 e 20; faltou no 17, fora das 3 últimas.
+    const registros = noites(6, "1", "22:00", 20).filter((_, i) => i !== 2);
+    expect(
+      regraConsistente(sinaisDaRegra(registros, "1", "23:00", agora)),
+    ).toBe(true);
+  });
+
   it("horário espalhado demais não passa", () => {
-    // Alterna 19:00 e 23:30: quatro horas e meia de distância.
-    const registros = Array.from({ length: 14 }, (_, i) =>
-      ritual(7 + i, "1", i % 2 ? "19:00" : "23:30"),
+    // Alterna 18:00 e 23:30: cinco horas e meia de distância.
+    const registros = Array.from({ length: 3 }, (_, i) =>
+      ritual(18 + i, "1", i % 2 ? "23:30" : "18:00"),
     );
     const sinais = sinaisDaRegra(registros, "1", "23:00", agora);
-    expect(sinais.consistency.hits).toBe(14);
+    expect(sinais.consistency.hits).toBe(3);
     expect(sinais.regularity.sdMinutes).toBeGreaterThan(
       LIMIAR_DA_ESCADA.regularityMaxSd,
     );
@@ -230,9 +230,9 @@ describe("a regra fica consistente", () => {
 
   it("a regularidade vem do horário do ritual, e não do registro", () => {
     // Largou as telas sempre às 22:00, marcou entre 22:00 e 08:00.
-    const registros = Array.from({ length: 14 }, (_, i) =>
-      ritual(7 + i, "1", "22:00", {
-        createdAt: em(7 + i, 22) + (i % 6) * 2 * 3_600_000,
+    const registros = Array.from({ length: 3 }, (_, i) =>
+      ritual(18 + i, "1", "22:00", {
+        createdAt: em(18 + i, 22) + i * 5 * 3_600_000,
       }),
     );
     const sinais = sinaisDaRegra(registros, "1", "23:00", agora);
