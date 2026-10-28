@@ -379,7 +379,8 @@ describe("o aviso da regra ativa", () => {
     expect(r).toEqual({ regra: "10", alvo: "00:30", minuto: hm(14) });
   });
 
-  it("a regra 0 não tem prazo e não ganha aviso", () => {
+  it("o 0 que saiu da escada não ganha aviso", () => {
+    // Degrau antigo de regra 0: ignorado, e a escada volta a não configurada.
     expect(ruleReminder([], escada("0"), agora)).toBeNull();
   });
 
@@ -419,6 +420,9 @@ describe("o aviso da regra ativa", () => {
     );
     expect(sleepReminderText("rule", "10").body).toBe(
       "Em meia hora, a cafeína de hoje acaba.",
+    );
+    expect(sleepReminderText("rule", "2").body).toBe(
+      "Em meia hora, nada de esforço intenso até deitar.",
     );
   });
 

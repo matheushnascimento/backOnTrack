@@ -3,7 +3,7 @@
 // Higiene do sono pelo método 10-3-2-1-0, em escada (#396, fatia 1).
 //
 // O sono deixa de ser o hábito: o desfecho (quanto dormiu) não se forma, o que
-// se forma é o que a pessoa faz antes de deitar. As cinco regras contam a
+// se forma é o que a pessoa faz antes de deitar. As quatro regras contam a
 // partir de um horário-alvo de deitar que ela escolhe, e o modelo forma UMA
 // por vez: começa pela que a pessoa escolher, e a próxima entra quando a
 // anterior estiver consistente. Ver `docs/11-modelo-de-niveis.md` §4.3.
@@ -13,10 +13,15 @@
 // - A primeira regra consistente passa o portão do nível 1 e libera a água.
 //   As seguintes sobem em paralelo e não derrubam nível.
 // - A escada tem limiar próprio, mais leve que o do portão (`LIMIAR_DA_ESCADA`).
-// - A regra 0 é zero soneca no despertador: levantar no primeiro toque. Ela
-//   se cumpre ao acordar e conta pro dia do calendário em que a pessoa
-//   acordou (`diaDaRegra`). Até 28/10 o app a lia como "nenhuma soneca
-//   durante o dia", marcada à noite, o que não é o método.
+//
+// Decisões de 28/10:
+//
+// - O 0 do método (zero soneca no despertador) fica fora da escada: é pequeno
+//   demais pra virar regra, e aparece só como citação do método. Registro
+//   antigo de regra "0" continua sendo lido como ritual (`ritualDe`), pra não
+//   virar uma noite de 0h no histórico, e não conta pra escada.
+// - O 2 é "sem esforço intenso", como no vídeo de referência: desacelerar o
+//   corpo, e não só parar de trabalhar.
 //
 // O ritual cumprido é um registro do tipo `sleep`, com `regra` e `at` (o
 // horário em que a pessoa cumpriu) no `details`, e sem duração.
@@ -33,20 +38,21 @@ const MS_MIN = 60_000;
 const MS_DIA = 86_400_000;
 
 /**
- * As cinco regras, na ordem do método.
+ * As quatro regras da escada, na ordem do método.
  *
- * `antes` é quantos minutos antes do horário-alvo a regra passa a valer. A
- * regra 0 não tem prazo de relógio: vale o dia todo.
+ * `antes` é quantos minutos antes do horário-alvo a regra passa a valer.
  */
 export const REGRAS = [
   { key: "10", titulo: "Sem cafeína", antes: 600 },
   { key: "3", titulo: "Sem comida pesada nem álcool", antes: 180 },
-  { key: "2", titulo: "Sem trabalho", antes: 120 },
+  { key: "2", titulo: "Sem esforço intenso", antes: 120 },
   { key: "1", titulo: "Sem telas", antes: 60 },
-  { key: "0", titulo: "Sem soneca no despertador", antes: null },
 ];
 
 const POR_CHAVE = Object.fromEntries(REGRAS.map((r) => [r.key, r]));
+
+/** Regras que já existiram e saíram da escada; o registro delas segue legível. */
+const REGRAS_QUE_SAIRAM = ["0"];
 
 /** A regra existe? */
 export function isRegra(key) {
@@ -57,7 +63,7 @@ export function isRegra(key) {
  * ⚠️ LIMIAR PROVISÓRIO, como os de `constants/journey.js`.
  *
  * Mais leve que o portão de nível de propósito (decisão de 27/10): com a barra
- * do portão, cada regra levaria umas quatro semanas, e as cinco quase meio ano.
+ * do portão, cada regra levaria umas quatro semanas, e todas quase meio ano.
  * Em 28/10 a janela caiu de 14 pra 3 noites: as três precisam estar cumpridas,
  * num horário parecido. Mesma família de sinal; calibra-se aqui, sem tocar em
  * lógica.
@@ -84,12 +90,12 @@ function relogio(min) {
  *
  * @param {string} regra
  * @param {string} alvo "HH:MM"
- * @returns {string|null} `null` pra regra 0, que não tem prazo, ou entrada inválida.
+ * @returns {string|null} `null` pra regra que não existe ou alvo inválido.
  */
 export function prazoDaRegra(regra, alvo) {
   const r = POR_CHAVE[regra];
   const min = parseHHMM(alvo);
-  if (!r || r.antes == null || min == null) return null;
+  if (!r || min == null) return null;
   return relogio(min - r.antes);
 }
 
@@ -103,7 +109,6 @@ export function prazoDaRegra(regra, alvo) {
 export function textoDaRegra(regra, alvo) {
   const r = POR_CHAVE[regra];
   if (!r) return "";
-  if (r.antes == null) return "Levantar no primeiro despertador, sem soneca";
   const prazo = prazoDaRegra(regra, alvo);
   return prazo ? `${r.titulo} depois das ${prazo}` : r.titulo;
 }
@@ -118,7 +123,11 @@ export function textoDaRegra(regra, alvo) {
 export function ritualDe(registro) {
   if (registro?.type !== "sleep") return null;
   const regra = campoDoRegistro(registro, "regra");
-  if (!isRegra(regra)) return null;
+  // O "0" saiu da escada em 28/10, e o registro dele ainda é um ritual, e não
+  // uma noite sem duração. Ele só não conta pra escada.
+  if (!isRegra(regra) && !REGRAS_QUE_SAIRAM.includes(String(regra))) {
+    return null;
+  }
   const at = campoDoRegistro(registro, "at");
   return { regra: String(regra), at: parseHHMM(at) == null ? null : at };
 }
@@ -140,19 +149,6 @@ function fronteiraEmMs(alvo) {
 /** O dia-calendário da noite a que um instante pertence. */
 export function noiteDe(ms, alvo) {
   return diaLocal(ms - fronteiraEmMs(alvo));
-}
-
-/**
- * O dia a que um instante pertence, pra uma regra.
- *
- * As regras 10, 3, 2 e 1 vivem na noite (`noiteDe`). A 0 se cumpre ao acordar,
- * e o dia dela é o do calendário: quem levantou sem soneca às 07:00 cumpriu a
- * de hoje, e o cartão tem que dizer "cumprida hoje" pelo resto do dia. Pela
- * fronteira da noite, quem acorda antes dela (alvo 01:00 e despertador às
- * 06:30) cairia na véspera, e o cartão pediria de novo meia hora depois.
- */
-export function diaDaRegra(regra, ms, alvo) {
-  return String(regra) === "0" ? diaLocal(ms) : noiteDe(ms, alvo);
 }
 
 /**
@@ -178,8 +174,7 @@ function instanteDoRitual(registro, at) {
 }
 
 /**
- * A noite de um ritual, como chave "AAAA-MM-DD". Pra regra 0, o dia em que a
- * pessoa acordou (`diaDaRegra`).
+ * A noite de um ritual, como chave "AAAA-MM-DD".
  *
  * @returns {string|null}
  */
@@ -187,7 +182,7 @@ export function noiteDoRitual(registro, alvo) {
   const ritual = ritualDe(registro);
   if (!ritual) return null;
   const ms = instanteDoRitual(registro, ritual.at);
-  return ms == null ? null : diaDaRegra(ritual.regra, ms, alvo);
+  return ms == null ? null : noiteDe(ms, alvo);
 }
 
 /**
@@ -227,7 +222,7 @@ export function veredictosDaRegra(
   const cumpridas = noitesCumpridas(records, regra, alvo);
   const out = [];
   for (let i = days - 1; i >= 0; i--) {
-    const dia = diaDaRegra(regra, now - i * MS_DIA, alvo);
+    const dia = noiteDe(now - i * MS_DIA, alvo);
     out.push({ dia, hit: cumpridas.has(dia) });
   }
   return out;

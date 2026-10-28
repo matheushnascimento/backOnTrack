@@ -21,7 +21,7 @@ import TimeFieldRow from "./TimeFieldRow";
 //   1. sem método: horário-alvo + escolher a primeira regra
 //   2. regra ativa: o texto com o horário de hoje e "cumpri"
 //   3. regra formada: escolher a próxima
-//   4. as cinco formadas
+//   4. as quatro formadas
 
 const TITULO = REGRAS.reduce((o, r) => ({ ...o, [r.key]: r.titulo }), {});
 
@@ -35,7 +35,7 @@ export default function SleepHygieneCard() {
         <RegraAtiva h={h} />
       ) : h.completa ? (
         <Corpo
-          titulo="As cinco regras viraram rotina"
+          titulo="As quatro regras viraram rotina"
           texto="O método inteiro está formado. A noite segue registrável aí embaixo, se quiser."
         />
       ) : (
@@ -75,6 +75,14 @@ function Configurar({ h }) {
           />
         ))}
       </View>
+      {/* O 0 do método fica de citação, fora da escada (decisão de 28/10). */}
+      <Text
+        className="text-xs text-body-secondary dark:text-body-secondary-dark"
+        style={{ fontFamily: "Inter_400Regular" }}
+      >
+        Do método 10-3-2-1-0. O 0 é não apertar a soneca do despertador: fica de
+        dica, fora da escada.
+      </Text>
     </View>
   );
 }
@@ -239,8 +247,7 @@ function BotaoPilula({ rotulo, accessibilityLabel, desativado, onPress }) {
 /** @param {{ regra: string, alvo: string|null, desativado?: boolean, onPress: () => void }} props */
 function OpcaoDeRegra({ regra, alvo, desativado, onPress }) {
   const prazo = alvo ? prazoDaRegra(regra, alvo) : null;
-  const quando =
-    regra === "0" ? "ao acordar" : prazo ? `depois das ${prazo}` : "";
+  const quando = prazo ? `depois das ${prazo}` : "";
   return (
     <Pressable
       accessibilityRole="button"

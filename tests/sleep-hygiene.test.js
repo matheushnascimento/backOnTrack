@@ -51,10 +51,14 @@ describe("as regras no relógio da pessoa", () => {
     expect(prazoDaRegra("1", "00:30")).toBe("23:30");
   });
 
-  it("a regra 0 não tem prazo de relógio", () => {
+  it("o 0 do método fica fora da escada (28/10)", () => {
     expect(prazoDaRegra("0", "23:00")).toBeNull();
-    expect(textoDaRegra("0", "23:00")).toBe(
-      "Levantar no primeiro despertador, sem soneca",
+    expect(textoDaRegra("0", "23:00")).toBe("");
+  });
+
+  it("o 2 é esforço intenso, como no vídeo de referência", () => {
+    expect(textoDaRegra("2", "23:00")).toBe(
+      "Sem esforço intenso depois das 21:00",
     );
   });
 
@@ -69,8 +73,8 @@ describe("as regras no relógio da pessoa", () => {
     expect(textoDaRegra("5", "23:00")).toBe("");
   });
 
-  it("são cinco, na ordem do método", () => {
-    expect(REGRAS.map((r) => r.key)).toEqual(["10", "3", "2", "1", "0"]);
+  it("são quatro, na ordem do método", () => {
+    expect(REGRAS.map((r) => r.key)).toEqual(["10", "3", "2", "1"]);
   });
 });
 
@@ -101,6 +105,19 @@ describe("ritualDe", () => {
   });
 });
 
+describe("o 0 que saiu da escada", () => {
+  it("registro antigo de regra 0 ainda é ritual, e não uma noite de 0h", () => {
+    expect(ritualDe(ritual(20, "0", "07:00"))).toEqual({
+      regra: "0",
+      at: "07:00",
+    });
+  });
+
+  it("degrau antigo de regra 0 é ignorado", () => {
+    expect(degrausDaTabela({ 0: { startedAt: 100 } })).toEqual([]);
+  });
+});
+
 describe("a que noite o ritual pertence", () => {
   it("largar as telas depois da meia-noite ainda é a mesma noite", () => {
     expect(noiteDoRitual(ritual(11, "1", "00:10"), "23:00")).toBe("2026-10-10");
@@ -110,15 +127,6 @@ describe("a que noite o ritual pertence", () => {
     expect(noiteDoRitual(ritual(10, "10", "13:05"), "23:00")).toBe(
       "2026-10-10",
     );
-  });
-
-  it("a regra 0 é do dia em que a pessoa acordou", () => {
-    expect(noiteDoRitual(ritual(11, "0", "07:10"), "23:00")).toBe("2026-10-11");
-  });
-
-  it("a regra 0 antes da fronteira da noite não cai na véspera", () => {
-    // Alvo 01:00 põe a fronteira às 07:00; o despertador das 06:30 é de hoje.
-    expect(noiteDoRitual(ritual(11, "0", "06:30"), "01:00")).toBe("2026-10-11");
   });
 
   it("quem deita tarde tem a fronteira mais tarde", () => {
@@ -167,20 +175,6 @@ describe("veredictosDaRegra", () => {
       em(10, 23),
     );
     expect(v[0].hit).toBe(false);
-  });
-
-  it("a regra 0 cumprida de manhã vale pelo resto do dia", () => {
-    const v = veredictosDaRegra(
-      [ritual(20, "0", "07:00")],
-      "0",
-      "23:00",
-      2,
-      em(20, 22),
-    );
-    expect(v).toEqual([
-      { dia: "2026-10-19", hit: false },
-      { dia: "2026-10-20", hit: true },
-    ]);
   });
 
   it("dois registros na mesma noite são uma ocasião", () => {
@@ -284,7 +278,7 @@ describe("degrausDaTabela", () => {
 describe("estadoDaEscada", () => {
   const agora = em(20, 23);
 
-  it("sem nada: não configurada, e as cinco à escolha", () => {
+  it("sem nada: não configurada, e as quatro à escolha", () => {
     const e = estadoDaEscada({
       alvo: "",
       degraus: [],
@@ -293,7 +287,7 @@ describe("estadoDaEscada", () => {
     });
     expect(e.configurada).toBe(false);
     expect(e.ativa).toBeNull();
-    expect(e.disponiveis).toEqual(["10", "3", "2", "1", "0"]);
+    expect(e.disponiveis).toEqual(["10", "3", "2", "1"]);
     expect(podeComecar(e, "1")).toBe(false); // falta o horário-alvo
   });
 
@@ -306,7 +300,8 @@ describe("estadoDaEscada", () => {
     });
     expect(e.configurada).toBe(false);
     expect(podeComecar(e, "1")).toBe(true);
-    expect(podeComecar(e, "0")).toBe(true);
+    expect(podeComecar(e, "10")).toBe(true);
+    expect(podeComecar(e, "0")).toBe(false);
   });
 
   it("com a regra ativa: uma por vez", () => {
@@ -342,7 +337,7 @@ describe("estadoDaEscada", () => {
     });
     expect(e.ativa).toBeNull();
     expect(e.conquistadas).toEqual(["1"]);
-    expect(e.disponiveis).toEqual(["10", "3", "2", "0"]);
+    expect(e.disponiveis).toEqual(["10", "3", "2"]);
     expect(podeComecar(e, "1")).toBe(false);
     expect(podeComecar(e, "10")).toBe(true);
   });
@@ -375,7 +370,7 @@ describe("estadoDaEscada", () => {
     expect(e.ativa).toBe("1");
   });
 
-  it("as cinco conquistadas: completa", () => {
+  it("as quatro conquistadas: completa", () => {
     const degraus = REGRAS.map((r, i) => ({
       regra: r.key,
       startedAt: i + 1,

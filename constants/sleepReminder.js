@@ -31,8 +31,7 @@
  * Com a escada configurada, entra um terceiro aviso: meia hora antes do prazo
  * da regra ativa ("Em meia hora, hora de largar as telas"). O horário vem do
  * alvo que a pessoa escolheu, e não do aprendido, então ele existe desde a
- * primeira noite. A regra 0 (sem soneca no despertador) não tem prazo de
- * relógio e não ganha aviso: a deixa dela é o próprio despertador.
+ * primeira noite.
  * aviso: ela é marcada à noite, junto do deitar.
  *
  * Isolado como função pura pelo motivo de sempre: o `expo-notifications` não
@@ -41,8 +40,8 @@
 
 import { diaLocal } from "./habitSignals";
 import {
-  diaDaRegra,
   estadoDaEscada,
+  noiteDe,
   noitesCumpridas,
   prazoDaRegra,
 } from "./sleepHygiene";
@@ -224,8 +223,8 @@ function proximas(minuto, now, dias, resolvida) {
 /**
  * O aviso da regra ativa da escada, ou `null` se não há o que avisar.
  *
- * Sem escada configurada, sem regra ativa (a anterior virou rotina e a
- * próxima não foi escolhida) ou com a regra 0, que não tem prazo.
+ * Sem escada configurada ou sem regra ativa (a anterior virou rotina e a
+ * próxima não foi escolhida).
  *
  * @param {{alvo: string, degraus: Array<object>}|null} hygiene o formato do
  *   `getHygiene`, o mesmo que a jornada recebe
@@ -294,8 +293,7 @@ export function sleepReminderSchedule({
     // A noite aqui é a da escada (fronteira 6h depois do alvo), a mesma em
     // que o "cumpri" cai. Quem já marcou a regra da noite não é avisado.
     const cumpridas = noitesCumpridas(records, regra.regra, regra.alvo);
-    const resolvida = (at) =>
-      cumpridas.has(diaDaRegra(regra.regra, at, regra.alvo));
+    const resolvida = (at) => cumpridas.has(noiteDe(at, regra.alvo));
     for (const at of proximas(regra.minuto, now, dias, resolvida)) {
       agenda.push({ kind: "rule", at, regra: regra.regra });
     }
@@ -307,7 +305,7 @@ export function sleepReminderSchedule({
 const AVISO_DA_REGRA = {
   10: "Em meia hora, a cafeína de hoje acaba.",
   3: "Em meia hora, nada de comida pesada nem álcool até deitar.",
-  2: "Em meia hora, hora de encerrar o trabalho.",
+  2: "Em meia hora, nada de esforço intenso até deitar.",
   1: "Em meia hora, hora de largar as telas.",
 };
 

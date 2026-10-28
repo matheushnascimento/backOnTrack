@@ -375,8 +375,8 @@ describe("deriveJourney com a escada da higiene do sono", () => {
     expect(j.level).toBeGreaterThanOrEqual(2);
   });
 
-  it("as cinco formadas: o sono fica estável", () => {
-    const degraus = ["10", "3", "2", "1", "0"].map((regra, i) => ({
+  it("as quatro formadas: o sono fica estável", () => {
+    const degraus = ["10", "3", "2", "1"].map((regra, i) => ({
       regra,
       startedAt: AGORA - (100 - i) * DIA,
       conqueredAt: AGORA - (90 - i) * DIA,
