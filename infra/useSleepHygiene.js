@@ -25,6 +25,7 @@ import { horaAgora } from "@/constants/timeSpan";
 import {
   add,
   conquerHygieneRule,
+  dropHygieneRule,
   setHygieneTarget,
   startHygieneRule,
   store,
@@ -72,6 +73,14 @@ export function useSleepHygiene() {
     [estado],
   );
 
+  /**
+   * Troca a regra ativa: sem nenhuma formada, o cartão volta pra escolha da
+   * primeira; com alguma, pra escolha da próxima.
+   */
+  const trocar = useCallback(() => {
+    if (estado.ativa) dropHygieneRule(estado.ativa);
+  }, [estado.ativa]);
+
   /** Marca a regra ativa como cumprida, agora. */
   const cumprir = useCallback(() => {
     if (!estado.ativa) return;
@@ -91,6 +100,7 @@ export function useSleepHygiene() {
     configurar,
     comecar,
     cumprir,
+    trocar,
     mudarAlvo: setHygieneTarget,
   };
 }

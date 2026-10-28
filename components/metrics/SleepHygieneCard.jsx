@@ -22,6 +22,9 @@ import TimeFieldRow from "./TimeFieldRow";
 //   2. regra ativa: o texto com o horário de hoje e "cumpri"
 //   3. regra formada: escolher a próxima
 //   4. as quatro formadas
+//
+// Enquanto a regra ativa não se forma, "Trocar" no rodapé desiste dela e
+// volta pra escolha (1, ou 3 se já houver regra formada).
 
 const TITULO = REGRAS.reduce((o, r) => ({ ...o, [r.key]: r.titulo }), {});
 
@@ -166,6 +169,24 @@ function Rodape({ h }) {
         >
           Já formadas: {formadas}
         </Text>
+      ) : null}
+      {h.ativa ? (
+        <View className="flex-row items-center justify-between gap-3">
+          <Text
+            className="flex-1 text-sm text-body-secondary dark:text-body-secondary-dark"
+            style={{ fontFamily: "Inter_400Regular" }}
+          >
+            Regra de agora:{" "}
+            <Text className="text-ink dark:text-ink-dark">
+              {TITULO[h.ativa]}
+            </Text>
+          </Text>
+          <BotaoPilula
+            rotulo="Trocar"
+            accessibilityLabel="Trocar a regra de agora"
+            onPress={h.trocar}
+          />
+        </View>
       ) : null}
       {editando ? (
         <View className="gap-2">

@@ -540,6 +540,17 @@ export function conquerHygieneRule(regra, now = Date.now()) {
   store.setCell(HYGIENE_STEPS, regra, "conqueredAt", now);
 }
 
+/**
+ * Desiste da regra ativa, pra escolher outra. Só regra ainda não formada:
+ * conquista não se perde. Os rituais já marcados ficam no histórico, e voltam
+ * a contar se a pessoa escolher a mesma regra de novo.
+ */
+export function dropHygieneRule(regra) {
+  if (!store.hasRow(HYGIENE_STEPS, regra)) return;
+  if (store.getCell(HYGIENE_STEPS, regra, "conqueredAt") > 0) return;
+  store.delRow(HYGIENE_STEPS, regra);
+}
+
 // --- Testers (tela de admin, Track A do M3-5) ---
 
 // Normaliza o número pra algo próximo de E.164: mantém dígitos e um "+" inicial.
