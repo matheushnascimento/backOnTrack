@@ -23,8 +23,9 @@ import TimeFieldRow from "./TimeFieldRow";
 //   3. regra formada: escolher a próxima
 //   4. as quatro formadas
 //
-// Enquanto a regra ativa não se forma, "Trocar" no rodapé desiste dela e
-// volta pra escolha (1, ou 3 se já houver regra formada).
+// O rodapé é uma linha com dois links. "Regra de agora", enquanto a regra
+// ativa não se forma, desiste dela e volta pra escolha (1, ou 3 se já houver
+// regra formada). "Deitar às" abre a alteração do horário-alvo.
 
 const TITULO = REGRAS.reduce((o, r) => ({ ...o, [r.key]: r.titulo }), {});
 
@@ -170,24 +171,6 @@ function Rodape({ h }) {
           Já formadas: {formadas}
         </Text>
       ) : null}
-      {h.ativa ? (
-        <View className="flex-row items-center justify-between gap-3">
-          <Text
-            className="flex-1 text-sm text-body-secondary dark:text-body-secondary-dark"
-            style={{ fontFamily: "Inter_400Regular" }}
-          >
-            Regra de agora:{" "}
-            <Text className="text-ink dark:text-ink-dark">
-              {TITULO[h.ativa]}
-            </Text>
-          </Text>
-          <BotaoPilula
-            rotulo="Trocar"
-            accessibilityLabel="Trocar a regra de agora"
-            onPress={h.trocar}
-          />
-        </View>
-      ) : null}
       {editando ? (
         <View className="gap-2">
           <TimeFieldRow
@@ -215,35 +198,59 @@ function Rodape({ h }) {
           </View>
         </View>
       ) : (
+        // Uma linha, dois links: menos botão na frente da regra de hoje.
         <View className="flex-row items-center justify-between gap-3">
-          <Text
-            className="text-sm text-body-secondary dark:text-body-secondary-dark"
-            style={{ fontFamily: "Inter_400Regular" }}
-          >
-            Deitar às{" "}
-            <Text
-              className="text-ink dark:text-ink-dark"
-              style={{ fontFamily: "JetBrainsMono_500Medium" }}
+          {h.ativa ? (
+            <Link
+              accessibilityLabel="Trocar a regra de agora"
+              onPress={h.trocar}
             >
-              {h.alvo}
-            </Text>
-          </Text>
-          <BotaoPilula
-            rotulo="Alterar"
+              Regra de agora: {TITULO[h.ativa]}
+            </Link>
+          ) : (
+            <View />
+          )}
+          <Link
             accessibilityLabel="Alterar horário-alvo"
             onPress={() => {
               setAlvo(h.alvo);
               setEditando(true);
             }}
-          />
+          >
+            Deitar às {h.alvo}
+          </Link>
         </View>
       )}
     </View>
   );
 }
 
-// Ação secundária do cartão. Antes era um texto pequeno no fim da linha
-// ("deitar às 23:00 · alterar") e não parecia tocável.
+/**
+ * Texto tocável do rodapé: cor primária e sublinhado, pra parecer tocável sem
+ * virar mais um botão no cartão.
+ *
+ * @param {{ accessibilityLabel: string, onPress: () => void, children: any }} props
+ */
+function Link({ accessibilityLabel, onPress, children }) {
+  return (
+    <Pressable
+      accessibilityRole="link"
+      accessibilityLabel={accessibilityLabel}
+      onPress={onPress}
+      hitSlop={8}
+      className="shrink active:opacity-70"
+    >
+      <Text
+        className="text-sm text-primary dark:text-primary-dark underline"
+        style={{ fontFamily: "Inter_500Medium" }}
+      >
+        {children}
+      </Text>
+    </Pressable>
+  );
+}
+
+// Salvar e cancelar do horário-alvo, só enquanto ele está sendo alterado.
 /** @param {{ rotulo: string, accessibilityLabel: string, desativado?: boolean, onPress: () => void }} props */
 function BotaoPilula({ rotulo, accessibilityLabel, desativado, onPress }) {
   return (
