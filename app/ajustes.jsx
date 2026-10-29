@@ -40,6 +40,7 @@ import {
   setReminderEnabled,
   setReminderTime,
   setSleepReminderEnabled,
+  setMedReminderEnabled,
   store,
   localStore,
 } from "@/infra/database";
@@ -125,6 +126,7 @@ export default function Ajustes() {
   const reminderEnabled = useValue("reminderEnabled", localStore);
   const reminderTime = useValue("reminderTime", localStore);
   const sleepReminderEnabled = useValue("sleepReminderEnabled", localStore);
+  const medReminderEnabled = useValue("medReminderEnabled", localStore);
   // Só pra explicar o toggle que não liga. Sem isto a pessoa clica, nada
   // acontece, e não há como saber que o sistema negou.
   // O interruptor mostra ligado só com a preferência E a permissão. Recusar o
@@ -137,6 +139,10 @@ export default function Ajustes() {
   });
   const sono = reminderToggleState({
     enabled: Boolean(sleepReminderEnabled),
+    granted: permissao,
+  });
+  const remedios = reminderToggleState({
+    enabled: Boolean(medReminderEnabled),
     granted: permissao,
   });
   /** Liga ou desliga, pedindo a permissão só quando é a pessoa que liga. */
@@ -360,7 +366,35 @@ export default function Ajustes() {
                   : `Aviso de deitar às ${sleepStatus.deitar} e de acordar às ${sleepStatus.acordar}.`}
             </Text>
           )}
-          {(foco.semPermissao || sono.semPermissao) && (
+          {/* Avisos do plano de remédios (#392). O texto da notificação não
+              diz o nome, porque aparece na tela de bloqueio. */}
+          <View className="flex-row items-center justify-between border-t border-surface-subtle px-4 py-3">
+            <View className="flex-1 pr-3">
+              <Text
+                className="text-sm text-ink dark:text-ink-dark"
+                style={{ fontFamily: "Inter_400Regular" }}
+              >
+                Lembretes dos remédios
+              </Text>
+              <Text
+                className="text-xs text-body-secondary dark:text-body-secondary-dark"
+                style={{ fontFamily: "Inter_400Regular", marginTop: 2 }}
+              >
+                No horário de cada remédio do plano. A notificação diz só
+                &quot;Hora do seu cuidado&quot;, sem o nome.
+              </Text>
+            </View>
+            <Switch
+              value={remedios.ligado}
+              onValueChange={(next) =>
+                alternarLembrete(next, setMedReminderEnabled)
+              }
+              accessibilityLabel="Ativar lembretes dos remédios"
+            />
+          </View>
+          {(foco.semPermissao ||
+            sono.semPermissao ||
+            remedios.semPermissao) && (
             <View className="gap-2 border-t border-surface-subtle px-4 py-3">
               <Text
                 className="text-xs text-body-secondary dark:text-body-secondary-dark"

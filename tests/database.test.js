@@ -19,6 +19,10 @@ import {
   conquerHygieneRule,
   swapHygieneRule,
   getHygiene,
+  addMed,
+  updateMed,
+  removeMed,
+  addMedTaken,
 } from "../infra/database";
 
 beforeEach(() => {
@@ -284,5 +288,31 @@ describe("trocar a regra ativa da higiene do sono (#396)", () => {
     expect(getHygiene().degraus).toEqual([
       { regra: "10", startedAt: 300, conqueredAt: null },
     ]);
+  });
+});
+
+describe("plano de remédios (#392)", () => {
+  test("cadastra, troca e tira do plano", () => {
+    const id = addMed("e2e1:k:aaa", 100);
+    expect(store.getRow("meds", id)).toEqual({
+      protegido: "e2e1:k:aaa",
+      createdAt: 100,
+    });
+    updateMed(id, "e2e1:k:bbb");
+    expect(store.getCell("meds", id, "protegido")).toBe("e2e1:k:bbb");
+    removeMed(id);
+    expect(store.hasRow("meds", id)).toBe(false);
+  });
+
+  test("o tomei é um autocuidado de hoje, com a nota em claro vazia", () => {
+    addMedTaken("e2e1:k:ccc");
+    const [r] = getAll("selfcare");
+    expect(r).toMatchObject({
+      type: "selfcare",
+      quantity: 1,
+      note: "",
+      protegido: "e2e1:k:ccc",
+    });
+    expect(getToday().selfcare).toHaveLength(1);
   });
 });

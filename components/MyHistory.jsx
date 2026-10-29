@@ -217,6 +217,16 @@ function SelfcareDetalhe({ obj }) {
         >
           {rotuloDoTipo(lido.tipo)}
         </Text>
+        {/* "Tomei" do plano de remédios (#392): o nome e o horário do plano
+            vêm dentro do campo cifrado. */}
+        {lido.remedio ? (
+          <Text
+            className="text-sm text-ink dark:text-ink-dark"
+            style={{ fontFamily: "Inter_400Regular" }}
+          >
+            {lido.remedio.nome}, do horário das {lido.remedio.horario}
+          </Text>
+        ) : null}
         {lido.nota ? (
           <Text
             className="text-sm text-body-secondary dark:text-body-secondary-dark"

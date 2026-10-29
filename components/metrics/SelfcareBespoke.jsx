@@ -13,6 +13,8 @@ import { useThemeTokens } from "@/constants/themeTokens";
 import { add, getById, update } from "@/infra/database";
 import { useProtection } from "@/infra/useProtection";
 
+import MedPlanToday from "./MedPlanToday";
+
 // Autocuidado, a 6ª métrica (#374, fatia 3a).
 //
 // O tipo e a nota vão cifrados ponta a ponta, então registrar exige a chave
@@ -45,8 +47,13 @@ export default function SelfcareBespoke({ onAfterAdd, recordId }) {
   );
 }
 
-/** @param {{ status: "sem-protecao"|"travado" }} props */
-function Portao({ status }) {
+/**
+ * Leva até a proteção quando ela não existe ou está travada. Exportado pra
+ * tela do plano de remédios, que tem a mesma exigência.
+ *
+ * @param {{ status: "sem-protecao"|"travado" }} props
+ */
+export function Portao({ status }) {
   const criar = status === "sem-protecao";
   return (
     <View className="gap-4">
@@ -98,14 +105,17 @@ function SelfcareCreate({ chave, onAfterAdd }) {
   }
 
   return (
-    <View className="gap-4">
-      <Tipos valor={tipo} onChange={setTipo} />
-      <Nota valor={nota} onChange={setNota} />
-      <BotaoPrimario
-        rotulo="Registrar"
-        onPress={handleSave}
-        desativado={!tipo}
-      />
+    <View className="gap-6">
+      <MedPlanToday chave={chave} />
+      <View className="gap-4">
+        <Tipos valor={tipo} onChange={setTipo} />
+        <Nota valor={nota} onChange={setNota} />
+        <BotaoPrimario
+          rotulo="Registrar"
+          onPress={handleSave}
+          desativado={!tipo}
+        />
+      </View>
     </View>
   );
 }
@@ -121,6 +131,9 @@ function SelfcareCreate({ chave, onAfterAdd }) {
 function SelfcareEdit({ recordId, chave, chaves, onAfterSave }) {
   const [tipo, setTipo] = useState(null);
   const [nota, setNota] = useState("");
+  // O "tomei" de um remédio do plano (#392). Não aparece na edição, mas tem
+  // que voltar no campo cifrado, que é reescrito inteiro.
+  const [remedio, setRemedio] = useState(null);
   const [estado, setEstado] = useState("carregando"); // carregando | aberto | travado | ilegivel
 
   useEffect(() => {
@@ -131,6 +144,7 @@ function SelfcareEdit({ recordId, chave, chaves, onAfterSave }) {
     if (lido.estado === "aberto") {
       setTipo(lido.tipo);
       setNota(lido.nota);
+      setRemedio(lido.remedio ?? null);
     }
   }, [recordId, chaves]);
 
@@ -156,7 +170,12 @@ function SelfcareEdit({ recordId, chave, chaves, onAfterSave }) {
       unit: "registro",
       quantity: 1,
       note: "",
-      protegido: cifrarRegistro(chave, { tipo, nota }),
+      // Um "tomei" que deixou de ser remédio perde o vínculo com o plano.
+      protegido: cifrarRegistro(chave, {
+        tipo,
+        nota,
+        remedio: tipo === "remedio" ? remedio : null,
+      }),
     });
     onAfterSave?.();
   }
@@ -250,7 +269,7 @@ function Nota({ valor, onChange }) {
 }
 
 /** @param {{ rotulo: string, onPress: () => void, desativado?: boolean }} props */
-function BotaoPrimario({ rotulo, onPress, desativado }) {
+export function BotaoPrimario({ rotulo, onPress, desativado }) {
   return (
     <Pressable
       accessibilityRole="button"
