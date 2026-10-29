@@ -23,16 +23,25 @@ import TimeFieldRow from "./TimeFieldRow";
 //   3. regra formada: escolher a próxima
 //   4. as quatro formadas
 //
-// O rodapé é uma linha com dois links. "Regra de agora", enquanto a regra
-// ativa não se forma, desiste dela e volta pra escolha (1, ou 3 se já houver
-// regra formada). "Deitar às" abre a alteração do horário-alvo.
+// O rodapé é uma linha com dois links. "Regra de agora" abre a lista das
+// regras ainda não iniciadas; a ativa só muda quando outra for escolhida, e
+// "Manter" fecha a lista sem mexer em nada. "Deitar às" abre a alteração do
+// horário-alvo.
 
 const TITULO = REGRAS.reduce((o, r) => ({ ...o, [r.key]: r.titulo }), {});
 
 export default function SleepHygieneCard() {
   const h = useSleepHygiene();
+  const [trocando, setTrocando] = useState(false);
 
   if (!h.configurada) return <Configurar h={h} />;
+  if (h.ativa && trocando) {
+    return (
+      <View className="gap-3 rounded-2xl bg-surface-subtle dark:bg-surface-subtle-dark px-5 py-4">
+        <TrocarRegra h={h} onFechar={() => setTrocando(false)} />
+      </View>
+    );
+  }
   return (
     <View className="gap-3 rounded-2xl bg-surface-subtle dark:bg-surface-subtle-dark px-5 py-4">
       {h.ativa ? (
@@ -45,7 +54,7 @@ export default function SleepHygieneCard() {
       ) : (
         <Proxima h={h} />
       )}
-      <Rodape h={h} />
+      <Rodape h={h} onTrocar={() => setTrocando(true)} />
     </View>
   );
 }
@@ -156,7 +165,45 @@ function Proxima({ h }) {
   );
 }
 
-function Rodape({ h }) {
+/**
+ * As regras ainda não iniciadas, pra trocar a ativa. Nada muda até a pessoa
+ * escolher uma; "Manter" fecha sem mexer.
+ */
+function TrocarRegra({ h, onFechar }) {
+  return (
+    <>
+      <Corpo
+        titulo="Trocar a regra de agora"
+        texto={`"${TITULO[h.ativa]}" continua valendo até você escolher outra.`}
+      />
+      {h.disponiveis.length === 0 ? (
+        <Text
+          className="text-sm text-body-secondary dark:text-body-secondary-dark"
+          style={{ fontFamily: "Inter_400Regular" }}
+        >
+          Ela é a última que falta: não há outra pra pôr no lugar.
+        </Text>
+      ) : (
+        h.disponiveis.map((regra) => (
+          <OpcaoDeRegra
+            key={regra}
+            regra={regra}
+            alvo={h.alvo}
+            onPress={() => {
+              h.trocarPor(regra);
+              onFechar();
+            }}
+          />
+        ))
+      )}
+      <Link accessibilityLabel={`Manter ${TITULO[h.ativa]}`} onPress={onFechar}>
+        Manter {TITULO[h.ativa]}
+      </Link>
+    </>
+  );
+}
+
+function Rodape({ h, onTrocar }) {
   const [editando, setEditando] = useState(false);
   const [alvo, setAlvo] = useState(h.alvo);
   const formadas = h.conquistadas.map((k) => TITULO[k]).join(", ");
@@ -203,7 +250,7 @@ function Rodape({ h }) {
           {h.ativa ? (
             <Link
               accessibilityLabel="Trocar a regra de agora"
-              onPress={h.trocar}
+              onPress={onTrocar}
             >
               Regra de agora: {TITULO[h.ativa]}
             </Link>

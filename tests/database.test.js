@@ -17,7 +17,7 @@ import {
   removeTester,
   startHygieneRule,
   conquerHygieneRule,
-  dropHygieneRule,
+  swapHygieneRule,
   getHygiene,
 } from "../infra/database";
 
@@ -252,25 +252,37 @@ describe("corrigir a hora de um registro (#336)", () => {
 });
 
 describe("trocar a regra ativa da higiene do sono (#396)", () => {
-  test("desiste da regra ainda não formada", () => {
+  test("a ativa sai e a escolhida entra", () => {
     startHygieneRule("10", 100);
-    dropHygieneRule("10");
-    expect(getHygiene().degraus).toEqual([]);
+    swapHygieneRule("10", "1", 300);
+    expect(getHygiene().degraus).toEqual([
+      { regra: "1", startedAt: 300, conqueredAt: null },
+    ]);
   });
 
   test("regra formada não sai: conquista não se perde", () => {
     startHygieneRule("1", 100);
     conquerHygieneRule("1", 200);
-    dropHygieneRule("1");
+    swapHygieneRule("1", "10", 300);
     expect(getHygiene().degraus).toEqual([
       { regra: "1", startedAt: 100, conqueredAt: 200 },
     ]);
   });
 
-  test("escolher a mesma regra de novo recomeça a data", () => {
-    startHygieneRule("10", 100);
-    dropHygieneRule("10");
+  test("não troca por regra já iniciada", () => {
+    startHygieneRule("1", 100);
+    conquerHygieneRule("1", 200);
     startHygieneRule("10", 300);
-    expect(getHygiene().degraus[0].startedAt).toBe(300);
+    swapHygieneRule("10", "1", 400);
+    expect(getHygiene().degraus.map((d) => d.regra)).toEqual(["1", "10"]);
+  });
+
+  test("escolher de volta a regra que saiu recomeça a data", () => {
+    startHygieneRule("10", 100);
+    swapHygieneRule("10", "1", 200);
+    swapHygieneRule("1", "10", 300);
+    expect(getHygiene().degraus).toEqual([
+      { regra: "10", startedAt: 300, conqueredAt: null },
+    ]);
   });
 });

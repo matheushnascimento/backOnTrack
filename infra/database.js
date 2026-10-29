@@ -541,14 +541,21 @@ export function conquerHygieneRule(regra, now = Date.now()) {
 }
 
 /**
- * Desiste da regra ativa, pra escolher outra. Só regra ainda não formada:
- * conquista não se perde. Os rituais já marcados ficam no histórico, e voltam
- * a contar se a pessoa escolher a mesma regra de novo.
+ * Troca a regra ativa por outra ainda não iniciada. Só sai regra ainda não
+ * formada: conquista não se perde. Os rituais da que saiu ficam no histórico,
+ * e voltam a contar se a pessoa escolher a mesma regra de novo.
+ *
+ * Numa transação: entre apagar uma e criar a outra, a escada ficaria sem
+ * degrau, e a tela piscaria a configuração do começo.
  */
-export function dropHygieneRule(regra) {
-  if (!store.hasRow(HYGIENE_STEPS, regra)) return;
-  if (store.getCell(HYGIENE_STEPS, regra, "conqueredAt") > 0) return;
-  store.delRow(HYGIENE_STEPS, regra);
+export function swapHygieneRule(de, para, now = Date.now()) {
+  if (!store.hasRow(HYGIENE_STEPS, de)) return;
+  if (store.getCell(HYGIENE_STEPS, de, "conqueredAt") > 0) return;
+  if (store.hasRow(HYGIENE_STEPS, para)) return;
+  store.transaction(() => {
+    store.delRow(HYGIENE_STEPS, de);
+    store.setRow(HYGIENE_STEPS, para, { startedAt: now });
+  });
 }
 
 // --- Testers (tela de admin, Track A do M3-5) ---
