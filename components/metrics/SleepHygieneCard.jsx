@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Pressable, Text, View } from "react-native";
 
 import { parseHHMM } from "@/constants/sleepTimes";
+import { useThemeTokens } from "@/constants/themeTokens";
 import {
   LIMIAR_DA_ESCADA,
   REGRAS,
@@ -12,6 +13,7 @@ import {
 import { useSleepHygiene } from "@/infra/useSleepHygiene";
 
 import TimeFieldRow from "./TimeFieldRow";
+import TimePickerField from "./TimePickerField";
 
 // A frente da tela do sono desde o #396: a regra da higiene do sono que se
 // cumpre hoje. Deitar, acordar, duração e qualidade ficam embaixo, opcionais.
@@ -26,8 +28,7 @@ import TimeFieldRow from "./TimeFieldRow";
 // O rodapé tem duas colunas: a regra de agora com "mudar" embaixo, e "Deitar
 // às" com o horário embaixo, os dois como link. "mudar" abre a lista das
 // regras ainda não iniciadas; a ativa só muda quando outra for escolhida, e
-// "Manter" fecha a lista sem mexer em nada. O horário abre a alteração do
-// horário-alvo.
+// "Manter" fecha a lista sem mexer em nada. O horário abre o relógio direto.
 
 const TITULO = REGRAS.reduce((o, r) => ({ ...o, [r.key]: r.titulo }), {});
 
@@ -205,8 +206,7 @@ function TrocarRegra({ h, onFechar }) {
 }
 
 function Rodape({ h, onTrocar }) {
-  const [editando, setEditando] = useState(false);
-  const [alvo, setAlvo] = useState(h.alvo);
+  const t = useThemeTokens();
   const formadas = h.conquistadas.map((k) => TITULO[k]).join(", ");
 
   return (
@@ -219,63 +219,41 @@ function Rodape({ h, onTrocar }) {
           Já formadas: {formadas}
         </Text>
       ) : null}
-      {editando ? (
-        <View className="gap-2">
-          <TimeFieldRow
-            label="Deitar às"
-            value={alvo}
-            onChange={setAlvo}
-            placeholder="23:00"
-            accessibilityLabel="Horário-alvo de deitar"
-          />
-          <View className="flex-row gap-2">
-            <BotaoPilula
-              rotulo="Salvar"
-              accessibilityLabel="Salvar horário-alvo"
-              desativado={parseHHMM(alvo) == null}
-              onPress={() => {
-                h.mudarAlvo(alvo);
-                setEditando(false);
-              }}
-            />
-            <BotaoPilula
-              rotulo="Cancelar"
-              accessibilityLabel="Cancelar alteração do horário-alvo"
-              onPress={() => setEditando(false)}
-            />
-          </View>
-        </View>
-      ) : (
-        // Duas colunas, cada uma com o valor em cima e o link embaixo: menos
-        // botão na frente da regra de hoje.
-        <View className="flex-row items-start justify-between gap-3">
-          {h.ativa ? (
-            <View className="shrink gap-0.5">
-              <Valor>{TITULO[h.ativa]}</Valor>
-              <Link
-                accessibilityLabel="Mudar a regra de agora"
-                onPress={onTrocar}
-              >
-                mudar
-              </Link>
-            </View>
-          ) : (
-            <View />
-          )}
-          <View className="items-end gap-0.5">
-            <Valor>Deitar às</Valor>
+      {/* Duas colunas, cada uma com o valor em cima e o link embaixo: menos
+          botão na frente da regra de hoje. */}
+      <View className="flex-row items-start justify-between gap-3">
+        {h.ativa ? (
+          <View className="shrink gap-0.5">
+            <Valor>{TITULO[h.ativa]}</Valor>
             <Link
-              accessibilityLabel="Alterar horário-alvo"
-              onPress={() => {
-                setAlvo(h.alvo);
-                setEditando(true);
-              }}
+              accessibilityLabel="Mudar a regra de agora"
+              onPress={onTrocar}
             >
-              {h.alvo}
+              mudar
             </Link>
           </View>
+        ) : (
+          <View />
+        )}
+        <View className="items-end gap-0.5">
+          <Valor>Deitar às</Valor>
+          {/* O horário é o link e abre o relógio direto. Cada toque no
+              relógio já grava, como nos outros campos de horário. */}
+          <TimePickerField
+            value={h.alvo}
+            onChangeText={(v) => {
+              if (parseHHMM(v) != null) h.mudarAlvo(v);
+            }}
+            accessibilityLabel="Alterar horário-alvo de deitar"
+            style={{
+              color: t.primary,
+              textDecorationLine: "underline",
+              fontFamily: "Inter_500Medium",
+              fontSize: 14,
+            }}
+          />
         </View>
-      )}
+      </View>
     </View>
   );
 }
@@ -312,28 +290,6 @@ function Link({ accessibilityLabel, onPress, children }) {
         style={{ fontFamily: "Inter_500Medium" }}
       >
         {children}
-      </Text>
-    </Pressable>
-  );
-}
-
-// Salvar e cancelar do horário-alvo, só enquanto ele está sendo alterado.
-/** @param {{ rotulo: string, accessibilityLabel: string, desativado?: boolean, onPress: () => void }} props */
-function BotaoPilula({ rotulo, accessibilityLabel, desativado, onPress }) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      accessibilityState={{ disabled: Boolean(desativado) }}
-      disabled={desativado}
-      onPress={onPress}
-      className={`rounded-full border border-border-strong dark:border-border-strong-dark bg-white dark:bg-card-dark px-4 py-2 active:opacity-70 ${desativado ? "opacity-40" : ""}`}
-    >
-      <Text
-        className="text-sm text-primary dark:text-primary-dark"
-        style={{ fontFamily: "Inter_600SemiBold" }}
-      >
-        {rotulo}
       </Text>
     </Pressable>
   );
