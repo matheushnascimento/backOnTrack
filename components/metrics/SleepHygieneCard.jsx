@@ -23,9 +23,10 @@ import TimeFieldRow from "./TimeFieldRow";
 //   3. regra formada: escolher a próxima
 //   4. as quatro formadas
 //
-// O rodapé é uma linha com dois links. "Regra de agora" abre a lista das
+// O rodapé tem duas colunas: a regra de agora com "mudar" embaixo, e "Deitar
+// às" com o horário embaixo, os dois como link. "mudar" abre a lista das
 // regras ainda não iniciadas; a ativa só muda quando outra for escolhida, e
-// "Manter" fecha a lista sem mexer em nada. "Deitar às" abre a alteração do
+// "Manter" fecha a lista sem mexer em nada. O horário abre a alteração do
 // horário-alvo.
 
 const TITULO = REGRAS.reduce((o, r) => ({ ...o, [r.key]: r.titulo }), {});
@@ -245,30 +246,49 @@ function Rodape({ h, onTrocar }) {
           </View>
         </View>
       ) : (
-        // Uma linha, dois links: menos botão na frente da regra de hoje.
-        <View className="flex-row items-center justify-between gap-3">
+        // Duas colunas, cada uma com o valor em cima e o link embaixo: menos
+        // botão na frente da regra de hoje.
+        <View className="flex-row items-start justify-between gap-3">
           {h.ativa ? (
-            <Link
-              accessibilityLabel="Trocar a regra de agora"
-              onPress={onTrocar}
-            >
-              Regra de agora: {TITULO[h.ativa]}
-            </Link>
+            <View className="shrink gap-0.5">
+              <Valor>{TITULO[h.ativa]}</Valor>
+              <Link
+                accessibilityLabel="Mudar a regra de agora"
+                onPress={onTrocar}
+              >
+                mudar
+              </Link>
+            </View>
           ) : (
             <View />
           )}
-          <Link
-            accessibilityLabel="Alterar horário-alvo"
-            onPress={() => {
-              setAlvo(h.alvo);
-              setEditando(true);
-            }}
-          >
-            Deitar às {h.alvo}
-          </Link>
+          <View className="items-end gap-0.5">
+            <Valor>Deitar às</Valor>
+            <Link
+              accessibilityLabel="Alterar horário-alvo"
+              onPress={() => {
+                setAlvo(h.alvo);
+                setEditando(true);
+              }}
+            >
+              {h.alvo}
+            </Link>
+          </View>
         </View>
       )}
     </View>
+  );
+}
+
+/** O que o link embaixo muda, na cor do texto. */
+function Valor({ children }) {
+  return (
+    <Text
+      className="text-sm text-ink dark:text-ink-dark"
+      style={{ fontFamily: "Inter_400Regular" }}
+    >
+      {children}
+    </Text>
   );
 }
 
