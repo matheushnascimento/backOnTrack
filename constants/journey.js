@@ -152,7 +152,7 @@ export function isBroken(verdicts, cadence, porSemana = 3) {
  * - **Portão:** a primeira regra formada passa o portão do nível 1 (decisão
  *   de 27/10). As seguintes sobem em paralelo e não derrubam nível, porque
  *   conquista não se perde.
- * - **Estável:** as cinco regras formadas.
+ * - **Estável:** as quatro regras formadas.
  * - **Ninguém cai por configurar.** Quem já passava o portão (ou já era
  *   estável) pelas noites com deitar continua passando: os sinais antigos são
  *   avaliados no instante da configuração, e não hoje. Avaliar hoje faria a

@@ -25,6 +25,7 @@ import { horaAgora } from "@/constants/timeSpan";
 import {
   add,
   conquerHygieneRule,
+  swapHygieneRule,
   setHygieneTarget,
   startHygieneRule,
   store,
@@ -72,6 +73,15 @@ export function useSleepHygiene() {
     [estado],
   );
 
+  /** Troca a regra ativa por outra ainda não iniciada. */
+  const trocarPor = useCallback(
+    (regra) => {
+      if (!estado.ativa || !(estado.disponiveis ?? []).includes(regra)) return;
+      swapHygieneRule(estado.ativa, regra);
+    },
+    [estado.ativa, estado.disponiveis],
+  );
+
   /** Marca a regra ativa como cumprida, agora. */
   const cumprir = useCallback(() => {
     if (!estado.ativa) return;
@@ -91,6 +101,7 @@ export function useSleepHygiene() {
     configurar,
     comecar,
     cumprir,
+    trocarPor,
     mudarAlvo: setHygieneTarget,
   };
 }

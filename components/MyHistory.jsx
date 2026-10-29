@@ -143,7 +143,7 @@ export function HistoryCard({
           className="text-sm text-ink dark:text-ink-dark"
           style={{ fontFamily: "Inter_400Regular" }}
         >
-          {textoDaRegra(ritual.regra, "")}
+          {textoDaRegra(ritual.regra, "") || "Regra que saiu do método"}
           {ritual.at ? `, cumprida às ${ritual.at}` : ""}
         </Text>
       ) : value ? (

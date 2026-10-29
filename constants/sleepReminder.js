@@ -26,11 +26,25 @@
  * tarde, o lembrete vai junto. Isso reforça regularidade, que é o que o §5
  * mede, e não puxa o horário pra cedo.
  *
+ * ## A regra da higiene do sono (#396, fatia 4)
+ *
+ * Com a escada configurada, entra um terceiro aviso: meia hora antes do prazo
+ * da regra ativa ("Em meia hora, hora de largar as telas"). O horário vem do
+ * alvo que a pessoa escolheu, e não do aprendido, então ele existe desde a
+ * primeira noite.
+ * aviso: ela é marcada à noite, junto do deitar.
+ *
  * Isolado como função pura pelo motivo de sempre: o `expo-notifications` não
  * roda no jest, e a regra inteira dá pra testar sem ele.
  */
 
 import { diaLocal } from "./habitSignals";
+import {
+  estadoDaEscada,
+  noiteDe,
+  noitesCumpridas,
+  prazoDaRegra,
+} from "./sleepHygiene";
 import { bedOf, nightInstant, parseHHMM, wakeOf } from "./sleepTimes";
 import { fmtClock } from "./timeSpan";
 
@@ -181,8 +195,11 @@ function noitesResolvidas(records, now) {
  *
  * `setDate` em vez de somar 24h, pra hora de parede sobreviver à troca de
  * horário de verão.
+ *
+ * @param {(at: number) => boolean} resolvida a noite deste instante já não
+ *   precisa do aviso?
  */
-function proximas(minuto, now, dias, resolvidas) {
+function proximas(minuto, now, dias, resolvida) {
   const agora = new Date(now);
   const datas = [];
   // Folga de tentativas: cada noite resolvida pula um dia, e no máximo uma
@@ -197,10 +214,39 @@ function proximas(minuto, now, dias, resolvidas) {
     );
     const at = d.getTime();
     if (at <= now) continue;
-    if (resolvidas.has(noiteDoInstante(at))) continue;
+    if (resolvida(at)) continue;
     datas.push(at);
   }
   return datas;
+}
+
+/**
+ * O aviso da regra ativa da escada, ou `null` se não há o que avisar.
+ *
+ * Sem escada configurada ou sem regra ativa (a anterior virou rotina e a
+ * próxima não foi escolhida).
+ *
+ * @param {{alvo: string, degraus: Array<object>}|null} hygiene o formato do
+ *   `getHygiene`, o mesmo que a jornada recebe
+ * @returns {{regra: string, alvo: string, minuto: number}|null} `minuto` é o
+ *   do aviso, já com a folga
+ */
+export function ruleReminder(records, hygiene, now = Date.now()) {
+  if (!hygiene) return null;
+  const escada = estadoDaEscada({
+    alvo: hygiene.alvo,
+    degraus: hygiene.degraus,
+    records,
+    now,
+  });
+  if (!escada.configurada || !escada.ativa) return null;
+  const prazo = parseHHMM(prazoDaRegra(escada.ativa, escada.alvo));
+  if (prazo == null) return null;
+  return {
+    regra: escada.ativa,
+    alvo: escada.alvo,
+    minuto: (prazo - FOLGA_MIN + MIN_POR_DIA) % MIN_POR_DIA,
+  };
 }
 
 /**
@@ -211,14 +257,17 @@ function proximas(minuto, now, dias, resolvidas) {
  *   enabled: boolean,
  *   dias: number,
  *   now?: number,
+ *   hygiene?: {alvo: string, degraus: Array<object>}|null,
  * }} args `dias` vem do teto de agendamento do lembrete do foco (#365).
- * @returns {Array<{kind: "bed"|"wake", at: number}>} em ordem de horário
+ * @returns {Array<{kind: "bed"|"wake"|"rule", at: number, regra?: string}>}
+ *   em ordem de horário
  */
 export function sleepReminderSchedule({
   records,
   enabled,
   dias,
   now = Date.now(),
+  hygiene = null,
 }) {
   if (!enabled) return [];
   const { bed, wake } = typicalSleepTimes(records, now);
@@ -227,18 +276,38 @@ export function sleepReminderSchedule({
   const agenda = [];
   if (bed != null) {
     const alvo = (bed - FOLGA_MIN + MIN_POR_DIA) % MIN_POR_DIA;
-    for (const at of proximas(alvo, now, dias, comBed)) {
+    const resolvida = (at) => comBed.has(noiteDoInstante(at));
+    for (const at of proximas(alvo, now, dias, resolvida)) {
       agenda.push({ kind: "bed", at });
     }
   }
   if (wake != null) {
     const alvo = (wake + FOLGA_MIN) % MIN_POR_DIA;
-    for (const at of proximas(alvo, now, dias, comAcordar)) {
+    const resolvida = (at) => comAcordar.has(noiteDoInstante(at));
+    for (const at of proximas(alvo, now, dias, resolvida)) {
       agenda.push({ kind: "wake", at });
+    }
+  }
+  const regra = ruleReminder(records, hygiene, now);
+  if (regra) {
+    // A noite aqui é a da escada (fronteira 6h depois do alvo), a mesma em
+    // que o "cumpri" cai. Quem já marcou a regra da noite não é avisado.
+    const cumpridas = noitesCumpridas(records, regra.regra, regra.alvo);
+    const resolvida = (at) => cumpridas.has(noiteDe(at, regra.alvo));
+    for (const at of proximas(regra.minuto, now, dias, resolvida)) {
+      agenda.push({ kind: "rule", at, regra: regra.regra });
     }
   }
   return agenda.sort((a, b) => a.at - b.at);
 }
+
+/** O que cada regra pede, no aviso de meia hora antes do prazo. */
+const AVISO_DA_REGRA = {
+  10: "Em meia hora, a cafeína de hoje acaba.",
+  3: "Em meia hora, nada de comida pesada nem álcool até deitar.",
+  2: "Em meia hora, nada de esforço intenso até deitar.",
+  1: "Em meia hora, hora de largar as telas.",
+};
 
 /**
  * Texto de cada lembrete, sem cobrança.
@@ -247,16 +316,22 @@ export function sleepReminderSchedule({
  * dizer "hora de deitar" transformaria um padrão observado numa ordem. O de
  * acordar segue o mesmo convite do lembrete do foco (#364).
  *
- * @param {"bed"|"wake"} kind
+ * O da regra segue o mesmo tom: avisa o prazo que a pessoa escolheu, sem
+ * perguntar se ela vai cumprir.
+ *
+ * @param {"bed"|"wake"|"rule"} kind
+ * @param {string} [regra] só pro `rule`
  * @returns {{title: string, body: string}}
  */
-export function sleepReminderText(kind) {
+export function sleepReminderText(kind, regra) {
   return {
     title: "Back on Track",
     body:
-      kind === "bed"
-        ? "Em meia hora costuma ser sua hora de deitar."
-        : "Um minuto pra registrar a noite?",
+      kind === "rule"
+        ? (AVISO_DA_REGRA[regra] ?? "Em meia hora, o prazo da regra de hoje.")
+        : kind === "bed"
+          ? "Em meia hora costuma ser sua hora de deitar."
+          : "Um minuto pra registrar a noite?",
   };
 }
 
@@ -290,15 +365,18 @@ export function sleepTakesOverFocus({
  *
  * @param {Array<object>} records
  * @param {number} [now]
- * @returns {{faltam: number, deitar: string|null, acordar: string|null}}
+ * @param {{alvo: string, degraus: Array<object>}|null} [hygiene]
+ * @returns {{faltam: number, deitar: string|null, acordar: string|null, regra: string|null}}
  *   `faltam` são as noites com horário de deitar que ainda faltam; os horários
  *   são os dos AVISOS, já com a folga, e não os típicos.
  */
-export function sleepReminderStatus(records, now = Date.now()) {
+export function sleepReminderStatus(records, now = Date.now(), hygiene = null) {
   const { bed, wake, nBed } = typicalSleepTimes(records, now);
+  const regra = ruleReminder(records, hygiene, now);
   return {
     faltam: Math.max(0, MIN_NOITES - nBed),
     deitar: bed == null ? null : fmtClock(bed - FOLGA_MIN + MIN_POR_DIA),
     acordar: wake == null ? null : fmtClock(wake + FOLGA_MIN),
+    regra: regra == null ? null : fmtClock(regra.minuto),
   };
 }

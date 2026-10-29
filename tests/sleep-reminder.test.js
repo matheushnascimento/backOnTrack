@@ -10,6 +10,7 @@ import {
   FOLGA_MIN,
   MIN_NOITES,
   medianaCircular,
+  ruleReminder,
   sleepReminderSchedule,
   sleepReminderStatus,
   sleepReminderText,
@@ -273,7 +274,12 @@ describe("sleepReminderStatus", () => {
 
   it("aprendendo, diz quantas noites faltam", () => {
     const st = sleepReminderStatus(semana().slice(0, 3), now);
-    expect(st).toEqual({ faltam: 2, deitar: null, acordar: null });
+    expect(st).toEqual({
+      faltam: 2,
+      deitar: null,
+      acordar: null,
+      regra: null,
+    });
   });
 
   it("com noites, mostra os horários dos AVISOS, já com a folga", () => {
@@ -281,6 +287,7 @@ describe("sleepReminderStatus", () => {
       faltam: 0,
       deitar: "22:30",
       acordar: "07:30",
+      regra: null,
     });
   });
 
@@ -292,6 +299,135 @@ describe("sleepReminderStatus", () => {
       faltam: 0,
       deitar: "23:40",
       acordar: null,
+      regra: null,
     });
+  });
+});
+
+// Higiene do sono (#396, fatia 4): com a escada configurada, a regra ativa
+// ganha aviso meia hora antes do prazo, calculado pelo alvo escolhido.
+describe("o aviso da regra ativa", () => {
+  const agora = em(20, 12);
+
+  /** Escada com alvo e a regra `regra` ativa desde o dia 18. */
+  const escada = (regra, alvo = "23:00", conqueredAt = null) => ({
+    alvo,
+    degraus: [{ regra, startedAt: em(18, 12), conqueredAt }],
+  });
+
+  /** "Cumpri" tocado no dia `d` às `h`, como linha crua. */
+  const cumpri = (d, regra, h, m = 0) => ({
+    type: "sleep",
+    quantity: 0,
+    unit: "regra",
+    createdAt: em(d, h, m),
+    details: JSON.stringify({
+      regra,
+      at: `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`,
+    }),
+  });
+
+  const daRegra = (agenda) => agenda.filter((a) => a.kind === "rule");
+
+  it("meia hora antes do prazo, desde a primeira noite", () => {
+    // Sem nenhuma noite com deitar: o aviso da regra não depende do aprendido.
+    const agenda = sleepReminderSchedule({
+      records: [],
+      enabled: true,
+      dias: 3,
+      now: agora,
+      hygiene: escada("1"),
+    });
+    expect(agenda.every((a) => a.kind === "rule")).toBe(true);
+    expect(agenda.map((a) => quando(a.at))).toEqual([
+      [20, 21, 30],
+      [21, 21, 30],
+      [22, 21, 30],
+    ]);
+    expect(agenda[0].regra).toBe("1");
+  });
+
+  it("noite em que a regra já foi cumprida não é avisada", () => {
+    const agenda = sleepReminderSchedule({
+      records: [cumpri(20, "1", 21)],
+      enabled: true,
+      dias: 3,
+      now: em(20, 21, 5),
+      hygiene: escada("1"),
+    });
+    expect(daRegra(agenda).map((a) => quando(a.at))).toEqual([
+      [21, 21, 30],
+      [22, 21, 30],
+      [23, 21, 30],
+    ]);
+  });
+
+  it("cumprir outra regra não cala o aviso desta", () => {
+    const agenda = sleepReminderSchedule({
+      records: [cumpri(20, "10", 21)],
+      enabled: true,
+      dias: 1,
+      now: em(20, 21, 5),
+      hygiene: escada("1"),
+    });
+    expect(daRegra(agenda).map((a) => quando(a.at))).toEqual([[20, 21, 30]]);
+  });
+
+  it("o prazo dá a volta no relógio com o alvo depois da meia-noite", () => {
+    // Deitar às 00:30: cafeína até 14:30, aviso às 14:00.
+    const r = ruleReminder([], escada("10", "00:30"), agora);
+    expect(r).toEqual({ regra: "10", alvo: "00:30", minuto: hm(14) });
+  });
+
+  it("o 0 que saiu da escada não ganha aviso", () => {
+    // Degrau antigo de regra 0: ignorado, e a escada volta a não configurada.
+    expect(ruleReminder([], escada("0"), agora)).toBeNull();
+  });
+
+  it("sem regra ativa, nenhum aviso", () => {
+    // A anterior virou rotina e a próxima ainda não foi escolhida.
+    expect(ruleReminder([], escada("1", "23:00", em(19, 8)), agora)).toBeNull();
+    expect(ruleReminder([], { alvo: "", degraus: [] }, agora)).toBeNull();
+    expect(ruleReminder([], null, agora)).toBeNull();
+  });
+
+  it("desligado, nada", () => {
+    expect(
+      sleepReminderSchedule({
+        records: [],
+        enabled: false,
+        dias: 3,
+        now: agora,
+        hygiene: escada("1"),
+      }),
+    ).toEqual([]);
+  });
+
+  it("convive com os avisos aprendidos, em ordem de horário", () => {
+    const agenda = sleepReminderSchedule({
+      records: semana(),
+      enabled: true,
+      dias: 1,
+      now: em(15, 12),
+      hygiene: escada("1"),
+    });
+    expect(agenda.map((a) => a.kind)).toEqual(["rule", "bed", "wake"]);
+  });
+
+  it("o texto diz o que a regra pede", () => {
+    expect(sleepReminderText("rule", "1").body).toBe(
+      "Em meia hora, hora de largar as telas.",
+    );
+    expect(sleepReminderText("rule", "10").body).toBe(
+      "Em meia hora, a cafeína de hoje acaba.",
+    );
+    expect(sleepReminderText("rule", "2").body).toBe(
+      "Em meia hora, nada de esforço intenso até deitar.",
+    );
+  });
+
+  it("Ajustes mostra o horário do aviso da regra", () => {
+    expect(sleepReminderStatus([], agora, escada("1")).regra).toBe("21:30");
+    expect(sleepReminderStatus([], agora).regra).toBeNull();
   });
 });

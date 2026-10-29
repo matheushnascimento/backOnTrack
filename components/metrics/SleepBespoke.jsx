@@ -273,7 +273,7 @@ function RitualEdit({ recordId, ritual, onAfterSave }) {
           className="text-base text-ink dark:text-ink-dark"
           style={{ fontFamily: "Inter_600SemiBold" }}
         >
-          {textoDaRegra(ritual.regra, "")}
+          {textoDaRegra(ritual.regra, "") || "Regra que saiu do método"}
         </Text>
       </View>
       <TimeFieldRow

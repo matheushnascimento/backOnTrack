@@ -54,7 +54,7 @@ export const store = createMergeableStore()
       createdAt: { type: "number" },
     },
     // Degraus da escada da higiene do sono (#396). Uma linha por regra, com a
-    // regra ("10", "3", "2", "1", "0") como id. Linha e não valor único: dois
+    // regra ("10", "3", "2", "1") como id. Linha e não valor único: dois
     // aparelhos mexendo ao mesmo tempo juntam célula por célula. Conquista só
     // se escreve, nunca se apaga. Ver `constants/sleepHygiene.js`.
     [HYGIENE_STEPS]: {
@@ -106,7 +106,7 @@ export const store = createMergeableStore()
     // contagem se ele for reconquistado.
     journeyGraduatedAt: { type: "string", default: "" },
     // Horário-alvo de deitar da higiene do sono (#396), "HH:MM". É dele que
-    // saem os horários das cinco regras. Vazio = método não configurado.
+    // saem os horários das quatro regras. Vazio = método não configurado.
     hygieneTarget: { type: "string", default: "" },
   });
 
@@ -538,6 +538,24 @@ export function conquerHygieneRule(regra, now = Date.now()) {
   if (!store.hasRow(HYGIENE_STEPS, regra)) return;
   if (store.getCell(HYGIENE_STEPS, regra, "conqueredAt") > 0) return;
   store.setCell(HYGIENE_STEPS, regra, "conqueredAt", now);
+}
+
+/**
+ * Troca a regra ativa por outra ainda não iniciada. Só sai regra ainda não
+ * formada: conquista não se perde. Os rituais da que saiu ficam no histórico,
+ * e voltam a contar se a pessoa escolher a mesma regra de novo.
+ *
+ * Numa transação: entre apagar uma e criar a outra, a escada ficaria sem
+ * degrau, e a tela piscaria a configuração do começo.
+ */
+export function swapHygieneRule(de, para, now = Date.now()) {
+  if (!store.hasRow(HYGIENE_STEPS, de)) return;
+  if (store.getCell(HYGIENE_STEPS, de, "conqueredAt") > 0) return;
+  if (store.hasRow(HYGIENE_STEPS, para)) return;
+  store.transaction(() => {
+    store.delRow(HYGIENE_STEPS, de);
+    store.setRow(HYGIENE_STEPS, para, { startedAt: now });
+  });
 }
 
 // --- Testers (tela de admin, Track A do M3-5) ---

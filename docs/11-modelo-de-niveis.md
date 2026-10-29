@@ -140,11 +140,12 @@ O §4 e o §4.2 já separavam o comportamento (deitar) do desfecho (duração), 
 | ----- | ------------------------------------- | ----------------- |
 | 10    | sem cafeína 10h antes                 | até 13h           |
 | 3     | sem comida pesada nem álcool 3h antes | até 20h           |
-| 2     | sem trabalho 2h antes                 | até 21h           |
+| 2     | sem esforço intenso 2h antes          | até 21h           |
 | 1     | sem telas 1h antes                    | até 22h           |
-| 0     | nenhuma soneca                        | de manhã          |
 
-**São cinco comportamentos, e o modelo forma um por vez.** Cobrar os cinco toda noite seria a lista de tarefas que o §1.5 recusa, e quebraria a fricção mínima do §4.2. Por isso o método vira uma **escada dentro do sono**: a pessoa escolhe por qual regra começa, e a próxima entra quando a anterior estiver consistente, pelo mesmo sinal que decide os níveis. A ocasião continua sendo **uma por noite**: a regra ativa cumprida.
+O método tem ainda o **0: zero soneca no despertador**, levantar no primeiro toque. Ele fica **fora da escada**, como citação do método na tela de configurar: é pequeno demais pra virar regra com registro, prazo e aviso (decisão de 28/10, abaixo).
+
+**São quatro comportamentos, e o modelo forma um por vez.** Cobrar os quatro toda noite seria a lista de tarefas que o §1.5 recusa, e quebraria a fricção mínima do §4.2. Por isso o método vira uma **escada dentro do sono**: a pessoa escolhe por qual regra começa, e a próxima entra quando a anterior estiver consistente, pelo mesmo sinal que decide os níveis. A ocasião continua sendo **uma por noite**: a regra ativa cumprida.
 
 **Regularidade pelo horário do ritual.** O §5 mede consistência de contexto, e o contexto agora é o momento em que a pessoa cumpre a regra, e não mais o deitar. O horário-alvo dá a referência.
 
@@ -157,9 +158,11 @@ O §4 e o §4.2 já separavam o comportamento (deitar) do desfecho (duração), 
 **Decisões de 27/10/2026**, que estavam em aberto:
 
 - **A primeira regra consistente passa o portão do nível 1** e libera a água. As regras seguintes sobem em paralelo e não derrubam nível. Assim a pessoa forma no máximo dois hábitos por vez, que é o teto do §3.
-- **A escada tem limiar próprio, mais leve que o do portão:** as 3 últimas noites cumpridas, num horário parecido (dispersão de até 2h). Com a barra do portão, cada regra levaria umas quatro semanas e as cinco quase meio ano. Começou em 80% de 14 noites e caiu pra 3 noites em 28/10, porque 14 já era longo demais pra cada fase. É provisório como os outros, e mora em `LIMIAR_DA_ESCADA` (`constants/sleepHygiene.js`).
-- **A regra 0 (soneca) é marcada à noite, sobre o dia que passou**, junto das outras. Continua sendo uma ocasião e um momento de registro por noite.
+- **A escada tem limiar próprio, mais leve que o do portão:** as 3 últimas noites cumpridas, num horário parecido (dispersão de até 2h). Com a barra do portão, cada regra levaria umas quatro semanas e todas quase meio ano. Começou em 80% de 14 noites e caiu pra 3 noites em 28/10, porque 14 já era longo demais pra cada fase. É provisório como os outros, e mora em `LIMIAR_DA_ESCADA` (`constants/sleepHygiene.js`).
+- ~~A regra 0 (soneca) é marcada à noite, sobre o dia que passou.~~ Revisto em 28/10: a decisão partiu de ler "soneca" como cochilo durante o dia. No método, o 0 é **zero soneca no despertador** (referência: o vídeo "O Método 10-3-2-1-0", de Laércio Refundini, capítulo "Método 0: acordar sem soneca"). Com isso corrigido, **o 0 saiu da escada**: fica só como citação. Registro antigo de regra 0 continua aparecendo como ritual no histórico, e não conta pra escada.
+- **O 2 é "sem esforço intenso"** (28/10), como no mesmo vídeo ("Método 2: como desacelerar o corpo"), e não "sem trabalho", que é a versão mais comum do método.
 - **A noite de um ritual vai até 6 horas depois do horário-alvo.** Quem deita às 23h e larga as telas às 00h10 ainda está na mesma noite, e a regra 10 marcada de tarde é da noite daquele dia.
+- **O lembrete do sono avisa a regra ativa**, meia hora antes do prazo ("Em meia hora, hora de largar as telas"). O horário sai do alvo escolhido, então o aviso existe desde a primeira noite, sem esperar o horário aprendido. Noite em que a regra já foi cumprida fica sem aviso.
 
 Implementação na #396.
 
