@@ -12,6 +12,7 @@ const TESTERS = "testers";
 const GOALS = "goals";
 const E2E_KEYS = "e2eKeys";
 const HYGIENE_STEPS = "hygieneSteps";
+const MEDS = "meds";
 
 // MergeableStore em vez de Store puro: pré-requisito de qualquer sync (M6,
 // ADR-009). Carrega metadata de CRDT pra merge determinístico entre devices.
@@ -60,6 +61,13 @@ export const store = createMergeableStore()
     [HYGIENE_STEPS]: {
       startedAt: { type: "number" },
       conqueredAt: { type: "number" },
+    },
+    // Plano de remédios (#392). Uma linha por remédio. Nome e horários vão
+    // juntos no `protegido`, cifrado ponta a ponta; em claro só o `createdAt`.
+    // Ver `constants/medPlan.js`.
+    [MEDS]: {
+      protegido: { type: "string" },
+      createdAt: { type: "number" },
     },
   })
   .setValuesSchema({
@@ -310,6 +318,10 @@ export function setSleepReminderEnabled(on) {
   localStore.setValue("sleepReminderEnabled", Boolean(on));
 }
 
+export function setMedReminderEnabled(on) {
+  localStore.setValue("medReminderEnabled", Boolean(on));
+}
+
 // --- Timer de exercício e estudo (#369) ---
 
 /** Começa o timer de `metric`. Um por vez: quem chama confere antes. */
@@ -555,6 +567,44 @@ export function swapHygieneRule(de, para, now = Date.now()) {
   store.transaction(() => {
     store.delRow(HYGIENE_STEPS, de);
     store.setRow(HYGIENE_STEPS, para, { startedAt: now });
+  });
+}
+
+// --- Plano de remédios (#392) ---
+
+/**
+ * Cadastra um remédio. `protegido` vem pronto do `cifrarRemedio`: quem cifra
+ * é a tela, que tem a chave destrancada.
+ *
+ * @returns {string} o id da linha
+ */
+export function addMed(protegido, now = Date.now()) {
+  return store.addRow(MEDS, { protegido, createdAt: now });
+}
+
+/** Troca nome e horários de um remédio, recifrados pela tela. */
+export function updateMed(id, protegido) {
+  if (!store.hasRow(MEDS, id)) return;
+  store.setCell(MEDS, id, "protegido", protegido);
+}
+
+/**
+ * Tira o remédio do plano. Os "tomei" já marcados ficam no histórico, porque
+ * levam o nome dentro (ver `cifrarRegistro`).
+ */
+export function removeMed(id) {
+  store.delRow(MEDS, id);
+}
+
+/** Marca o "tomei" de um horário, hoje. `protegido` vem do `cifrarRegistro`. */
+export function addMedTaken(protegido) {
+  add("selfcare", {
+    date: new Date().toISOString(),
+    unit: "registro",
+    quantity: 1,
+    // Vazia de propósito: a coluna `note` viaja em claro.
+    note: "",
+    protegido,
   });
 }
 

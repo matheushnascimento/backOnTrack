@@ -35,6 +35,8 @@ export const LOCAL_PREFS_SCHEMA = {
   reminderTime: { type: "string", default: "21:00" },
   // Lembrete do sono que aprende o horário (#368). Desligado por padrão.
   sleepReminderEnabled: { type: "boolean", default: false },
+  // Aviso no horário de cada remédio do plano (#392). Desligado por padrão.
+  medReminderEnabled: { type: "boolean", default: false },
   // Nível forçado pra previsualizar telas (#293). -1 = desligado.
   journeyDemoLevel: { type: "number", default: -1 },
   // Força a tela de retomada, pra previsualização (#320).

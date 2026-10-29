@@ -10,6 +10,7 @@ import {
   reminderSchedule,
   reminderText,
 } from "@/constants/reminder";
+import { medReminderSchedule, medReminderText } from "@/constants/medPlan";
 import {
   sleepReminderSchedule,
   sleepReminderText,
@@ -17,6 +18,7 @@ import {
 } from "@/constants/sleepReminder";
 import { getHygiene, getToday, localStore, store } from "./database";
 import { useJourney } from "./useJourney";
+import { useMedPlan } from "./useMedPlan";
 
 // Lembrete diário do hábito em foco (#364).
 //
@@ -55,6 +57,9 @@ const PREFIXO_FOCO = "foco-";
 
 /** Prefixo dos agendamentos do lembrete do sono (#368). */
 const PREFIXO_SONO = "sono-";
+
+/** Prefixo dos avisos do plano de remédios (#392). */
+const PREFIXO_REMEDIO = "remedio-";
 
 /** Cancela só os agendamentos cujo identificador começa com `prefixo`. */
 async function cancelarPorPrefixo(prefixo) {
@@ -304,4 +309,66 @@ export function useSleepReminder() {
       );
     });
   }, [enabled, records, granted, hygieneTarget, hygieneSteps]);
+}
+
+/**
+ * Reagenda os avisos do plano de remédios (#392), cancelando só os dele.
+ *
+ * A regra de QUANDO é toda do `medReminderSchedule`: cada horário de cada
+ * remédio, pulado o que já tem "tomei". O texto não diz o nome, porque aparece
+ * na tela de bloqueio.
+ *
+ * @param {{remedios: Array<object>, marcas: Array<object>, enabled: boolean}} estado
+ *   já decifrados pelo `useMedPlan`
+ * @returns {Promise<Array<{at: number}>>}
+ */
+export async function rescheduleMedReminder({ remedios, marcas, enabled }) {
+  if (!isNative()) return [];
+
+  const agenda = medReminderSchedule({
+    remedios,
+    marcas,
+    enabled,
+    dias: DIAS_AGENDADOS,
+  });
+
+  await cancelarPorPrefixo(PREFIXO_REMEDIO);
+  if (agenda.length === 0) return [];
+
+  // Consulta, e não pede: quem pede é o interruptor de Ajustes.
+  if (!(await hasNotificationPermission())) return [];
+  await ensureCanal();
+
+  const conteudo = medReminderText();
+  await Promise.all(
+    agenda.map(({ at }, i) => agendar(`${PREFIXO_REMEDIO}${i}`, conteudo, at)),
+  );
+  return agenda;
+}
+
+/**
+ * Mantém os avisos dos remédios em dia enquanto o app estiver montado (#392).
+ *
+ * Reage ao plano, aos "tomei", ao interruptor e às chaves: o plano é cifrado,
+ * e com o aparelho travado não há o que agendar. Travar cancela os avisos, e
+ * destravar os traz de volta. Chamar no root, uma vez.
+ */
+export function useMedReminder() {
+  const enabled = useValue("medReminderEnabled", localStore);
+  const { remedios, marcas } = useMedPlan();
+  const { granted } = useNotificationPermission();
+
+  useEffect(() => {
+    if (!isNative()) return;
+    rescheduleMedReminder({
+      remedios,
+      marcas,
+      enabled: Boolean(enabled),
+    }).catch((e) => {
+      console.warn(
+        "[reminders] não consegui reagendar os remédios:",
+        e?.message ?? e,
+      );
+    });
+  }, [enabled, remedios, marcas, granted]);
 }

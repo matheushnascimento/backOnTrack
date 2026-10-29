@@ -17,6 +17,13 @@
  * Em claro fica só o que a Home e o sync precisam: a data, a hora do registro
  * e a quantidade 1. O servidor sabe que a pessoa cuidou de si numa terça às
  * 8h, e não o quê.
+ *
+ * ## O "tomei" do plano de remédios (#392)
+ *
+ * Marcar um remédio do plano cria um registro de autocuidado comum, do tipo
+ * remédio, com `remedio: {id, nome, horario}` dentro do campo cifrado. O nome
+ * vai junto, e não só o id, pra que o histórico continue dizendo o que foi
+ * tomado depois que o remédio sair do plano. Ver `constants/medPlan.js`.
  */
 
 import { decryptField, encryptField } from "./e2e";
@@ -43,19 +50,33 @@ export function rotuloDoTipo(tipo) {
 /**
  * O campo cifrado de um registro novo ou editado.
  *
+ * ⚠️ Quem edita um registro tem que repassar o `remedio` que leu: o campo
+ * cifrado é reescrito inteiro, e o que não vier aqui some (#328, #332).
+ *
  * @param {{kid: string, dataKey: Uint8Array}} chave a do pacote principal
- * @param {{tipo: string, nota?: string}} conteudo
+ * @param {{
+ *   tipo: string,
+ *   nota?: string,
+ *   remedio?: {id: string, nome: string, horario: string}|null,
+ * }} conteudo
  * @returns {string}
  */
-export function cifrarRegistro(chave, { tipo, nota = "" }) {
+export function cifrarRegistro(chave, { tipo, nota = "", remedio = null }) {
   if (!SELFCARE_TIPOS.some((t) => t.key === tipo)) {
     throw new Error(`tipo de autocuidado desconhecido: ${tipo}`);
   }
-  return encryptField(
-    chave,
-    JSON.stringify({ tipo, nota: String(nota).trim() }),
-    CONTEXTO,
-  );
+  const conteudo = { tipo, nota: String(nota).trim() };
+  if (remedio) {
+    if (tipo !== "remedio" || !remedio.id || !remedio.horario) {
+      throw new Error("marca do plano de remédios incompleta");
+    }
+    conteudo.remedio = {
+      id: String(remedio.id),
+      nome: String(remedio.nome ?? ""),
+      horario: String(remedio.horario),
+    };
+  }
+  return encryptField(chave, JSON.stringify(conteudo), CONTEXTO);
 }
 
 /** O campo `protegido` do registro, hidratado ou linha crua do `useTable`. */
@@ -78,16 +99,20 @@ function protegidoDe(registro) {
  *
  * @param {Record<string, Uint8Array>} chaves
  * @param {object} registro
- * @returns {{estado: "aberto", tipo: string, nota: string}|{estado: "travado"|"ilegivel"}}
+ * `remedio` só vem quando o registro é o "tomei" de um remédio do plano.
+ *
+ * @returns {{estado: "aberto", tipo: string, nota: string, remedio?: {id: string, nome: string, horario: string}}|{estado: "travado"|"ilegivel"}}
  */
 export function lerRegistro(chaves, registro) {
   const protegido = protegidoDe(registro);
   if (!protegido) return { estado: "ilegivel" };
   try {
-    const { tipo, nota } = JSON.parse(
+    const { tipo, nota, remedio } = JSON.parse(
       decryptField(chaves, protegido, CONTEXTO),
     );
-    return { estado: "aberto", tipo, nota: nota ?? "" };
+    return remedio
+      ? { estado: "aberto", tipo, nota: nota ?? "", remedio }
+      : { estado: "aberto", tipo, nota: nota ?? "" };
   } catch (e) {
     return { estado: e?.code === "chave-ausente" ? "travado" : "ilegivel" };
   }

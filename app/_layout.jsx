@@ -21,7 +21,11 @@ import {
 } from "@expo-google-fonts/jetbrains-mono";
 
 import { useRegistrosPersistencia } from "@/infra/persistence";
-import { useFocusReminder, useSleepReminder } from "@/infra/reminders";
+import {
+  useFocusReminder,
+  useMedReminder,
+  useSleepReminder,
+} from "@/infra/reminders";
 import { SessionProvider } from "@/infra/session";
 import { SyncStatusProvider } from "@/infra/sync";
 import { useRestoreThemePreference } from "@/infra/theme";
@@ -93,6 +97,7 @@ function AppTree() {
   // produziria dois agendamentos.
   useFocusReminder();
   useSleepReminder();
+  useMedReminder();
 
   return (
     <View className="flex-1">
@@ -119,6 +124,7 @@ function AppTree() {
         {/* Proteção dos dados sensíveis (#388): por Ajustes e pelo
             autocuidado. */}
         <Stack.Screen name="protecao" options={{ title: "Proteção" }} />
+        <Stack.Screen name="remedios" options={{ title: "Remédios" }} />
         {/* Callback do magic link: headless, autopropulsão pra /. */}
         <Stack.Screen
           name="auth/callback"
