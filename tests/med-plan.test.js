@@ -7,6 +7,7 @@
 
 import { createKeyBundle } from "@/constants/e2e";
 import {
+  adesaoDoRemedio,
   cifrarRemedio,
   lerRemedio,
   marcasDoPlano,
@@ -15,6 +16,7 @@ import {
   normalizarHorarios,
   planoDoDia,
   remediosDaTabela,
+  semanasDoMes,
 } from "@/constants/medPlan";
 import { cifrarRegistro, lerRegistro } from "@/constants/selfcare";
 
@@ -152,6 +154,71 @@ describe("o dia", () => {
     const remedios = remediosDaTabela({}, tabela(sertralina));
     expect(remedios.map((r) => r.estado)).toEqual(["travado"]);
     expect(planoDoDia(remedios, [], "2026-10-20")).toEqual([]);
+  });
+});
+
+describe("o calendário do mês", () => {
+  it("outubro de 2026 começa na quinta e fecha a última semana", () => {
+    const semanas = semanasDoMes(2026, 9);
+    expect(semanas).toHaveLength(5);
+    expect(semanas[0]).toEqual([
+      null,
+      null,
+      null,
+      null,
+      "2026-10-01",
+      "2026-10-02",
+      "2026-10-03",
+    ]);
+    expect(semanas[4]).toEqual([
+      "2026-10-25",
+      "2026-10-26",
+      "2026-10-27",
+      "2026-10-28",
+      "2026-10-29",
+      "2026-10-30",
+      "2026-10-31",
+    ]);
+  });
+
+  it("fevereiro que começa no domingo cabe em quatro semanas", () => {
+    const semanas = semanasDoMes(2026, 1);
+    expect(semanas).toHaveLength(4);
+    expect(semanas[0][0]).toBe("2026-02-01");
+    expect(semanas[3][6]).toBe("2026-02-28");
+  });
+
+  it("cheio com todos os horários, meio com parte, nada sem marca", () => {
+    const [vit] = remediosDaTabela(chaves, tabela(vitamina));
+    const marca = (d, h, horario) =>
+      tomei(d, h, { id: "v", nome: "Vitamina D", horario });
+    const marcas = marcasDoPlano(chaves, {
+      a: marca(20, 8, "08:00"),
+      b: marca(20, 20, "20:00"),
+      c: marca(21, 8, "08:00"),
+      // De outro remédio: não conta pra este.
+      d: tomei(22, 8, { id: "s", nome: "Sertralina 50mg", horario: "08:00" }),
+    });
+    expect(adesaoDoRemedio(vit, marcas)).toEqual({
+      "2026-10-20": "cheio",
+      "2026-10-21": "meio",
+    });
+  });
+
+  it("marca do horário antigo conta depois que o horário muda", () => {
+    const [ser] = remediosDaTabela(
+      chaves,
+      tabela({ ...sertralina, horarios: ["09:00"] }),
+    );
+    const marcas = marcasDoPlano(chaves, {
+      a: tomei(20, 8, { id: "s", nome: "Sertralina 50mg", horario: "08:00" }),
+    });
+    expect(adesaoDoRemedio(ser, marcas)).toEqual({ "2026-10-20": "cheio" });
+  });
+
+  it("remédio que não abre não tem dia", () => {
+    const [ser] = remediosDaTabela({}, tabela(sertralina));
+    expect(adesaoDoRemedio(ser, [])).toEqual({});
   });
 });
 

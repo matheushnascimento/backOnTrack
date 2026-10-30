@@ -77,7 +77,7 @@ export default function MedPlanToday({ chave }) {
       <Pressable
         accessibilityRole="link"
         accessibilityLabel={
-          itens.length === 0 ? "Cadastrar remédio" : "Gerenciar remédios"
+          itens.length === 0 ? "Cadastrar remédio" : "Ver o mês e o plano"
         }
         onPress={() => router.push("/remedios")}
         hitSlop={8}
@@ -87,7 +87,7 @@ export default function MedPlanToday({ chave }) {
           className="text-sm text-primary dark:text-primary-dark underline"
           style={{ fontFamily: "Inter_500Medium" }}
         >
-          {itens.length === 0 ? "Cadastrar remédio" : "Gerenciar remédios"}
+          {itens.length === 0 ? "Cadastrar remédio" : "Ver o mês e o plano"}
         </Text>
       </Pressable>
     </View>
