@@ -14,6 +14,7 @@ import { add, getById, update } from "@/infra/database";
 import { useProtection } from "@/infra/useProtection";
 
 import MedPlanToday from "./MedPlanToday";
+import SelfcareGoals from "./SelfcareGoals";
 
 // Autocuidado, a 6ª métrica (#374, fatia 3a).
 //
@@ -107,6 +108,7 @@ function SelfcareCreate({ chave, onAfterAdd }) {
   return (
     <View className="gap-6">
       <MedPlanToday chave={chave} />
+      <SelfcareGoals chave={chave} />
       <View className="gap-4">
         <Tipos valor={tipo} onChange={setTipo} />
         <Nota valor={nota} onChange={setNota} />

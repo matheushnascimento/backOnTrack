@@ -33,7 +33,7 @@
 
 import { decryptField, encryptField } from "./e2e";
 import { diaLocal } from "./habitSignals";
-import { lerRegistro } from "./selfcare";
+import { diaDoRegistro, lerRegistro } from "./selfcare";
 import { parseHHMM } from "./sleepTimes";
 
 /** Contexto do campo cifrado do plano: não decifra se copiado pra outro campo. */
@@ -119,14 +119,6 @@ export function remediosDaTabela(chaves, tabela) {
       ...lerRemedio(chaves, linha),
     }))
     .sort((a, b) => a.createdAt - b.createdAt || a.id.localeCompare(b.id));
-}
-
-/** O dia local de um registro: pela `date`, ou pelo `createdAt`. */
-function diaDoRegistro(r) {
-  const ms = Date.parse(r?.date ?? "");
-  if (Number.isFinite(ms)) return diaLocal(ms);
-  const ts = Number(r?.createdAt);
-  return Number.isFinite(ts) && ts > 0 ? diaLocal(ts) : null;
 }
 
 /**
