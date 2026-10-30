@@ -127,6 +127,7 @@ Esta milestone não existia no plano original. Ela nasceu do diagnóstico do có
 - ⬜ Tratamento de erros e estados vazios
 - ⬜ Exportação/backup de dados (JSON/CSV), com a rota de exportação já prevista
 - 🟡 Build via EAS, instalado fora do Expo Go: o perfil `preview` gera **APK** instalável (`buildType: apk`, #71/#72); primeiro APK `preview` gerado e **validado num Android real**. Falta o build de **produção** (`.aab` + submit à loja).
+- 🟡 **App no iPhone como PWA** (#407). Alguns testers não usavam o app por terem iPhone, e ele só saía como APK. A versão web vira app instalável pela tela de início. **Fatia 1** (#408): manifesto, ícones, meta tags da Apple e service worker que deixa o app abrir sem rede; o card "Obter o app" ensina a instalar no iPhone e some quando o app já está instalado. **Falta:** um endereço próprio pros testers, que só muda na promoção; a chave da proteção guardada travada no aparelho, pra não pedir a senha a cada abertura; e os lembretes por Web Push, numa issue própria
 - ⬜ Documentação de manutenção (como rodar, como publicar updates)
 
 ---
