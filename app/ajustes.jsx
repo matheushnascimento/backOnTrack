@@ -145,6 +145,17 @@ export default function Ajustes() {
     enabled: Boolean(medReminderEnabled),
     granted: permissao,
   });
+  // O que a seção Lembretes diz fechada (#405). Sem permissão vem antes da
+  // contagem, porque é o caso em que nada chega.
+  const lembretes = [foco, sono, remedios];
+  const ligados = lembretes.filter((l) => l.ligado).length;
+  const resumoDosLembretes = lembretes.some((l) => l.semPermissao)
+    ? "sem permissão"
+    : ligados === 0
+      ? "desligados"
+      : ligados === 1
+        ? "1 ligado"
+        : `${ligados} ligados`;
   /** Liga ou desliga, pedindo a permissão só quando é a pessoa que liga. */
   async function alternarLembrete(next, salvar) {
     if (next) {
@@ -284,7 +295,7 @@ export default function Ajustes() {
         {/* Navegação */}
         {/* Lembretes (#364). Um por dia, só do hábito em foco, e calado se a
             pessoa já registrou. O horário é dela. */}
-        <Section title="Lembretes">
+        <Section title="Lembretes" resumo={resumoDosLembretes}>
           <View className="flex-row items-center justify-between border-t border-surface-subtle px-4 py-3">
             <View className="flex-1 pr-3">
               <Text
@@ -489,7 +500,7 @@ export default function Ajustes() {
             fluxo de entrar/sair, e a Home não tem mais botão Entrar isolado
             (era redundante e piscava durante o auto-load da sessão). */}
         {AUTH_ENABLED && (
-          <Section title="Conta">
+          <Section title="Conta" resumo={user ? user.email : "entrar"}>
             {user ? (
               <>
                 <Row label="Logado como" value={user.email} disabled />
@@ -1104,16 +1115,51 @@ function SignalsBlock({ goals }) {
   );
 }
 
-function Section({ title, children }) {
+/**
+ * Seção que abre e fecha tocando no título (#405). Começa fechada: a tela
+ * cresceu com cada lembrete e meta novos, e aberta inteira virou rolagem.
+ * Fechada, o `resumo` diz o estado sem precisar abrir.
+ *
+ * @param {{ title: string, resumo?: string|null, children: React.ReactNode }} props
+ */
+function Section({ title, resumo, children }) {
+  const t = useThemeTokens();
+  const [aberta, setAberta] = useState(false);
   return (
     <View className="overflow-hidden rounded-2xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark">
-      <Text
-        className="px-4 pt-3.5 pb-1.5 text-xs uppercase tracking-wider text-label dark:text-label-dark"
-        style={{ fontFamily: "JetBrainsMono_500Medium" }}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={title}
+        accessibilityState={{ expanded: aberta }}
+        onPress={() => setAberta((a) => !a)}
+        className="flex-row items-center gap-2 px-4 py-3.5 active:opacity-70"
       >
-        {title}
-      </Text>
-      {children}
+        <Text
+          className="flex-1 text-xs uppercase tracking-wider text-label dark:text-label-dark"
+          style={{ fontFamily: "JetBrainsMono_500Medium" }}
+        >
+          {title}
+        </Text>
+        {!aberta && resumo ? (
+          <Text
+            className="text-xs text-body-secondary dark:text-body-secondary-dark"
+            style={{ fontFamily: "Inter_400Regular", maxWidth: "60%" }}
+            numberOfLines={1}
+          >
+            {resumo}
+          </Text>
+        ) : null}
+        <Svg width={14} height={14} viewBox="0 0 24 24" fill="none">
+          <Path
+            d={aberta ? "M6 9l6 6 6-6" : "M9 6l6 6-6 6"}
+            stroke={t.label}
+            strokeWidth={2.4}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </Svg>
+      </Pressable>
+      {aberta ? children : null}
     </View>
   );
 }
