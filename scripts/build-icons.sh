@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Gera os 4 PNGs de identidade visual a partir dos SVGs source (M5-B, #228).
+# Gera os PNGs de identidade visual a partir dos SVGs source (M5-B, #228).
 # Usa ImageMagick (`convert`). Rodar quando SVGs em assets/source/ mudarem.
 #
 # Uso:
@@ -25,5 +25,17 @@ convert -background none -resize 1024x1024 "$SRC/splash-icon.svg" "$OUT/splash-i
 # favicon.png: 96×96 é o sweet spot pra browser tab (renderiza a 16-32).
 convert -background none -resize 96x96 "$SRC/favicon.svg" "$OUT/favicon.png"
 
-echo "✓ Ícones gerados em $OUT/:"
-ls -la "$OUT"/*.png | awk '{printf "  %s\t%s bytes\n", $NF, $5}'
+# Ícones do PWA (#408), servidos da raiz do site pelo `public/`.
+# apple-touch-icon: 180×180, tela de início do iPhone. O iOS arredonda sozinho
+# e não aceita transparência, então sai do icon.svg de fundo sólido.
+# 192 e 512: os tamanhos que o manifesto exige. maskable: pro recorte do
+# Android, com o desenho dentro da área segura.
+PWA="public/icons"
+mkdir -p "$PWA"
+convert -background none -resize 180x180 "$SRC/icon.svg" "$PWA/apple-touch-icon.png"
+convert -background none -resize 192x192 "$SRC/icon.svg" "$PWA/icon-192.png"
+convert -background none -resize 512x512 "$SRC/icon.svg" "$PWA/icon-512.png"
+convert -background none -resize 512x512 "$SRC/pwa-maskable.svg" "$PWA/maskable-512.png"
+
+echo "✓ Ícones gerados em $OUT/ e $PWA/:"
+ls -la "$OUT"/*.png "$PWA"/*.png | awk '{printf "  %s\t%s bytes\n", $NF, $5}'
