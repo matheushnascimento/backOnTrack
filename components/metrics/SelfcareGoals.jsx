@@ -198,8 +198,11 @@ function MetaDoTipo({ tipo, meta, onChange }) {
           ) : null}
         </View>
       </Pressable>
+      {/* Período numa linha própria, com as duas opções dividindo a
+          largura: lado a lado com o − e +, o "por semana" saía do card em
+          tela estreita. */}
       {acompanha ? (
-        <View className="flex-row items-center justify-between">
+        <View className="gap-3">
           <View className="flex-row items-center gap-3">
             <Passo
               simbolo="−"
@@ -228,12 +231,12 @@ function MetaDoTipo({ tipo, meta, onChange }) {
                 accessibilityState={{ checked: meta.periodo === periodo }}
                 accessibilityLabel={`Por ${periodo}`}
                 onPress={() => trocarPeriodo(periodo)}
-                className={`rounded-full px-3 py-1 active:opacity-70 ${
+                className={`flex-1 rounded-full py-1.5 active:opacity-70 ${
                   meta.periodo === periodo ? "bg-white dark:bg-card-dark" : ""
                 }`}
               >
                 <Text
-                  className={`text-sm ${
+                  className={`text-center text-sm ${
                     meta.periodo === periodo
                       ? "text-ink dark:text-ink-dark"
                       : "text-body-secondary dark:text-body-secondary-dark"
