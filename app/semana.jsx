@@ -11,6 +11,9 @@ import WeekStrip from "@/components/WeekStrip";
 import { store } from "@/infra/database";
 import { METRIC_KEYS_ORDER, summarizeWeek } from "@/infra/week";
 import { useThemeTokens } from "@/constants/themeTokens";
+import { rotuloDoTipo } from "@/constants/selfcare";
+import { textoDoProgresso } from "@/constants/selfcareGoals";
+import { useSelfcareGoals } from "@/infra/useSelfcareGoals";
 
 // Tela Semana (M5-B fatia 3, mockup 2a·7).
 // Header mono + h1 + subtitle → strip de 7 dias com barrinhas por métrica →
@@ -23,6 +26,7 @@ export default function Semana() {
   // Recalcula quando a tabela muda (mesmo padrão da Home).
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const summary = useMemo(() => summarizeWeek(), [records]);
+  const metas = useSelfcareGoals();
 
   return (
     <MyView safe={true} className="flex-1 bg-light-background dark:bg-app-dark">
@@ -112,6 +116,39 @@ export default function Semana() {
             );
           })}
         </View>
+
+        {/* Metas do autocuidado (#395), só destravado e com metas. A janela
+            é a mesma desta tela: os últimos 7 dias, contando hoje. */}
+        {metas.progresso.length > 0 ? (
+          <View className="gap-2.5">
+            <Text
+              className="text-xs uppercase tracking-wider text-label dark:text-label-dark"
+              style={{ fontFamily: "JetBrainsMono_500Medium" }}
+            >
+              Autocuidado
+            </Text>
+            {metas.progresso.map((p) => (
+              <View
+                key={p.tipo}
+                className="flex-row items-center justify-between gap-3 rounded-xl border border-border-subtle dark:border-border-subtle-dark bg-white dark:bg-card-dark px-4 py-3"
+              >
+                <Text
+                  className="text-sm text-ink dark:text-ink-dark"
+                  style={{ fontFamily: "Inter_500Medium" }}
+                >
+                  {rotuloDoTipo(p.tipo).charAt(0).toUpperCase() +
+                    rotuloDoTipo(p.tipo).slice(1)}
+                </Text>
+                <Text
+                  className="flex-1 text-right text-sm text-body-secondary dark:text-body-secondary-dark"
+                  style={{ fontFamily: "JetBrainsMono_400Regular" }}
+                >
+                  {textoDoProgresso(p)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
       </ScrollView>
     </MyView>
   );

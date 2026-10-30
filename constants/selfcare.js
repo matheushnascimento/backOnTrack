@@ -27,6 +27,7 @@
  */
 
 import { decryptField, encryptField } from "./e2e";
+import { diaLocal } from "./habitSignals";
 
 /** Tipos de autocuidado, na ordem em que aparecem na tela. */
 export const SELFCARE_TIPOS = [
@@ -77,6 +78,19 @@ export function cifrarRegistro(chave, { tipo, nota = "", remedio = null }) {
     };
   }
   return encryptField(chave, JSON.stringify(conteudo), CONTEXTO);
+}
+
+/**
+ * O dia local de um registro: pela `date`, ou pelo `createdAt`.
+ *
+ * @param {{date?: string, createdAt?: number}} r
+ * @returns {string|null} "AAAA-MM-DD"
+ */
+export function diaDoRegistro(r) {
+  const ms = Date.parse(r?.date ?? "");
+  if (Number.isFinite(ms)) return diaLocal(ms);
+  const ts = Number(r?.createdAt);
+  return Number.isFinite(ts) && ts > 0 ? diaLocal(ts) : null;
 }
 
 /** O campo `protegido` do registro, hidratado ou linha crua do `useTable`. */

@@ -116,6 +116,10 @@ export const store = createMergeableStore()
     // Horário-alvo de deitar da higiene do sono (#396), "HH:MM". É dele que
     // saem os horários das quatro regras. Vazio = método não configurado.
     hygieneTarget: { type: "string", default: "" },
+    // Metas por tipo do autocuidado (#395), cifradas inteiras num campo só:
+    // "terapia 1 por semana" em claro revelaria o que os registros escondem.
+    // Vazio = nenhuma meta. Ver `constants/selfcareGoals.js`.
+    selfcareGoals: { type: "string", default: "" },
   });
 
 // Preferências do APARELHO (lembretes, prévias de dev). Store comum, e não
@@ -606,6 +610,15 @@ export function addMedTaken(protegido) {
     note: "",
     protegido,
   });
+}
+
+/**
+ * Grava as metas do autocuidado (#395), já cifradas por `cifrarMetas`.
+ *
+ * @param {string} protegido vazio tira todas
+ */
+export function setSelfcareGoals(protegido) {
+  store.setValue("selfcareGoals", protegido ?? "");
 }
 
 // --- Testers (tela de admin, Track A do M3-5) ---

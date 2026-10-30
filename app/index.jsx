@@ -29,6 +29,7 @@ import { CATEGORY_MAP } from "@/components/categoryUtils";
 import { minutesToHHMM } from "@/constants/duration";
 import { latestBed } from "@/constants/sleepTimes";
 import { ritualDe } from "@/constants/sleepHygiene";
+import { resumoDasMetas } from "@/constants/selfcareGoals";
 import { getGreeting } from "@/constants/greeting";
 import {
   headerCopy,
@@ -48,6 +49,7 @@ import {
 import { JOURNEY_ORDER } from "@/constants/goals";
 import { GRADUATED, PAUSED } from "@/constants/journey";
 import { useJourney } from "@/infra/useJourney";
+import { useSelfcareGoals } from "@/infra/useSelfcareGoals";
 //#endregion
 
 const METRICS = Object.keys(CATEGORY_MAP);
@@ -166,6 +168,10 @@ export default function Home() {
 
   const { focus, rest } = splitZones(journey);
   const extras = foraDaJornada(METRICS);
+  // Metas do autocuidado (#395): com a proteção destravada e metas
+  // escolhidas, a linha dele mostra o progresso por tipo no lugar da
+  // contagem do dia. Travado, fica a contagem, que não revela nada.
+  const metasDoAutocuidado = resumoDasMetas(useSelfcareGoals().progresso);
   const copy = headerCopy(journey);
 
   // Momento pendente (#293). O ack é o que garante "uma vez e some": sem ele
@@ -432,8 +438,9 @@ export default function Home() {
 
         {/* Fora da jornada (#374): hoje só o autocuidado. Sem esta zona ele
             sumiria da Home, porque foco e resto saem da ordem da jornada. Sem
-            selo de nível, porque não é hábito da jornada. O valor é só a
-            contagem do dia: o tipo vai cifrado, e a Home não decifra. */}
+            selo de nível, porque não é hábito da jornada. O valor é a
+            contagem do dia, ou o progresso das metas quando destravado
+            (#395). */}
         {extras.length > 0 ? (
           <View className="gap-2">
             <View className="flex-row items-center gap-2">
@@ -450,7 +457,11 @@ export default function Home() {
                 key={metric}
                 metric={metric}
                 name={porMetrica[metric].name}
-                value={porMetrica[metric].value}
+                value={
+                  metric === "selfcare" && metasDoAutocuidado
+                    ? metasDoAutocuidado
+                    : porMetrica[metric].value
+                }
                 badge={null}
                 onPress={() => router.navigate(`/(metrics)/${metric}`)}
               />
