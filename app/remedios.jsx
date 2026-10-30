@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
 import MyView from "@/components/MyView";
+import MedCalendar from "@/components/metrics/MedCalendar";
 import { BotaoPrimario, Portao } from "@/components/metrics/SelfcareBespoke";
 import TimePickerField from "@/components/metrics/TimePickerField";
 import { confirmAction } from "@/constants/dialogs";
@@ -13,7 +14,8 @@ import { addMed, removeMed, updateMed } from "@/infra/database";
 import { useMedPlan } from "@/infra/useMedPlan";
 import { useProtection } from "@/infra/useProtection";
 
-// Plano de remédios (#392): cadastrar, alterar e tirar do plano.
+// Plano de remédios (#392): cadastrar, alterar e tirar do plano. Em cima, o
+// mês de cada remédio com os dias marcados (#393).
 //
 // Nome e horários vão cifrados, então a tela exige a proteção destravada, como
 // o autocuidado. Um remédio pode ter vários horários (decisão de 29/10). Tirar
@@ -56,12 +58,15 @@ export default function Remedios() {
           </Texto>
         </View>
         {protecao.status === "destravado" ? (
-          <Plano
-            chave={{
-              kid: protecao.principal.kid,
-              dataKey: protecao.chaves[protecao.principal.kid],
-            }}
-          />
+          <>
+            <MedCalendar />
+            <Plano
+              chave={{
+                kid: protecao.principal.kid,
+                dataKey: protecao.chaves[protecao.principal.kid],
+              }}
+            />
+          </>
         ) : (
           <Portao status={protecao.status} />
         )}

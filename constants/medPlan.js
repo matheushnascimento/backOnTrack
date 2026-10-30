@@ -246,6 +246,58 @@ export function medReminderSchedule({
 }
 
 /**
+ * As semanas de um mês, de domingo a sábado. Cada célula é o dia
+ * ("AAAA-MM-DD") ou `null` antes do dia 1 e depois do último.
+ *
+ * @param {number} ano
+ * @param {number} mes 0 a 11, como no `Date`
+ * @returns {Array<Array<string|null>>}
+ */
+export function semanasDoMes(ano, mes) {
+  const inicio = new Date(ano, mes, 1).getDay();
+  const total = new Date(ano, mes + 1, 0).getDate();
+  const celulas = Array.from({ length: inicio }, () => null);
+  for (let d = 1; d <= total; d++) {
+    celulas.push(`${ano}-${pad2(mes + 1)}-${pad2(d)}`);
+  }
+  while (celulas.length % 7) celulas.push(null);
+  const semanas = [];
+  for (let i = 0; i < celulas.length; i += 7) {
+    semanas.push(celulas.slice(i, i + 7));
+  }
+  return semanas;
+}
+
+/**
+ * Como foi cada dia de um remédio (#393): `cheio` com todos os horários
+ * marcados, `meio` com parte deles. Dia sem marca não entra no mapa: fica sem
+ * ponto, sem contar falha (decisões de 30/10).
+ *
+ * Conta horários distintos marcados contra quantos o remédio tem hoje. Se o
+ * horário mudou, a marca antiga ainda conta, pra o dia que foi cumprido no
+ * plano de então não virar meio.
+ *
+ * @param {ReturnType<typeof remediosDaTabela>[number]} remedio
+ * @param {ReturnType<typeof marcasDoPlano>} marcas
+ * @returns {Record<string, "cheio"|"meio">} por dia "AAAA-MM-DD"
+ */
+export function adesaoDoRemedio(remedio, marcas) {
+  if (remedio?.estado !== "aberto") return {};
+  const porDia = new Map();
+  for (const m of marcas ?? []) {
+    if (m.remedioId !== remedio.id) continue;
+    if (!porDia.has(m.dia)) porDia.set(m.dia, new Set());
+    porDia.get(m.dia).add(m.horario);
+  }
+  const total = remedio.horarios.length;
+  const out = {};
+  for (const [dia, horarios] of porDia) {
+    out[dia] = horarios.size >= total ? "cheio" : "meio";
+  }
+  return out;
+}
+
+/**
  * Texto do aviso. Aparece na tela de bloqueio, pra qualquer pessoa perto do
  * aparelho: nem o nome do remédio, nem a palavra "remédio" (#394).
  *
