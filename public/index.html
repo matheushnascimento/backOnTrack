@@ -12,8 +12,16 @@
     <title>Back on Track</title>
 
     <!-- PWA (#408). O manifesto serve ao Android e ao desktop; o iPhone lê
-         as meta tags da Apple e o apple-touch-icon. -->
-    <link rel="manifest" href="/manifest.webmanifest" />
+         as meta tags da Apple e o apple-touch-icon.
+         `use-credentials`: o navegador busca o manifesto SEM cookies por
+         padrão, e o preview da Vercel exige o cookie de login. Sem isso o
+         preview responde com redirecionamento e o Chrome diz que o app não
+         pode ser instalado. No endereço público não muda nada. -->
+    <link
+      rel="manifest"
+      href="/manifest.webmanifest"
+      crossorigin="use-credentials"
+    />
     <meta name="theme-color" content="#2E5A88" />
     <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
