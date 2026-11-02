@@ -23,6 +23,16 @@
 // - O 2 é "sem esforço intenso", como no vídeo de referência: desacelerar o
 //   corpo, e não só parar de trabalhar.
 //
+// Decisões de 02/11 (#413):
+//
+// - A escada não mede a regularidade do toque em "cumpri". As regras são de
+//   abstinência, e o contexto que se repete é o prazo, já fixo pelo
+//   horário-alvo. Medir o toque cobrava a hora em que a pessoa lembra de abrir
+//   o app: quatro noites cumpridas em seguida não formaram a regra.
+// - Qualquer sequência de 3 noites seguidas forma a regra, e não só a das 3
+//   últimas. A conquista não pode depender de o app estar aberto na noite
+//   certa.
+//
 // O ritual cumprido é um registro do tipo `sleep`, com `regra` e `at` (o
 // horário em que a pessoa cumpriu) no `details`, e sem duração.
 
@@ -64,16 +74,13 @@ export function isRegra(key) {
  *
  * Mais leve que o portão de nível de propósito (decisão de 27/10): com a barra
  * do portão, cada regra levaria umas quatro semanas, e todas quase meio ano.
- * Em 28/10 a janela caiu de 14 pra 3 noites: as três precisam estar cumpridas,
- * num horário parecido. Mesma família de sinal; calibra-se aqui, sem tocar em
- * lógica.
+ * Em 28/10 a janela caiu de 14 pra 3 noites. Desde 02/11 basta a sequência:
+ * 3 noites seguidas cumpridas, sem olhar o horário do toque. Calibra-se aqui,
+ * sem tocar em lógica.
  */
 export const LIMIAR_DA_ESCADA = {
-  /** Janela, em noites. */
+  /** Noites seguidas cumpridas pra regra virar rotina. */
   window: 3,
-  consistency: 1,
-  regularityMinSamples: 3,
-  regularityMaxSd: 120,
 };
 
 /** "HH:MM" a partir de minutos, dando a volta no relógio. */
@@ -145,6 +152,16 @@ function fronteiraEmMs(alvo) {
   // Módulo 24h: alvo 23:00 põe a fronteira às 05:00, e não 29 horas depois.
   return (((parseHHMM(alvo) ?? 0) + 360) % 1440) * MS_MIN;
 }
+
+/** A chave "AAAA-MM-DD" como meia-noite UTC, pra andar no calendário. */
+const utcDaChave = (chave) => {
+  const [a, m, d] = chave.split("-").map(Number);
+  return Date.UTC(a, m - 1, d);
+};
+
+/** A noite anterior, pelo calendário: imune a horário de verão. */
+const noiteAnterior = (chave) =>
+  new Date(utcDaChave(chave) - MS_DIA).toISOString().slice(0, 10);
 
 /** O dia-calendário da noite a que um instante pertence. */
 export function noiteDe(ms, alvo) {
@@ -231,8 +248,10 @@ export function veredictosDaRegra(
 /**
  * Os três sinais de uma regra, na janela da escada.
  *
- * A regularidade é a do horário do ritual (`at`), e não a do deitar: o
- * contexto que se repete agora é o momento em que a pessoa cumpre a regra.
+ * Quem decide a escada é a sequência (`sequenciaCompleta`). Os sinais seguem
+ * no formato do portão pra jornada e o diagnóstico em Ajustes lerem o sono
+ * como os outros hábitos; a regularidade, do horário do ritual (`at`), fica
+ * só informativa.
  */
 export function sinaisDaRegra(
   records,
@@ -264,17 +283,51 @@ export function sinaisDaRegra(
 }
 
 /**
- * A regra está consistente? É o que libera a próxima.
+ * Noites seguidas cumprindo a regra, até a de hoje.
  *
- * Mesmas três perguntas do `passesGate`, com o limiar da escada.
+ * A noite de hoje ainda em aberto não quebra a sequência: sem "cumpri" hoje,
+ * conta a partir de ontem. É o "N de 3" do cartão.
+ *
+ * @returns {number}
  */
-export function regraConsistente(sinais, limiar = LIMIAR_DA_ESCADA) {
-  if (sinais.consistency.rate < limiar.consistency) return false;
-  if (sinais.regularity.n < limiar.regularityMinSamples) return false;
-  if (sinais.regularity.sdMinutes == null) return false;
-  if (sinais.regularity.sdMinutes > limiar.regularityMaxSd) return false;
-  if (sinais.resilience.doubleMisses > 0) return false;
-  return true;
+export function noitesSeguidas(records, regra, alvo, now = Date.now()) {
+  const cumpridas = noitesCumpridas(records, regra, alvo);
+  let noite = noiteDe(now, alvo);
+  if (!cumpridas.has(noite)) noite = noiteAnterior(noite);
+  let n = 0;
+  while (cumpridas.has(noite)) {
+    n += 1;
+    noite = noiteAnterior(noite);
+  }
+  return n;
+}
+
+/**
+ * A regra já teve `window` noites seguidas cumpridas, em qualquer ponto?
+ * É o que a forma e libera a próxima.
+ *
+ * Qualquer ponto, e não só as últimas noites: a conquista é gravada quando o
+ * app abre, e quem cumpriu três noites e pulou a quarta antes de abrir já
+ * tinha formado a regra. Os rituais de quando a regra foi trocada e escolhida
+ * de novo contam também, como diz o `swapHygieneRule`.
+ *
+ * @returns {boolean}
+ */
+export function sequenciaCompleta(
+  records,
+  regra,
+  alvo,
+  window = LIMIAR_DA_ESCADA.window,
+) {
+  const noites = [...noitesCumpridas(records, regra, alvo)].sort();
+  let seguidas = 0;
+  for (let i = 0; i < noites.length; i++) {
+    const emSeguida =
+      i > 0 && utcDaChave(noites[i]) - utcDaChave(noites[i - 1]) === MS_DIA;
+    seguidas = emSeguida ? seguidas + 1 : 1;
+    if (seguidas >= window) return true;
+  }
+  return false;
 }
 
 /**
@@ -306,7 +359,8 @@ export function degrausDaTabela(tabela) {
  *   disso o sono segue como era, e as noites com "deitou" contam (transição).
  * - `ativa`: a regra que se cumpre toda noite. `null` quando nenhuma começou,
  *   ou quando a anterior foi conquistada e a próxima ainda não foi escolhida.
- * - `pronta`: a ativa já está consistente e pode ser conquistada.
+ * - `pronta`: a ativa já teve a sequência e pode ser conquistada.
+ * - `seguidas`: noites seguidas da ativa até hoje, pro cartão.
  *
  * Conquista não se perde: a regra formada sai da lista da noite, e cobrar de
  * volta seria a lista de tarefas que o §1.5 recusa.
@@ -327,10 +381,10 @@ export function estadoDaEscada({
   const iniciadas = new Set(lista.map((d) => d.regra));
   const disponiveis = REGRAS.map((r) => r.key).filter((k) => !iniciadas.has(k));
   const alvoValido = parseHHMM(alvo) != null;
-  const sinais =
-    ativa && alvoValido
-      ? sinaisDaRegra(records, ativa, alvo, now, limiar)
-      : null;
+  const comAtiva = Boolean(ativa) && alvoValido;
+  const sinais = comAtiva
+    ? sinaisDaRegra(records, ativa, alvo, now, limiar)
+    : null;
 
   return {
     alvo: alvoValido ? alvo : null,
@@ -340,7 +394,10 @@ export function estadoDaEscada({
     conquistadas,
     disponiveis,
     sinais,
-    pronta: sinais ? regraConsistente(sinais, limiar) : false,
+    pronta: comAtiva
+      ? sequenciaCompleta(records, ativa, alvo, limiar.window)
+      : false,
+    seguidas: comAtiva ? noitesSeguidas(records, ativa, alvo, now) : 0,
     completa: conquistadas.length === REGRAS.length,
   };
 }

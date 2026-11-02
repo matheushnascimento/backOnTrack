@@ -103,7 +103,7 @@ function Configurar({ h }) {
 }
 
 function RegraAtiva({ h }) {
-  const noites = h.sinais?.consistency.hits ?? 0;
+  const meta = LIMIAR_DA_ESCADA.window;
   return (
     <>
       <Rotulo>Regra de hoje</Rotulo>
@@ -117,7 +117,7 @@ function RegraAtiva({ h }) {
         className="text-sm text-body-secondary dark:text-body-secondary-dark"
         style={{ fontFamily: "Inter_400Regular" }}
       >
-        {noites} das últimas {LIMIAR_DA_ESCADA.window} noites
+        {h.seguidas} de {meta} noites seguidas. Com {meta}, a regra vira rotina.
       </Text>
       {h.cumpridaHoje ? (
         <View className="items-center rounded-2xl border border-border-strong dark:border-border-strong-dark py-4">
