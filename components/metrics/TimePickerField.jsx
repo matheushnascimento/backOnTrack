@@ -1,6 +1,13 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 import { useState } from "react";
-import { Modal, Pressable, Text, TextInput, View } from "react-native";
+import {
+  Modal,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import Svg, { Circle, G, Line, Text as SvgText } from "react-native-svg";
 
 import { useThemeTokens } from "@/constants/themeTokens";
@@ -115,18 +122,28 @@ export default function TimePickerField({
           visible={show}
           onRequestClose={dismiss}
         >
-          <Pressable
+          <View
             style={{
               flex: 1,
               justifyContent: "center",
               alignItems: "center",
-              backgroundColor: "rgba(0,0,0,0.4)",
               padding: 16,
             }}
-            onPress={dismiss}
           >
+            {/* O fundo é irmão do cartão, e não pai (#415). No web, o onPress
+                sai do `click` do DOM, que sobe até o primeiro Pressable: com o
+                fundo envolvendo o cartão, tocar no que não é Pressable (o SVG do
+                relógio, um campo de texto) fechava o modal. */}
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Fechar"
+              onPress={dismiss}
+              style={[
+                StyleSheet.absoluteFill,
+                { backgroundColor: "rgba(0,0,0,0.4)" },
+              ]}
+            />
             <View
-              onStartShouldSetResponder={() => true}
               style={{
                 backgroundColor: t.bgCard,
                 borderRadius: 20,
@@ -245,7 +262,7 @@ export default function TimePickerField({
                 </Text>
               </Pressable>
             </View>
-          </Pressable>
+          </View>
         </Modal>
       )}
     </View>
