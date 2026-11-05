@@ -5,6 +5,7 @@ import {
   Modal,
   Pressable,
   ScrollView,
+  StyleSheet,
   Switch,
   Text,
   TextInput,
@@ -609,18 +610,26 @@ function NameEditModal({ current, onClose }) {
 
   return (
     <Modal transparent animationType="fade" visible onRequestClose={onClose}>
-      <Pressable
+      <View
         style={{
           flex: 1,
           justifyContent: "center",
           alignItems: "center",
-          backgroundColor: "rgba(0,0,0,0.4)",
           padding: 16,
         }}
-        onPress={onClose}
       >
+        {/* Fundo irmão do cartão, como no TimePickerField (#415): no web,
+            tocar no campo de texto fechava o modal. */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Fechar"
+          onPress={onClose}
+          style={[
+            StyleSheet.absoluteFill,
+            { backgroundColor: "rgba(0,0,0,0.4)" },
+          ]}
+        />
         <View
-          onStartShouldSetResponder={() => true}
           style={{
             backgroundColor: t.bgCard,
             borderRadius: 20,
@@ -718,7 +727,7 @@ function NameEditModal({ current, onClose }) {
             </Pressable>
           </View>
         </View>
-      </Pressable>
+      </View>
     </Modal>
   );
 }
