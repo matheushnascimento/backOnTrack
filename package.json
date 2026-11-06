@@ -86,6 +86,7 @@
     "tailwindcss": "^3.4.19",
     "test-renderer": "^1.2.0",
     "typescript": "~6.0.3",
+    "web-push": "^3.6.7",
     "ws": "^8.21.1"
   },
   "private": true,
