@@ -10,11 +10,11 @@ import {
   degrausDaTabela,
   estadoDaEscada,
   noiteDoRitual,
+  noitesSeguidas,
   podeComecar,
   prazoDaRegra,
-  regraConsistente,
   ritualDe,
-  sinaisDaRegra,
+  sequenciaCompleta,
   sugerirAlvo,
   textoDaRegra,
   veredictosDaRegra,
@@ -189,70 +189,79 @@ describe("veredictosDaRegra", () => {
   });
 });
 
-describe("a regra fica consistente", () => {
+describe("a regra vira rotina com 3 noites seguidas", () => {
   const agora = em(20, 23);
+  const forma = (registros) => sequenciaCompleta(registros, "1", "23:00");
 
-  it("3 noites seguidas, mesmo horário: pronta", () => {
-    const sinais = sinaisDaRegra(
-      noites(3, "1", "22:00", 20),
-      "1",
-      "23:00",
-      agora,
-    );
-    expect(sinais.consistency.hits).toBe(3);
-    expect(sinais.consistency.days).toBe(LIMIAR_DA_ESCADA.window);
-    expect(regraConsistente(sinais)).toBe(true);
+  it("3 noites seguidas formam", () => {
+    expect(forma(noites(3, "1", "22:00", 20))).toBe(true);
+    expect(LIMIAR_DA_ESCADA.window).toBe(3);
   });
 
-  it("menos de 3 noites na regra ainda não", () => {
-    // A noite antes do começo conta como falta.
-    const sinais = sinaisDaRegra(
-      noites(2, "1", "22:00", 20),
-      "1",
-      "23:00",
-      agora,
-    );
-    expect(regraConsistente(sinais)).toBe(false);
+  it("2 noites ainda não", () => {
+    expect(forma(noites(2, "1", "22:00", 20))).toBe(false);
   });
 
-  it("uma falta entre as 3 últimas noites ainda não", () => {
-    const registros = noites(3, "1", "22:00", 20).filter((_, i) => i !== 1);
+  it("3 noites com uma falta no meio ainda não", () => {
+    expect(forma(noites(4, "1", "22:00", 20).filter((_, i) => i !== 1))).toBe(
+      false,
+    );
+  });
+
+  it("o horário do toque não pesa (#413)", () => {
+    // Os toques reais da "sem cafeína": 14:31, 14:40, 19:13 e 10:29.
+    const registros = [
+      ritual(28, "10", "14:31"),
+      ritual(29, "10", "14:40"),
+      ritual(30, "10", "19:13"),
+      ritual(31, "10", "10:29"),
+    ];
+    expect(sequenciaCompleta(registros, "10", "23:00")).toBe(true);
+  });
+
+  it("a sequência vale mesmo fora das últimas noites (#413)", () => {
+    // Cumpriu de 10 a 12 e parou. Hoje, dia 20, a regra continua formada.
+    expect(forma(noites(3, "1", "22:00", 12))).toBe(true);
     expect(
-      regraConsistente(sinaisDaRegra(registros, "1", "23:00", agora)),
-    ).toBe(false);
+      noitesSeguidas(noites(3, "1", "22:00", 12), "1", "23:00", agora),
+    ).toBe(0);
   });
 
-  it("falta mais antiga que a janela não pesa", () => {
-    // Cumpriu nos dias 15, 16, 18, 19 e 20; faltou no 17, fora das 3 últimas.
-    const registros = noites(6, "1", "22:00", 20).filter((_, i) => i !== 2);
+  it("dois registros na mesma noite são uma noite só", () => {
+    const registros = [
+      ...noites(2, "1", "22:00", 20),
+      ritual(20, "1", "22:30"),
+    ];
+    expect(forma(registros)).toBe(false);
+  });
+});
+
+describe("noitesSeguidas, o N do cartão", () => {
+  it("conta até hoje quando hoje já foi cumprida", () => {
     expect(
-      regraConsistente(sinaisDaRegra(registros, "1", "23:00", agora)),
-    ).toBe(true);
+      noitesSeguidas(noites(2, "1", "22:00", 20), "1", "23:00", em(20, 23)),
+    ).toBe(2);
   });
 
-  it("horário espalhado demais não passa", () => {
-    // Alterna 18:00 e 23:30: cinco horas e meia de distância.
-    const registros = Array.from({ length: 3 }, (_, i) =>
-      ritual(18 + i, "1", i % 2 ? "23:30" : "18:00"),
-    );
-    const sinais = sinaisDaRegra(registros, "1", "23:00", agora);
-    expect(sinais.consistency.hits).toBe(3);
-    expect(sinais.regularity.sdMinutes).toBeGreaterThan(
-      LIMIAR_DA_ESCADA.regularityMaxSd,
-    );
-    expect(regraConsistente(sinais)).toBe(false);
+  it("hoje ainda em aberto não quebra a sequência", () => {
+    expect(
+      noitesSeguidas(noites(2, "1", "22:00", 19), "1", "23:00", em(20, 15)),
+    ).toBe(2);
   });
 
-  it("a regularidade vem do horário do ritual, e não do registro", () => {
-    // Largou as telas sempre às 22:00, marcou entre 22:00 e 08:00.
-    const registros = Array.from({ length: 3 }, (_, i) =>
-      ritual(18 + i, "1", "22:00", {
-        createdAt: em(18 + i, 22) + i * 5 * 3_600_000,
-      }),
-    );
-    const sinais = sinaisDaRegra(registros, "1", "23:00", agora);
-    expect(sinais.regularity.sdMinutes).toBeLessThan(1);
-    expect(regraConsistente(sinais)).toBe(true);
+  it("uma noite pulada recomeça a contagem", () => {
+    expect(
+      noitesSeguidas(noites(2, "1", "22:00", 18), "1", "23:00", em(20, 23)),
+    ).toBe(0);
+  });
+
+  it("noite de madrugada é a da véspera", () => {
+    // Largou as telas às 00:10 do dia 21, que ainda é a noite do 20.
+    const registros = [
+      ...noites(1, "1", "22:00", 19),
+      ritual(21, "1", "00:10"),
+    ];
+    expect(noitesSeguidas(registros, "1", "23:00", em(21, 0, 20))).toBe(2);
   });
 });
 
@@ -326,6 +335,24 @@ describe("estadoDaEscada", () => {
       now: agora,
     });
     expect(e.pronta).toBe(true);
+    expect(e.seguidas).toBe(14);
+  });
+
+  it("a sequência antiga ainda deixa pronta, e o cartão conta de novo (#413)", () => {
+    // O caso real: 28 a 31/10 cumpridas, 1/11 pulada, aberto em 2/11.
+    const e = estadoDaEscada({
+      alvo: "23:00",
+      degraus: [{ regra: "10", startedAt: em(28, 14), conqueredAt: null }],
+      records: [
+        ritual(28, "10", "14:31"),
+        ritual(29, "10", "14:40"),
+        ritual(30, "10", "19:13"),
+        ritual(31, "10", "10:29"),
+      ],
+      now: new Date(2026, 10, 2, 9, 30).getTime(),
+    });
+    expect(e.pronta).toBe(true);
+    expect(e.seguidas).toBe(0);
   });
 
   it("conquistada, libera a escolha da próxima", () => {

@@ -147,7 +147,7 @@ O método tem ainda o **0: zero soneca no despertador**, levantar no primeiro to
 
 **São quatro comportamentos, e o modelo forma um por vez.** Cobrar os quatro toda noite seria a lista de tarefas que o §1.5 recusa, e quebraria a fricção mínima do §4.2. Por isso o método vira uma **escada dentro do sono**: a pessoa escolhe por qual regra começa, e a próxima entra quando a anterior estiver consistente, pelo mesmo sinal que decide os níveis. A ocasião continua sendo **uma por noite**: a regra ativa cumprida.
 
-**Regularidade pelo horário do ritual.** O §5 mede consistência de contexto, e o contexto agora é o momento em que a pessoa cumpre a regra, e não mais o deitar. O horário-alvo dá a referência.
+~~**Regularidade pelo horário do ritual.** O §5 mede consistência de contexto, e o contexto agora é o momento em que a pessoa cumpre a regra, e não mais o deitar. O horário-alvo dá a referência.~~ Revisto em 02/11, abaixo: o contexto é o prazo da regra, e ele já é fixo.
 
 **O desfecho continua, sem destaque.** Deitar, acordar, duração e qualidade seguem registráveis e lidos contra a faixa de suficiência (#341), como o §4.2 já dizia. Só deixam de ocupar a frente da tela.
 
@@ -158,13 +158,19 @@ O método tem ainda o **0: zero soneca no despertador**, levantar no primeiro to
 **Decisões de 27/10/2026**, que estavam em aberto:
 
 - **A primeira regra consistente passa o portão do nível 1** e libera a água. As regras seguintes sobem em paralelo e não derrubam nível. Assim a pessoa forma no máximo dois hábitos por vez, que é o teto do §3.
-- **A escada tem limiar próprio, mais leve que o do portão:** as 3 últimas noites cumpridas, num horário parecido (dispersão de até 2h). Com a barra do portão, cada regra levaria umas quatro semanas e todas quase meio ano. Começou em 80% de 14 noites e caiu pra 3 noites em 28/10, porque 14 já era longo demais pra cada fase. É provisório como os outros, e mora em `LIMIAR_DA_ESCADA` (`constants/sleepHygiene.js`).
+- **A escada tem limiar próprio, mais leve que o do portão:** as 3 últimas noites cumpridas, ~~num horário parecido (dispersão de até 2h)~~ (a dispersão saiu em 02/11). Com a barra do portão, cada regra levaria umas quatro semanas e todas quase meio ano. Começou em 80% de 14 noites e caiu pra 3 noites em 28/10, porque 14 já era longo demais pra cada fase. É provisório como os outros, e mora em `LIMIAR_DA_ESCADA` (`constants/sleepHygiene.js`).
 - ~~A regra 0 (soneca) é marcada à noite, sobre o dia que passou.~~ Revisto em 28/10: a decisão partiu de ler "soneca" como cochilo durante o dia. No método, o 0 é **zero soneca no despertador** (referência: o vídeo "O Método 10-3-2-1-0", de Laércio Refundini, capítulo "Método 0: acordar sem soneca"). Com isso corrigido, **o 0 saiu da escada**: fica só como citação. Registro antigo de regra 0 continua aparecendo como ritual no histórico, e não conta pra escada.
 - **O 2 é "sem esforço intenso"** (28/10), como no mesmo vídeo ("Método 2: como desacelerar o corpo"), e não "sem trabalho", que é a versão mais comum do método.
 - **A noite de um ritual vai até 6 horas depois do horário-alvo.** Quem deita às 23h e larga as telas às 00h10 ainda está na mesma noite, e a regra 10 marcada de tarde é da noite daquele dia.
 - **O lembrete do sono avisa a regra ativa**, meia hora antes do prazo ("Em meia hora, hora de largar as telas"). O horário sai do alvo escolhido, então o aviso existe desde a primeira noite, sem esperar o horário aprendido. Noite em que a regra já foi cumprida fica sem aviso.
 
 Implementação na #396.
+
+**Decisões de 02/11/2026** (#413), depois de quatro noites seguidas de "sem cafeína" que não formaram a regra:
+
+- **A escada não mede o horário do toque.** As quatro regras são de abstinência ("sem cafeína depois das 13h"), e o contexto que se repete é o prazo, que o horário-alvo já fixa. O horário em que a pessoa toca "cumpri" é só quando ela lembrou de abrir o app: os toques foram 14h31, 14h40, 19h13 e 10h29, a dispersão passou de 2h, e a regra não formou. A regularidade da escada segue calculada, só como informação no diagnóstico de Ajustes.
+- **Qualquer sequência de 3 noites seguidas forma a regra**, e não só as 3 últimas. A conquista é gravada quando o app abre; se dependesse da janela de agora, uma noite pulada antes de abrir apagaria a sequência que já tinha acontecido.
+- **O cartão diz o que falta:** "N de 3 noites seguidas", e que com 3 a regra vira rotina. Antes ele mostrava "3 das últimas 3 noites" sem dizer por que não subia.
 
 ---
 
