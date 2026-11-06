@@ -19,6 +19,14 @@ import {
 import { getHygiene, getToday, localStore, store } from "./database";
 import { useJourney } from "./useJourney";
 import { useMedPlan } from "./useMedPlan";
+import {
+  enviarAgenda,
+  pedirPermissao,
+  permissaoConcedida,
+  pushSuportado,
+} from "./webPush";
+
+export { precisaInstalar, pushSuportado } from "./webPush";
 
 // Lembrete diário do hábito em foco (#364).
 //
@@ -42,15 +50,20 @@ import { useMedPlan } from "./useMedPlan";
 // com um tipo de lembrete só, e apagaria os do sono no instante em que os dois
 // convivessem.
 //
-// ## Web fica de fora
+// ## No navegador, pelo server (#417)
 //
-// Notificação local agendada não funciona de forma confiável no navegador, e
-// o app web é superfície de conferência, não de uso diário. Tudo aqui vira
-// no-op fora do native, pra não quebrar o build da Vercel.
+// Notificação local agendada não funciona no navegador, e quem usa iPhone só
+// tem o web. Lá, a mesma agenda vai pro server de sync, que dispara por Web
+// Push (`infra/webPush.web.js`). A conta de QUANDO é a mesma: só o transporte
+// muda. Navegador sem push (iPhone fora do app instalado, http) fica sem
+// lembrete.
 
 const CANAL = "lembretes";
 
 const isNative = () => Platform.OS === "ios" || Platform.OS === "android";
+
+/** Há como avisar neste aparelho? No app sempre; no navegador, com push. */
+const lembretesAqui = () => isNative() || pushSuportado();
 
 /** Prefixo dos agendamentos do lembrete do foco. */
 const PREFIXO_FOCO = "foco-";
@@ -85,6 +98,9 @@ async function cancelarPorPrefixo(prefixo) {
  * @returns {Promise<boolean>} concedida?
  */
 export async function ensureNotificationPermission() {
+  // No navegador, o pedido sai antes de qualquer `await`: o iOS só mostra o
+  // diálogo dentro do toque.
+  if (Platform.OS === "web") return pedirPermissao();
   if (!isNative()) return false;
   const atual = await Notifications.getPermissionsAsync();
   if (atual.granted) return true;
@@ -97,6 +113,7 @@ export async function ensureNotificationPermission() {
 
 /** A permissão está concedida? Consulta, e nunca pede. */
 export async function hasNotificationPermission() {
+  if (Platform.OS === "web") return permissaoConcedida();
   if (!isNative()) return false;
   const atual = await Notifications.getPermissionsAsync();
   return Boolean(atual.granted);
@@ -154,9 +171,17 @@ async function ensureCanal() {
  * @returns {Promise<number[]>} instantes agendados, vazio se nada foi agendado
  */
 export async function rescheduleFocusReminder(estado) {
-  if (!isNative()) return [];
-
   const datas = reminderSchedule(estado);
+
+  if (Platform.OS === "web") {
+    const conteudo = reminderText(estado.focus, CATEGORY_MAP);
+    await enviarAgenda(
+      "foco",
+      datas.map((at) => ({ at, ...conteudo })),
+    );
+    return datas;
+  }
+  if (!isNative()) return [];
 
   // Cancela sempre, inclusive quando nada será agendado: é assim que o
   // lembrete some depois do registro, ou quando a pessoa desliga.
@@ -203,14 +228,24 @@ export async function rescheduleSleepReminder({
   enabled,
   hygiene = null,
 }) {
-  if (!isNative()) return [];
-
   const agenda = sleepReminderSchedule({
     records,
     enabled,
     dias: DIAS_AGENDADOS,
     hygiene,
   });
+
+  if (Platform.OS === "web") {
+    await enviarAgenda(
+      "sono",
+      agenda.map(({ kind, at, regra }) => ({
+        at,
+        ...sleepReminderText(kind, regra),
+      })),
+    );
+    return agenda;
+  }
+  if (!isNative()) return [];
 
   await cancelarPorPrefixo(PREFIXO_SONO);
   if (agenda.length === 0) return [];
@@ -248,7 +283,7 @@ export function useFocusReminder() {
   const { granted } = useNotificationPermission();
 
   useEffect(() => {
-    if (!isNative()) return;
+    if (!lembretesAqui()) return;
     // `records` é gatilho de propósito: o `getToday` relê a store, e sem ele
     // nas deps o lembrete não sumiria logo depois de registrar. Mesmo padrão
     // do memo da Home (#108).
@@ -297,7 +332,7 @@ export function useSleepReminder() {
   const { granted } = useNotificationPermission();
 
   useEffect(() => {
-    if (!isNative()) return;
+    if (!lembretesAqui()) return;
     rescheduleSleepReminder({
       records: Object.values(records ?? {}),
       enabled: Boolean(enabled),
@@ -323,14 +358,22 @@ export function useSleepReminder() {
  * @returns {Promise<Array<{at: number}>>}
  */
 export async function rescheduleMedReminder({ remedios, marcas, enabled }) {
-  if (!isNative()) return [];
-
   const agenda = medReminderSchedule({
     remedios,
     marcas,
     enabled,
     dias: DIAS_AGENDADOS,
   });
+
+  if (Platform.OS === "web") {
+    const conteudo = medReminderText();
+    await enviarAgenda(
+      "remedio",
+      agenda.map(({ at }) => ({ at, ...conteudo })),
+    );
+    return agenda;
+  }
+  if (!isNative()) return [];
 
   await cancelarPorPrefixo(PREFIXO_REMEDIO);
   if (agenda.length === 0) return [];
@@ -359,7 +402,7 @@ export function useMedReminder() {
   const { granted } = useNotificationPermission();
 
   useEffect(() => {
-    if (!isNative()) return;
+    if (!lembretesAqui()) return;
     rescheduleMedReminder({
       remedios,
       marcas,

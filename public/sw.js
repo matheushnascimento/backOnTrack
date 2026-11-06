@@ -88,3 +88,41 @@ self.addEventListener("fetch", (event) => {
     );
   }
 });
+
+// Lembretes por Web Push (#417). Quem decide QUANDO é o app, e quem dispara é
+// o server de sync. Aqui só se mostra o aviso que chegou, com o texto que o
+// app mandou: o da tela de bloqueio, que não diz nome de remédio.
+//
+// A `tag` é o tipo (foco, sono, remedio): um aviso novo do mesmo tipo
+// substitui o anterior em vez de empilhar.
+self.addEventListener("push", (event) => {
+  let aviso;
+  try {
+    aviso = event.data?.json() ?? {};
+  } catch {
+    aviso = {};
+  }
+  event.waitUntil(
+    self.registration.showNotification(aviso.title ?? "Back on Track", {
+      body: aviso.body ?? "",
+      tag: aviso.tag,
+      icon: "/icons/icon-192.png",
+      badge: "/icons/icon-192.png",
+    }),
+  );
+});
+
+// Tocar no aviso abre o app, ou traz pra frente a janela que já estiver
+// aberta.
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients
+      .matchAll({ type: "window", includeUncontrolled: true })
+      .then((janelas) =>
+        janelas.length > 0
+          ? janelas[0].focus()
+          : self.clients.openWindow(PAGINA),
+      ),
+  );
+});

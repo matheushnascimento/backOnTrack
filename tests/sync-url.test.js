@@ -3,7 +3,7 @@
 // infra/sync.js: a lógica de montagem/encoding da URL onde bug moraria
 // (roomId com espaço, JWT com `+`/`=`, mistura de logado/deslogado).
 
-import { buildHealthzUrl, buildSyncUrl } from "../infra/sync-url";
+import { buildHealthzUrl, buildHttpUrl, buildSyncUrl } from "../infra/sync-url";
 
 describe("buildSyncUrl", () => {
   const BASE = "wss://backontrack-sync.mhdn.com.br";
@@ -105,5 +105,22 @@ describe("buildHealthzUrl", () => {
     expect(buildHealthzUrl("wss://ws-sync.example.com")).toBe(
       "https://ws-sync.example.com/healthz",
     );
+  });
+});
+
+// --- buildHttpUrl (#417) ---------------------------------------------------
+
+describe("buildHttpUrl", () => {
+  it("as rotas do push saem da mesma base do sync", () => {
+    expect(buildHttpUrl("wss://sync.exemplo/", "/push/agenda")).toBe(
+      "https://sync.exemplo/push/agenda",
+    );
+    expect(buildHttpUrl("ws://localhost:8787", "/push/chave")).toBe(
+      "http://localhost:8787/push/chave",
+    );
+  });
+
+  it("sync desligado, sem URL", () => {
+    expect(buildHttpUrl("", "/push/chave")).toBeNull();
   });
 });
