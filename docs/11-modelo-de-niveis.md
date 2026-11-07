@@ -180,11 +180,11 @@ Lally mediu automaticidade com questionário (SRHI). Não temos isso, e não que
 
 O que temos é `records` com `createdAt`, `quantity` e `type`. Dá pra montar um **proxy comportamental** com três sinais:
 
-| sinal            | o que é                                             | por que indica automaticidade                                                                                                |
-| ---------------- | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
-| **consistência** | % de dias com a ocasião cumprida, janela de 28 dias | o óbvio: o comportamento acontece                                                                                            |
-| **regularidade** | dispersão do horário do comportamento               | comportamento automático é disparado por contexto e acontece em horário estável; variabilidade cai conforme o hábito assenta |
-| **resiliência**  | falhou e voltou no dia seguinte?                    | hábito automático se recupera sozinho; hábito frágil vira duas faltas                                                        |
+| sinal            | o que é                                            | por que indica automaticidade                                                                                                |
+| ---------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| **consistência** | % de dias com a ocasião cumprida, janela de 7 dias | o óbvio: o comportamento acontece                                                                                            |
+| **regularidade** | dispersão do horário do comportamento              | comportamento automático é disparado por contexto e acontece em horário estável; variabilidade cai conforme o hábito assenta |
+| **resiliência**  | falhou e voltou no dia seguinte?                   | hábito automático se recupera sozinho; hábito frágil vira duas faltas                                                        |
 
 **A regularidade é o sinal mais interessante e o menos óbvio**, e é quase de graça, porque todo registro já tem timestamp.
 
@@ -194,9 +194,19 @@ Isso também é o que a §4.1 pede: se a unidade é a ocasião em contexto, o ho
 
 ⚠️ **Isto é proxy, não medida.** Não estamos medindo automaticidade; estamos inferindo de comportamento observável. Os limiares abaixo são **ponto de partida pra calibrar com dado real**, não verdades:
 
-- consistência ≥ 80% em 28 dias
-- desvio do horário habitual estável ou em queda
+- ~~consistência ≥ 80% em 28 dias~~ consistência ≥ 80% em 7 dias, ou seja 6 de 7 (#419)
+- desvio do horário habitual estável ou em queda, com pelo menos 4 registros com horário na janela
 - nenhuma falta dupla na janela
+
+**Duas janelas desde 07/11 (#419).** Com 28 dias, liberar o próximo hábito levava um mês, tempo demais pra quem está começando. O portão passou a olhar **7 dias**, e a graduação (§7) ficou com **21**. A graduação não acompanhou porque é ela que diz "automático, não derruba mais o nível", e uma semana perfeita é menos que o mínimo de 18 dias do Lally. Os pisos de amostra caíram na proporção de cada janela: portão 8 → 4, graduação 16 → 12.
+
+Isso não contradiz a §3, mas muda onde a proteção mora. Subir rápido empilha hábitos ainda em formação, e o que impede o castelo de cartas é que, até graduar, cada um deles ainda pode baixar o nível se cair. Consequências aceitas:
+
+- **Sobe rápido e cai rápido.** Uma semana fraca já tira o portão, com a regressão gentil da §2 amortecendo.
+- **No portão, a falta dupla deixa de decidir.** Com 6 de 7 só cabe uma falta, então a consistência reprova antes. Na graduação, com 21 dias, ela segue valendo.
+- **A quebra da §6 lê a janela da graduação.** A regra semanal olha duas semanas, e a do portão só tem uma.
+
+Exercício e estudo continuam julgados por dia, o problema anotado no §12: com 6 de 7, quem treina 3 a 5 vezes por semana segue sem passar o portão.
 
 O primeiro usuário com dado suficiente pra calibrar é o próprio dono do projeto, com registros desde julho.
 
@@ -243,7 +253,7 @@ Então a régua é a mesma da §5, com barra diferente:
 |              | portão (§5)           | graduação                           |
 | ------------ | --------------------- | ----------------------------------- |
 | o que afirma | "perto de automático" | "automático"                        |
-| consistência | ≥ 80% em 28 dias      | mais alta, e sustentada             |
+| consistência | ≥ 80% em 7 dias       | ≥ 90% em 21 dias (19 de 21)         |
 | regularidade | estável ou em queda   | estável, faixa estreita             |
 | resiliência  | sem falta dupla       | recupera sozinho após falha isolada |
 
@@ -287,7 +297,7 @@ A ordem é **sugerida, não imposta**. Obrigar quem já dorme bem a "conquistar"
 **O critério pra pular é o mesmo critério pra passar.** Não se pula o portão. Entra-se nele já qualificado:
 
 1. A pessoa indica que aquele hábito já está resolvido.
-2. O app avalia o **histórico** dela na mesma janela de 28 dias que usaria pra qualquer um (§5).
+2. O app avalia o **histórico** dela com a régua do portão (§5), sobre a janela da graduação: 21 dias desde a #419, porque o hábito concedido entra graduado, e uma semana não basta pra isso.
 3. Satisfez o portão → nível concedido, hábito entra **graduado**.
 4. Não satisfez (ou não há histórico) → o app observa pra frente até haver evidência.
 
