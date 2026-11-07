@@ -74,6 +74,7 @@ import {
   GRADUATED,
   LOCKED,
   PAUSED,
+  THRESHOLDS,
   deriveJourney,
 } from "@/constants/journey";
 
@@ -116,9 +117,15 @@ const STATUS_LABEL = {
   [LOCKED]: "—",
 };
 
-// Janela dos sinais de automaticidade. 28 dias é a janela do portão de nível
-// (docs/11-modelo-de-niveis.md §5).
-const JANELA_SINAIS = 28;
+// Janela dos sinais de automaticidade: a mesma do portão de nível
+// (docs/11-modelo-de-niveis.md §5), pra conferência e diagnóstico dizerem o
+// mesmo que o nível faz.
+const JANELA_SINAIS = THRESHOLDS.window;
+
+// Pular nível concede o hábito JÁ GRADUADO (#295), então a conferência olha a
+// janela da graduação, com a régua do portão. Com a do portão, 6 dias de
+// histórico dariam um hábito que não derruba mais o nível (#419).
+const JANELA_CONFERENCIA = THRESHOLDS.graduation.window;
 
 export default function Ajustes() {
   const { colorScheme, setColorScheme } = useColorScheme();
@@ -212,7 +219,7 @@ export default function Ajustes() {
       lista,
       skipMetric,
       goalFor(goals, skipMetric),
-      JANELA_SINAIS,
+      JANELA_CONFERENCIA,
     );
     const qualifies = skipQualifies(signals);
     const jornadaAtual = deriveJourney({
@@ -224,7 +231,7 @@ export default function Ajustes() {
     return {
       signals,
       qualifies,
-      evidence: skipEvidence(signals, JANELA_SINAIS),
+      evidence: skipEvidence(signals, JANELA_CONFERENCIA),
       copy: skipCopy({
         metric: skipMetric,
         qualifies,

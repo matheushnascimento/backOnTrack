@@ -241,7 +241,7 @@ describe("deriveJourney", () => {
   it("devolve os sinais junto, pro diagnóstico mostrar o porquê", () => {
     const j = deriveJourney({ records: serieCheia("sleep", 480), ...base });
     expect(j.habits.sleep.signals.consistency.rate).toBe(1);
-    expect(j.habits.sleep.signals.regularity.n).toBe(28);
+    expect(j.habits.sleep.signals.regularity.n).toBe(THRESHOLDS.window);
   });
 });
 
@@ -403,5 +403,78 @@ describe("deriveJourney com a escada da higiene do sono", () => {
     });
     expect(j.habits.sleep.signals.consistency.hits).toBe(2);
     expect(j.habits.sleep.signals.consistency.days).toBe(3);
+  });
+});
+
+// As janelas da #419. Aqui os VALORES importam: são a decisão de 07/11, e não
+// o mecanismo. Mudou o limiar, este bloco tem que mudar junto.
+describe("portão em 7 dias, graduação em 21", () => {
+  const base = { goals: {}, now: AGORA, thresholds: THRESHOLDS };
+  /** Água batendo a meta nos dias pedidos (0 = hoje), sempre às 9h. */
+  const agua = (dias) => dias.map((d) => reg("water", d, 2000));
+  const sono = serieCheia("sleep", 480, 21, 23);
+  const ate = (n) => Array.from({ length: n }, (_, i) => i);
+
+  it("as janelas são de 7 e 21 dias", () => {
+    expect(THRESHOLDS.window).toBe(7);
+    expect(THRESHOLDS.graduation.window).toBe(21);
+  });
+
+  it("6 de 7 dias passam o portão", () => {
+    const j = deriveJourney({
+      records: [...sono, ...agua([0, 1, 2, 4, 5, 6])],
+      ...base,
+    });
+    expect(j.habits.water.gated).toBe(true);
+  });
+
+  it("5 de 7 não passam", () => {
+    const j = deriveJourney({
+      records: [...sono, ...agua([0, 1, 3, 4, 6])],
+      ...base,
+    });
+    expect(j.habits.water.gated).toBe(false);
+  });
+
+  // Com 6 de 7 só cabe uma falta: a regra da falta dupla fica de guarda, mas
+  // a consistência chega primeiro. Se o limiar baixar, ela volta a decidir.
+  it("no portão, a falta que cabe é uma só", () => {
+    expect(Math.ceil(THRESHOLDS.gate.consistency * 7)).toBe(6);
+  });
+
+  it("o que ficou fora da semana não conta pro portão", () => {
+    const antigas = agua(ate(21).filter((d) => d >= 7));
+    const j = deriveJourney({
+      records: [...sono, ...antigas, ...agua([0, 1, 2, 3])],
+      ...base,
+    });
+    expect(j.habits.water.gated).toBe(false);
+  });
+
+  // Uma semana perfeita não é automático: o mínimo do Lally é 18 dias.
+  it("uma semana perfeita passa o portão sem graduar", () => {
+    const j = deriveJourney({ records: [...sono, ...agua(ate(7))], ...base });
+    expect(j.habits.water.gated).toBe(true);
+    expect(j.habits.water.graduated).toBe(false);
+  });
+
+  it("19 de 21 dias graduam", () => {
+    const dias = ate(21).filter((d) => d !== 9 && d !== 15);
+    const j = deriveJourney({ records: [...sono, ...agua(dias)], ...base });
+    expect(j.habits.water.graduated).toBe(true);
+  });
+
+  it("18 de 21 não graduam", () => {
+    const dias = ate(21).filter((d) => ![4, 9, 15].includes(d));
+    const j = deriveJourney({ records: [...sono, ...agua(dias)], ...base });
+    expect(j.habits.water.gated).toBe(true);
+    expect(j.habits.water.graduated).toBe(false);
+  });
+
+  // A quebra semanal olha duas semanas. Na janela do portão nunca dispararia.
+  it("a quebra semanal ainda vê duas semanas fracas", () => {
+    const exercicio = [8, 16, 20].map((d) => reg("exercise", d, 30));
+    const j = deriveJourney({ records: [...sono, ...exercicio], ...base });
+    expect(j.habits.exercise.broken).toBe(true);
   });
 });
