@@ -190,6 +190,32 @@ Qualquer outra rota HTTP segue respondendo `426 Upgrade Required`.
 
 Cloudflare Tunnel na frente já garante TLS válido; o server em si só fala WS plano em `127.0.0.1:8787` do host (loopback, não LAN, e só o cloudflared do systemd alcança).
 
+## Lembretes por Web Push (#417)
+
+No navegador não existe aviso agendado local, então o app web manda pra cá a lista dos próximos avisos de cada tipo (foco, sono, remédio), e este processo dispara cada um na hora. O código mora em `push.js`.
+
+- **Rotas** (todas com `Authorization: Bearer <access_token>`, menos a da chave):
+  - `GET /push/chave`: a chave pública VAPID, que o navegador usa pra se inscrever.
+  - `PUT /push/agenda`: `{aparelho, inscricao, tipo, avisos: [{at, title, body}]}`. Substitui a agenda daquele tipo, daquele aparelho.
+  - `DELETE /push/aparelhos/<id>`: esquece o aparelho (o app chama ao sair da conta).
+- **Disco:** `$DATA_DIR/push/<sub>.json`, separado das salas. É estado do aparelho, e não dado da pessoa: nada daqui sincroniza.
+- **Disparo:** a cada 30 s. Cada aviso sai uma vez; o que atrasou mais de 30 min (server fora do ar) é descartado. Inscrição recusada com 404/410 tira o aparelho.
+
+### Ligar
+
+O push só liga com as duas chaves VAPID no `.env`. Sem elas, as rotas respondem 503 e o sync segue igual.
+
+```bash
+npx web-push generate-vapid-keys
+# copiar pro server/.env:
+#   VAPID_PUBLIC_KEY=...
+#   VAPID_PRIVATE_KEY=...
+docker compose up -d --build
+docker compose logs sync   # esperado: "... | push: on"
+```
+
+⚠️ **Trocar as chaves invalida todas as inscrições**: cada navegador precisa desligar e ligar os lembretes de novo. Gerar uma vez e guardar.
+
 ## O que NÃO está aqui
 
 - Cliente do app passando `?token=`: vem na fatia C junto com a migração dos dados anônimos.

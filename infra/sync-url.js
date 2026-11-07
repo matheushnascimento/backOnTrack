@@ -38,10 +38,22 @@ export function buildSyncUrl(baseUrl, roomId, token) {
  * @returns {string | null} `null` se a base estiver vazia (sync desligado).
  */
 export function buildHealthzUrl(baseUrl) {
+  return buildHttpUrl(baseUrl, "/healthz");
+}
+
+/**
+ * URL HTTP do server de sync, na mesma base do WebSocket. Serve o `/healthz`
+ * e as rotas do Web Push (#417), que moram no mesmo processo.
+ *
+ * @param {string} baseUrl Mesma base do `buildSyncUrl` (ex.: `wss://host`).
+ * @param {string} caminho Começando com `/`.
+ * @returns {string | null} `null` se a base estiver vazia (sync desligado).
+ */
+export function buildHttpUrl(baseUrl, caminho) {
   if (!baseUrl) return null;
   const semBarra = String(baseUrl).replace(/\/+$/, "");
   const http = semBarra
     .replace(/^wss:\/\//i, "https://")
     .replace(/^ws:\/\//i, "http://");
-  return `${http}/healthz`;
+  return `${http}${caminho}`;
 }

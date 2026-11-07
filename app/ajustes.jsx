@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import {
   Linking,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -57,6 +58,8 @@ import {
 } from "@/infra/sync";
 import {
   ensureNotificationPermission,
+  precisaInstalar,
+  pushSuportado,
   useNotificationPermission,
 } from "@/infra/reminders";
 import { saveThemePreference } from "@/infra/theme";
@@ -150,13 +153,21 @@ export default function Ajustes() {
   // contagem, porque é o caso em que nada chega.
   const lembretes = [foco, sono, remedios];
   const ligados = lembretes.filter((l) => l.ligado).length;
-  const resumoDosLembretes = lembretes.some((l) => l.semPermissao)
-    ? "sem permissão"
-    : ligados === 0
-      ? "desligados"
-      : ligados === 1
-        ? "1 ligado"
-        : `${ligados} ligados`;
+  // No navegador, os lembretes vêm por Web Push (#417), e nem todo navegador
+  // recebe: o iPhone só com o app instalado na tela de início.
+  const web = Platform.OS === "web";
+  const semLembretesAqui = web && !pushSuportado();
+  const resumoDosLembretes = semLembretesAqui
+    ? precisaInstalar()
+      ? "instale o app"
+      : "indisponível"
+    : lembretes.some((l) => l.semPermissao)
+      ? "sem permissão"
+      : ligados === 0
+        ? "desligados"
+        : ligados === 1
+          ? "1 ligado"
+          : `${ligados} ligados`;
   /** Liga ou desliga, pedindo a permissão só quando é a pessoa que liga. */
   async function alternarLembrete(next, salvar) {
     if (next) {
@@ -297,139 +308,154 @@ export default function Ajustes() {
         {/* Lembretes (#364). Um por dia, só do hábito em foco, e calado se a
             pessoa já registrou. O horário é dela. */}
         <Section title="Lembretes" resumo={resumoDosLembretes}>
-          <View className="flex-row items-center justify-between border-t border-surface-subtle px-4 py-3">
-            <View className="flex-1 pr-3">
-              <Text
-                className="text-sm text-ink dark:text-ink-dark"
-                style={{ fontFamily: "Inter_400Regular" }}
-              >
-                Lembrete diário
-              </Text>
-              <Text
-                className="text-xs text-body-secondary dark:text-body-secondary-dark"
-                style={{ fontFamily: "Inter_400Regular", marginTop: 2 }}
-              >
-                Só do hábito em foco, e calado se você já registrou no dia
-              </Text>
-            </View>
-            <Switch
-              value={foco.ligado}
-              onValueChange={(next) =>
-                alternarLembrete(next, setReminderEnabled)
-              }
-              accessibilityLabel="Ativar lembrete diário"
-            />
-          </View>
-          {foco.ligado && (
-            <View className="flex-row items-center justify-between border-t border-surface-subtle px-4 py-3">
-              <Text
-                className="text-sm text-ink dark:text-ink-dark"
-                style={{ fontFamily: "Inter_400Regular" }}
-              >
-                Horário
-              </Text>
-              <TimePickerField
-                value={String(reminderTime ?? "")}
-                onChangeText={setReminderTime}
-                placeholder={DEFAULT_REMINDER_TIME}
-                accessibilityLabel="Horário do lembrete"
-              />
-            </View>
-          )}
-          {/* Lembrete do sono (#368): horário aprendido, sem campo pra
-              escolher. Interruptor próprio porque notifica mesmo quando o foco
-              é outro hábito. */}
-          <View className="flex-row items-center justify-between border-t border-surface-subtle px-4 py-3">
-            <View className="flex-1 pr-3">
-              <Text
-                className="text-sm text-ink dark:text-ink-dark"
-                style={{ fontFamily: "Inter_400Regular" }}
-              >
-                Lembretes do sono
-              </Text>
-              <Text
-                className="text-xs text-body-secondary dark:text-body-secondary-dark"
-                style={{ fontFamily: "Inter_400Regular", marginTop: 2 }}
-              >
-                Antes de deitar e depois de acordar, no horário que você costuma
-                ter
-              </Text>
-            </View>
-            <Switch
-              value={sono.ligado}
-              onValueChange={(next) =>
-                alternarLembrete(next, setSleepReminderEnabled)
-              }
-              accessibilityLabel="Ativar lembretes do sono"
-            />
-          </View>
-          {sono.ligado && (
+          {semLembretesAqui ? (
             <Text
               className="border-t border-surface-subtle px-4 py-3 text-xs text-body-secondary dark:text-body-secondary-dark"
               style={{ fontFamily: "Inter_400Regular" }}
             >
-              {sleepStatus.regra
-                ? `Aviso da regra de hoje às ${sleepStatus.regra}. `
-                : ""}
-              {sleepStatus.deitar == null
-                ? `Aprendendo seu horário: faltam ${sleepStatus.faltam} de ${MIN_NOITES} noites com hora de deitar nas últimas duas semanas.`
-                : sleepStatus.acordar == null
-                  ? `Aviso de deitar às ${sleepStatus.deitar}. O de acordar aparece quando houver noites suficientes com hora de acordar.`
-                  : `Aviso de deitar às ${sleepStatus.deitar} e de acordar às ${sleepStatus.acordar}.`}
+              {precisaInstalar()
+                ? 'No iPhone, os lembretes chegam com o app instalado: toque em Compartilhar e depois em "Adicionar à Tela de Início", e abra pelo ícone.'
+                : "Este navegador não recebe lembretes. No Chrome, no Android ou no computador, eles chegam."}
             </Text>
-          )}
-          {/* Avisos do plano de remédios (#392). O texto da notificação não
-              diz o nome, porque aparece na tela de bloqueio. */}
-          <View className="flex-row items-center justify-between border-t border-surface-subtle px-4 py-3">
-            <View className="flex-1 pr-3">
-              <Text
-                className="text-sm text-ink dark:text-ink-dark"
-                style={{ fontFamily: "Inter_400Regular" }}
-              >
-                Lembretes dos remédios
-              </Text>
-              <Text
-                className="text-xs text-body-secondary dark:text-body-secondary-dark"
-                style={{ fontFamily: "Inter_400Regular", marginTop: 2 }}
-              >
-                No horário de cada remédio do plano. A notificação diz só
-                &quot;Hora do seu cuidado&quot;, sem o nome.
-              </Text>
-            </View>
-            <Switch
-              value={remedios.ligado}
-              onValueChange={(next) =>
-                alternarLembrete(next, setMedReminderEnabled)
-              }
-              accessibilityLabel="Ativar lembretes dos remédios"
-            />
-          </View>
-          {(foco.semPermissao ||
-            sono.semPermissao ||
-            remedios.semPermissao) && (
-            <View className="gap-2 border-t border-surface-subtle px-4 py-3">
-              <Text
-                className="text-xs text-body-secondary dark:text-body-secondary-dark"
-                style={{ fontFamily: "Inter_400Regular" }}
-              >
-                O sistema não deu permissão de notificação, então nenhum
-                lembrete vai chegar. Liberando nas configurações do aparelho,
-                eles voltam sozinhos.
-              </Text>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel="Abrir configurações do aparelho"
-                onPress={() => Linking.openSettings()}
-                className="self-start active:opacity-70"
-              >
+          ) : (
+            <>
+              <View className="flex-row items-center justify-between border-t border-surface-subtle px-4 py-3">
+                <View className="flex-1 pr-3">
+                  <Text
+                    className="text-sm text-ink dark:text-ink-dark"
+                    style={{ fontFamily: "Inter_400Regular" }}
+                  >
+                    Lembrete diário
+                  </Text>
+                  <Text
+                    className="text-xs text-body-secondary dark:text-body-secondary-dark"
+                    style={{ fontFamily: "Inter_400Regular", marginTop: 2 }}
+                  >
+                    Só do hábito em foco, e calado se você já registrou no dia
+                  </Text>
+                </View>
+                <Switch
+                  value={foco.ligado}
+                  onValueChange={(next) =>
+                    alternarLembrete(next, setReminderEnabled)
+                  }
+                  accessibilityLabel="Ativar lembrete diário"
+                />
+              </View>
+              {foco.ligado && (
+                <View className="flex-row items-center justify-between border-t border-surface-subtle px-4 py-3">
+                  <Text
+                    className="text-sm text-ink dark:text-ink-dark"
+                    style={{ fontFamily: "Inter_400Regular" }}
+                  >
+                    Horário
+                  </Text>
+                  <TimePickerField
+                    value={String(reminderTime ?? "")}
+                    onChangeText={setReminderTime}
+                    placeholder={DEFAULT_REMINDER_TIME}
+                    accessibilityLabel="Horário do lembrete"
+                  />
+                </View>
+              )}
+              {/* Lembrete do sono (#368): horário aprendido, sem campo pra
+              escolher. Interruptor próprio porque notifica mesmo quando o foco
+              é outro hábito. */}
+              <View className="flex-row items-center justify-between border-t border-surface-subtle px-4 py-3">
+                <View className="flex-1 pr-3">
+                  <Text
+                    className="text-sm text-ink dark:text-ink-dark"
+                    style={{ fontFamily: "Inter_400Regular" }}
+                  >
+                    Lembretes do sono
+                  </Text>
+                  <Text
+                    className="text-xs text-body-secondary dark:text-body-secondary-dark"
+                    style={{ fontFamily: "Inter_400Regular", marginTop: 2 }}
+                  >
+                    Antes de deitar e depois de acordar, no horário que você
+                    costuma ter
+                  </Text>
+                </View>
+                <Switch
+                  value={sono.ligado}
+                  onValueChange={(next) =>
+                    alternarLembrete(next, setSleepReminderEnabled)
+                  }
+                  accessibilityLabel="Ativar lembretes do sono"
+                />
+              </View>
+              {sono.ligado && (
                 <Text
-                  className="text-xs text-primary dark:text-primary-dark"
-                  style={{ fontFamily: "Inter_500Medium" }}
+                  className="border-t border-surface-subtle px-4 py-3 text-xs text-body-secondary dark:text-body-secondary-dark"
+                  style={{ fontFamily: "Inter_400Regular" }}
                 >
-                  Abrir configurações do aparelho
+                  {sleepStatus.regra
+                    ? `Aviso da regra de hoje às ${sleepStatus.regra}. `
+                    : ""}
+                  {sleepStatus.deitar == null
+                    ? `Aprendendo seu horário: faltam ${sleepStatus.faltam} de ${MIN_NOITES} noites com hora de deitar nas últimas duas semanas.`
+                    : sleepStatus.acordar == null
+                      ? `Aviso de deitar às ${sleepStatus.deitar}. O de acordar aparece quando houver noites suficientes com hora de acordar.`
+                      : `Aviso de deitar às ${sleepStatus.deitar} e de acordar às ${sleepStatus.acordar}.`}
                 </Text>
-              </Pressable>
-            </View>
+              )}
+              {/* Avisos do plano de remédios (#392). O texto da notificação não
+              diz o nome, porque aparece na tela de bloqueio. */}
+              <View className="flex-row items-center justify-between border-t border-surface-subtle px-4 py-3">
+                <View className="flex-1 pr-3">
+                  <Text
+                    className="text-sm text-ink dark:text-ink-dark"
+                    style={{ fontFamily: "Inter_400Regular" }}
+                  >
+                    Lembretes dos remédios
+                  </Text>
+                  <Text
+                    className="text-xs text-body-secondary dark:text-body-secondary-dark"
+                    style={{ fontFamily: "Inter_400Regular", marginTop: 2 }}
+                  >
+                    No horário de cada remédio do plano. A notificação diz só
+                    &quot;Hora do seu cuidado&quot;, sem o nome.
+                  </Text>
+                </View>
+                <Switch
+                  value={remedios.ligado}
+                  onValueChange={(next) =>
+                    alternarLembrete(next, setMedReminderEnabled)
+                  }
+                  accessibilityLabel="Ativar lembretes dos remédios"
+                />
+              </View>
+              {(foco.semPermissao ||
+                sono.semPermissao ||
+                remedios.semPermissao) && (
+                <View className="gap-2 border-t border-surface-subtle px-4 py-3">
+                  <Text
+                    className="text-xs text-body-secondary dark:text-body-secondary-dark"
+                    style={{ fontFamily: "Inter_400Regular" }}
+                  >
+                    {web
+                      ? "O navegador não deu permissão de notificação, então nenhum lembrete vai chegar. Liberando nas configurações do site, eles voltam sozinhos."
+                      : "O sistema não deu permissão de notificação, então nenhum lembrete vai chegar. Liberando nas configurações do aparelho, eles voltam sozinhos."}
+                  </Text>
+                  {!web && (
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Abrir configurações do aparelho"
+                      onPress={() => Linking.openSettings()}
+                      className="self-start active:opacity-70"
+                    >
+                      <Text
+                        className="text-xs text-primary dark:text-primary-dark"
+                        style={{ fontFamily: "Inter_500Medium" }}
+                      >
+                        Abrir configurações do aparelho
+                      </Text>
+                    </Pressable>
+                  )}
+                </View>
+              )}
+            </>
           )}
         </Section>
 

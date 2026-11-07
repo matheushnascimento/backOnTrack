@@ -8,7 +8,7 @@ COPY package.json ./
 RUN npm install --omit=dev
 
 # Depois o restante do server.
-COPY server.js ./
+COPY server.js push.js ./
 COPY smoke-client.js ./
 
 # Porta interna. O Traefik na frente mapeia via label, não via publish.

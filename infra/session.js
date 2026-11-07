@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { AppState, Platform } from "react-native";
 import { AUTH_ENABLED, supabase } from "./supabase";
+import { esquecerAparelho } from "./webPush";
 
 // Contexto de sessão do Supabase (M6 auth fatia A, #207, ADR-010).
 //
@@ -81,6 +82,10 @@ export function SessionProvider({ children }) {
     user: session?.user ?? null,
     ready,
     signOut: async () => {
+      // Antes de sair, enquanto ainda há token: os lembretes por Web Push
+      // agendados no server não podem seguir chegando neste navegador pra
+      // quem entrar depois (#417). Falhar aqui não impede a saída.
+      await esquecerAparelho().catch(() => {});
       if (supabase) await supabase.auth.signOut();
     },
     // Renovação sob demanda (#361). O `startAutoRefresh` acima cobre o caso

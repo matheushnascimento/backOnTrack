@@ -26,6 +26,9 @@
 //
 // TLS termina no cloudflared do host (ver compose.yml + README). Este processo
 // só fala WS plano na rede interna.
+//
+// Desde a #417 o mesmo processo dispara os lembretes por Web Push do app web
+// (`push.js`). Liga só com as chaves VAPID no env.
 
 import {
   createHmac,
@@ -40,7 +43,10 @@ import { join, resolve } from "node:path";
 import { createMergeableStore } from "tinybase";
 import { createFilePersister } from "tinybase/persisters/persister-file";
 import { createWsServer } from "tinybase/synchronizers/synchronizer-ws-server";
+import webpush from "web-push";
 import { WebSocketServer } from "ws";
+
+import { criarPush, validarAgenda } from "./push.js";
 
 const PORT = Number(process.env.PORT ?? 8787);
 const DATA_DIR = resolve(process.env.DATA_DIR ?? "./data");
@@ -55,6 +61,16 @@ const JWKS_URL = SUPABASE_URL
 
 // Um dos dois é suficiente pra validar token: JWKS (ES256) ou secret (HS256).
 const CAN_VERIFY = Boolean(JWKS_URL || JWT_SECRET);
+
+// Web Push (#417). Gerar o par uma vez com `npx web-push generate-vapid-keys`
+// e guardar no `.env`: trocar as chaves invalida todas as inscrições.
+const VAPID_PUBLIC_KEY = process.env.VAPID_PUBLIC_KEY ?? "";
+const VAPID_PRIVATE_KEY = process.env.VAPID_PRIVATE_KEY ?? "";
+const VAPID_SUBJECT =
+  process.env.VAPID_SUBJECT ?? "https://backontrack.mhdn.com.br";
+const PUSH_ATIVO = Boolean(VAPID_PUBLIC_KEY && VAPID_PRIVATE_KEY && CAN_VERIFY);
+/** De quanto em quanto tempo o disparo olha a agenda. */
+const PUSH_INTERVALO_MS = 30_000;
 
 if (!["optional", "required"].includes(AUTH_MODE)) {
   console.error(
@@ -210,6 +226,13 @@ async function verifyJwt(token) {
 // passa) e o cliente pergunta o modo aqui, só quando falha sem token.
 const httpServer = createServer((req, res) => {
   const rota = (req.url ?? "").split("?")[0].replace(/\/+$/, "") || "/";
+  if (rota.startsWith("/push/")) {
+    rotaDoPush(req, res, rota).catch((e) => {
+      console.error(`[push] erro na rota ${rota}: ${e.message}`);
+      if (!res.headersSent) responder(res, 500, { erro: "interno" });
+    });
+    return;
+  }
   if (req.method === "GET" && rota === "/healthz") {
     const corpo = JSON.stringify({ ok: true, authMode: AUTH_MODE });
     res.writeHead(200, {
@@ -227,6 +250,101 @@ const httpServer = createServer((req, res) => {
   res.writeHead(426, { "content-type": "text/plain" });
   res.end("Upgrade Required");
 });
+
+// --- Web Push (#417) ------------------------------------------------------
+
+if (PUSH_ATIVO) {
+  webpush.setVapidDetails(VAPID_SUBJECT, VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
+}
+const push = PUSH_ATIVO
+  ? criarPush({
+      dir: join(DATA_DIR, "push"),
+      // TTL: o serviço de push segura o aviso por no máximo meia hora se o
+      // aparelho estiver fora da rede. Depois disso, o lembrete perdeu a hora.
+      enviar: (inscricao, payload) =>
+        webpush.sendNotification(inscricao, payload, { TTL: 1800 }),
+    })
+  : null;
+if (push) {
+  setInterval(() => {
+    push.disparar().catch((e) => console.error(`[push] disparo: ${e.message}`));
+  }, PUSH_INTERVALO_MS);
+}
+
+// O app web é servido de outra origem. Liberar qualquer origem não abre nada:
+// a identidade vem do token no header, e não de cookie.
+const CORS = {
+  "access-control-allow-origin": "*",
+  "access-control-allow-methods": "GET, PUT, DELETE, OPTIONS",
+  "access-control-allow-headers": "authorization, content-type",
+  "access-control-max-age": "86400",
+};
+
+function responder(res, status, corpo) {
+  const texto = corpo == null ? "" : JSON.stringify(corpo);
+  res.writeHead(status, {
+    ...CORS,
+    "cache-control": "no-store",
+    ...(texto ? { "content-type": "application/json" } : {}),
+  });
+  res.end(texto);
+}
+
+/** Corpo JSON com teto de tamanho. `null` se não for JSON válido. */
+async function lerCorpo(req, limite = 64 * 1024) {
+  let tamanho = 0;
+  const partes = [];
+  for await (const parte of req) {
+    tamanho += parte.length;
+    if (tamanho > limite) return null;
+    partes.push(parte);
+  }
+  try {
+    return JSON.parse(Buffer.concat(partes).toString("utf8"));
+  } catch {
+    return null;
+  }
+}
+
+/** O `sub` do token no `Authorization`, ou `null`. Push sempre exige login. */
+async function contaDoPedido(req) {
+  const m = /^Bearer (.+)$/.exec(req.headers.authorization ?? "");
+  if (!m) return null;
+  try {
+    return (await verifyJwt(m[1])).sub;
+  } catch {
+    return null;
+  }
+}
+
+async function rotaDoPush(req, res, rota) {
+  if (req.method === "OPTIONS") return responder(res, 204);
+  if (!push) return responder(res, 503, { erro: "push desligado" });
+
+  if (req.method === "GET" && rota === "/push/chave") {
+    return responder(res, 200, { publicKey: VAPID_PUBLIC_KEY });
+  }
+
+  const sub = await contaDoPedido(req);
+  if (!sub) return responder(res, 401, { erro: "login necessário" });
+
+  if (req.method === "PUT" && rota === "/push/agenda") {
+    const lido = validarAgenda(await lerCorpo(req));
+    if (!lido.ok) return responder(res, 400, { erro: lido.erro });
+    if (!push.gravarAgenda(sub, lido.valor)) {
+      return responder(res, 409, { erro: "aparelhos demais" });
+    }
+    return responder(res, 204);
+  }
+
+  const apagar = /^\/push\/aparelhos\/([A-Za-z0-9_-]{8,64})$/.exec(rota);
+  if (req.method === "DELETE" && apagar) {
+    push.apagarAparelho(sub, apagar[1]);
+    return responder(res, 204);
+  }
+
+  return responder(res, 404, { erro: "rota desconhecida" });
+}
 
 const wss = new WebSocketServer({
   server: httpServer,
@@ -307,6 +425,6 @@ httpServer.listen(PORT, () => {
   // intermitente do #342. Quem lê esta linha precisa do número real.
   const porta = httpServer.address()?.port ?? PORT;
   console.log(
-    `[sync] listening on ws://0.0.0.0:${porta} | data dir: ${DATA_DIR} | auth: ${AUTH_MODE}${verifiers ? ` (${verifiers})` : ""}`,
+    `[sync] listening on ws://0.0.0.0:${porta} | data dir: ${DATA_DIR} | auth: ${AUTH_MODE}${verifiers ? ` (${verifiers})` : ""} | push: ${PUSH_ATIVO ? "on" : "off"}`,
   );
 });
