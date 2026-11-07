@@ -60,6 +60,11 @@ export function permissaoConcedida() {
   return pushSuportado() && Notification.permission === "granted";
 }
 
+/** Quem quer saber quando a permissão muda (`observarPermissao`). */
+const ouvintes = new Set();
+
+const avisarOuvintes = () => ouvintes.forEach((f) => f());
+
 /**
  * Pede a permissão. ⚠️ O pedido tem que sair antes de qualquer `await`: o
  * iOS só mostra o diálogo dentro do toque da pessoa.
@@ -68,7 +73,40 @@ export async function pedirPermissao() {
   if (!pushSuportado()) return false;
   if (Notification.permission === "granted") return true;
   if (Notification.permission === "denied") return false;
-  return (await Notification.requestPermission()) === "granted";
+  const resposta = await Notification.requestPermission();
+  avisarOuvintes();
+  return resposta === "granted";
+}
+
+/**
+ * Chama `ao` sempre que a permissão muda: pelo pedido de Ajustes ou pelas
+ * configurações do site. No celular, quem faz isso é a volta ao primeiro
+ * plano. No navegador, liberar não tira a aba do primeiro plano, e sem isto os
+ * lembretes que já estavam ligados só iam pro server na próxima mudança
+ * (o primeiro teste da #417).
+ *
+ * @param {() => void} ao
+ * @returns {() => void} pra parar de observar
+ */
+export function observarPermissao(ao) {
+  ouvintes.add(ao);
+  let status = null;
+  let parado = false;
+  // Nem todo navegador expõe a permissão de notificação aqui (Safari antigo):
+  // aí sobra o aviso do `pedirPermissao`, que cobre o caso de Ajustes.
+  navigator.permissions
+    ?.query({ name: "notifications" })
+    .then((s) => {
+      if (parado) return;
+      status = s;
+      status.addEventListener("change", ao);
+    })
+    .catch(() => {});
+  return () => {
+    parado = true;
+    ouvintes.delete(ao);
+    status?.removeEventListener("change", ao);
+  };
 }
 
 function idDoAparelho() {

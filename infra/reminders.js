@@ -21,6 +21,7 @@ import { useJourney } from "./useJourney";
 import { useMedPlan } from "./useMedPlan";
 import {
   enviarAgenda,
+  observarPermissao,
   pedirPermissao,
   permissaoConcedida,
   pushSuportado,
@@ -145,7 +146,12 @@ export function useNotificationPermission() {
     const sub = AppState.addEventListener("change", (estado) => {
       if (estado === "active") refresh();
     });
-    return () => sub?.remove?.();
+    // No navegador, liberar a permissão não muda o `AppState`.
+    const pararDeObservar = observarPermissao(refresh);
+    return () => {
+      sub?.remove?.();
+      pararDeObservar();
+    };
   }, [refresh]);
 
   return { granted, refresh };

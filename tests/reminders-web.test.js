@@ -24,6 +24,7 @@ jest.mock("expo-notifications", () => ({}));
 jest.mock("@/infra/webPush", () => ({
   enviarAgenda: jest.fn(async () => []),
   pedirPermissao: jest.fn(async () => true),
+  observarPermissao: jest.fn(() => () => {}),
   permissaoConcedida: jest.fn(() => true),
   pushSuportado: jest.fn(() => true),
   precisaInstalar: jest.fn(() => false),

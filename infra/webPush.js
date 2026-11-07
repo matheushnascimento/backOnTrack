@@ -20,6 +20,11 @@ export async function pedirPermissao() {
   return false;
 }
 
+/** No app, a mudança chega pela volta ao primeiro plano (`AppState`). */
+export function observarPermissao() {
+  return () => {};
+}
+
 /**
  * Mesma assinatura do web: `(tipo, avisos)`. No app não há o que mandar.
  *
