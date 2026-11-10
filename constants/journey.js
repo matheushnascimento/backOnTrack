@@ -28,12 +28,23 @@ import { estadoDaEscada } from "./sleepHygiene";
  * Ficam juntos de propósito: quando houver dado, calibra-se aqui sem tocar em
  * nenhuma lógica. O mecanismo é testável independente destes valores, e os
  * testes usam dado sintético justamente pra não depender deles.
+ *
+ * **Duas janelas desde 07/11 (#419).** Com 28 dias, liberar o próximo hábito
+ * levava um mês, tempo demais: o portão passou a olhar 7. A graduação ficou
+ * com 21, porque graduar diz "automático, não derruba mais o nível", e uma
+ * semana perfeita é menos que o mínimo de 18 dias que o Lally mediu. Enquanto
+ * não gradua, o hábito ainda pode baixar o nível se cair, e é isso que deixa
+ * a escada rápida segura (§3 do modelo).
+ *
+ * A regra de quebra (`isBroken`) lê a janela da graduação: a semanal olha duas
+ * semanas, e a do portão só tem uma.
  */
 export const THRESHOLDS = {
-  /** Janela de avaliação, em dias. */
-  window: 28,
+  /** Janela do portão, em dias. Era 28 até a #419. */
+  window: 7,
 
   gate: {
+    /** 6 de 7 dias. */
     consistency: 0.8,
     /**
      * Piso de amostra pra regularidade significar alguma coisa.
@@ -42,14 +53,17 @@ export const THRESHOLDS = {
      * amostras sempre parecem concentradas, e sem piso o sinal reporta
      * perfeição espúria e abriria o portão pra quem registrou duas vezes.
      */
-    regularityMinSamples: 8,
+    regularityMinSamples: 4,
     /** Desvio circular máximo, em minutos, pra contar como horário estável. */
     regularityMaxSd: 120,
   },
 
   graduation: {
+    /** Janela própria, mais longa que a do portão (#419). */
+    window: 21,
+    /** 19 de 21 dias. */
     consistency: 0.9,
-    regularityMinSamples: 16,
+    regularityMinSamples: 12,
     regularityMaxSd: 75,
     /** Recuperou de pelo menos esta fração das falhas isoladas. */
     resilience: 0.75,
@@ -141,6 +155,16 @@ export function isBroken(verdicts, cadence, porSemana = 3) {
   return false;
 }
 
+/** Os três sinais de uma métrica numa janela de `dias` terminando em `now`. */
+function sinaisDaJanela(records, metric, target, dias, now) {
+  const verdicts = dailyVerdicts(records, metric, target, dias, now);
+  return {
+    consistency: consistency(verdicts),
+    regularity: regularity(records, metric, dias, now),
+    resilience: resilience(verdicts),
+  };
+}
+
 /**
  * O sono na jornada depois que a pessoa configura a higiene do sono (#396).
  *
@@ -163,7 +187,15 @@ export function isBroken(verdicts, cadence, porSemana = 3) {
  * Os sinais devolvidos são os da regra ativa, ou os antigos congelados quando
  * não há regra ativa, pra quem lê `signals` ter sempre o mesmo formato.
  */
-function sonoPelaEscada({ hygiene, records, target, janela, now, thresholds }) {
+function sonoPelaEscada({
+  hygiene,
+  records,
+  target,
+  janela,
+  janelaGraduacao = janela,
+  now,
+  thresholds,
+}) {
   if (!hygiene) return null;
   const escada = estadoDaEscada({
     alvo: hygiene.alvo,
@@ -174,18 +206,14 @@ function sonoPelaEscada({ hygiene, records, target, janela, now, thresholds }) {
   if (!escada.configurada) return null;
 
   const desde = escada.desde;
-  const veredictosAntes = dailyVerdicts(
+  const antes = sinaisDaJanela(records, "sleep", target, janela, desde);
+  const antesGraduacao = sinaisDaJanela(
     records,
     "sleep",
     target,
-    janela,
+    janelaGraduacao,
     desde,
   );
-  const antes = {
-    consistency: consistency(veredictosAntes),
-    regularity: regularity(records, "sleep", janela, desde),
-    resilience: resilience(veredictosAntes),
-  };
 
   return {
     escada,
@@ -194,7 +222,7 @@ function sonoPelaEscada({ hygiene, records, target, janela, now, thresholds }) {
       escada.conquistadas.length > 0 ||
       escada.pronta ||
       passesGate(antes, thresholds),
-    graduated: escada.completa || passesGraduation(antes, thresholds),
+    graduated: escada.completa || passesGraduation(antesGraduacao, thresholds),
   };
 }
 
@@ -238,22 +266,29 @@ export function deriveJourney({
   hygiene = null,
 }) {
   const janela = thresholds.window;
+  const janelaGraduacao = thresholds.graduation?.window ?? janela;
   const lista = records ?? [];
 
   // 1. Sinais de cada hábito, independentes do nível.
   const porMetrica = {};
   for (const metric of JOURNEY_ORDER) {
     const target = goalFor(goals, metric);
-    const verdicts = dailyVerdicts(lista, metric, target, janela, now);
-    const signals = {
-      consistency: consistency(verdicts),
-      regularity: regularity(lista, metric, janela, now),
-      resilience: resilience(verdicts),
-    };
+    // A quebra (informativa) lê a janela da graduação: a regra semanal olha
+    // duas semanas, e a do portão só tem uma.
+    const verdicts = dailyVerdicts(lista, metric, target, janelaGraduacao, now);
+    const signals = sinaisDaJanela(lista, metric, target, janela, now);
+    // A graduação olha mais longe que o portão (#419).
+    const sinaisGraduacao = sinaisDaJanela(
+      lista,
+      metric,
+      target,
+      janelaGraduacao,
+      now,
+    );
     // `broken` é INFORMATIVO: serve pra explicar por que caiu, não pra
     // derrubar. Quem derruba é o portão. E hábito sem nenhum acerto na janela
     // não está quebrado: não começou.
-    const comecou = signals.consistency.hits > 0;
+    const comecou = sinaisGraduacao.consistency.hits > 0;
     // Concessão por conferência (#295): o hábito entra graduado sem esperar a
     // barra alta. A evidência exigida foi a do portão, avaliada sobre o mesmo
     // histórico: é reconhecimento antecipado, e não atalho.
@@ -266,6 +301,7 @@ export function deriveJourney({
             records: lista,
             target,
             janela,
+            janelaGraduacao,
             now,
             thresholds,
           })
@@ -285,7 +321,7 @@ export function deriveJourney({
     porMetrica[metric] = {
       signals,
       granted: concedido,
-      graduated: concedido || passesGraduation(signals, thresholds),
+      graduated: concedido || passesGraduation(sinaisGraduacao, thresholds),
       gated: concedido || passesGate(signals, thresholds),
       broken: !concedido && comecou && isBroken(verdicts, GOAL_CADENCE[metric]),
     };

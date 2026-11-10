@@ -3,9 +3,12 @@
 // Pular nível com conferência do histórico (#295): tela 4a·6 do Turno 4.
 //
 // ⚠️ **O critério pra pular é o MESMO critério do portão.** Não se pula o
-// portão: entra-se nele já qualificado, com evidência avaliada sobre a mesma
-// janela de 28 dias que qualquer um enfrenta. Não há o que burlar, porque a
-// exigência é idêntica à do caminho normal (§9 do modelo).
+// portão: entra-se nele já qualificado, com evidência avaliada pela mesma
+// régua que qualquer um enfrenta. Não há o que burlar, porque a exigência é
+// idêntica à do caminho normal (§9 do modelo).
+//
+// A janela é a da graduação (21 dias, #419), e não a do portão: a concessão
+// entra graduada, e uma semana de histórico não basta pra isso.
 //
 // O que a concessão encurta é a ESPERA: graduar normalmente exige a barra
 // alta sustentada; aqui a evidência do portão basta. Quem chega com o hábito
