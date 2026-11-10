@@ -311,6 +311,8 @@ Hábito pulado entra graduado porque, se satisfaz o portão sem esforço do app,
 
 Hoje **metas não existem como dado**: as de `app/ajustes.jsx` são texto fixo, display-only. O que existe é registro com timestamp/quantidade, mais `computeDaysSinceLast` e `totalRecords` em `app/index.jsx`.
 
+> **Atualizado em 10/11 (#423).** O item 1 abaixo está entregue: as metas viraram dado no #288 e ficaram editáveis no #423, menos o sono, que tem faixa. A meta nova vale pra janela inteira, então subir uma meta pode devolver um hábito à construção. O modal de edição avisa disso antes do Salvar.
+
 O modelo exige três coisas novas:
 
 1. **Alvo por métrica e por pessoa.** Sem isso não há portão. "8h pra todo mundo" é mentira, porque tem gente que precisa de 7. Isto promove "metas personalizadas" de item de QoL a **fundação**.

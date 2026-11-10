@@ -1,7 +1,7 @@
 // @ts-nocheck -- legado grandfatherizado por ADR-002 (#48); remover ao tipar este arquivo
 import { createMergeableStore, createStore } from "tinybase";
 
-import { DEFAULT_GOALS } from "@/constants/goals";
+import { DEFAULT_GOALS, EDITABLE_GOALS, GOAL_LIMITS } from "@/constants/goals";
 import { LOCAL_PREFS_SCHEMA } from "@/constants/localPrefs";
 import { maisRecentesPrimeiro } from "@/constants/recordOrder";
 import { degrausDaTabela } from "@/constants/sleepHygiene";
@@ -120,6 +120,9 @@ export const store = createMergeableStore()
     // "terapia 1 por semana" em claro revelaria o que os registros escondem.
     // Vazio = nenhuma meta. Ver `constants/selfcareGoals.js`.
     selfcareGoals: { type: "string", default: "" },
+    // Peso corporal (#423), cifrado: é dado de saúde. Só sugere a meta da
+    // água. Vazio = não informado. Ver `constants/bodyWeight.js`.
+    bodyWeight: { type: "string", default: "" },
   });
 
 // Preferências do APARELHO (lembretes, prévias de dev). Store comum, e não
@@ -383,8 +386,8 @@ export function ensureSyncRoomId() {
  * semear ANTES do `startAutoLoad` terminar, o load sobrescreve o que acabou
  * de ser escrito. Manter como último passo se alguém mexer na ordem.
  *
- * Não sobrescreve meta existente, porque o usuário poderá editar em fatia futura, e
- * seed não pode desfazer escolha de ninguém.
+ * Não sobrescreve meta existente: a pessoa pode ter editado (#423), e seed não
+ * pode desfazer escolha de ninguém.
  */
 export function ensureGoals() {
   for (const [metric, target] of Object.entries(DEFAULT_GOALS)) {
@@ -392,6 +395,38 @@ export function ensureGoals() {
       store.setRow(GOALS, metric, { target, updatedAt: Date.now() });
     }
   }
+}
+
+/**
+ * Grava a meta escolhida pela pessoa (#423).
+ *
+ * Só aceita meta editável e dentro dos limites, os mesmos que a tela usa pra
+ * habilitar o Salvar. A checagem repete aqui porque a store é o último ponto
+ * antes do sync: um valor absurdo gravado viajaria pra todos os aparelhos.
+ *
+ * Não há histórico de metas. A nova vale pra janela inteira, então sinais e
+ * nível recalculam como se ela sempre tivesse sido aquela.
+ *
+ * @param {string} metric
+ * @param {number} target na unidade canônica (ml, refeições, min)
+ * @returns {boolean} se gravou
+ */
+export function setGoal(metric, target) {
+  if (!EDITABLE_GOALS.includes(metric)) return false;
+  const { min, max, step } = GOAL_LIMITS[metric];
+  if (!Number.isInteger(target) || target < min || target > max) return false;
+  if (target % step !== 0) return false;
+  store.setRow(GOALS, metric, { target, updatedAt: Date.now() });
+  return true;
+}
+
+/**
+ * Grava o peso já cifrado por `cifrarPeso` (#423).
+ *
+ * @param {string} protegido vazio apaga
+ */
+export function setBodyWeight(protegido) {
+  store.setValue("bodyWeight", protegido ?? "");
 }
 
 /** Metas como objeto simples `{ metric: target }`, pro `goalFor`. */

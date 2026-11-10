@@ -29,7 +29,6 @@ import { MIN_NOITES, sleepReminderStatus } from "@/constants/sleepReminder";
 
 import {
   clearAll,
-  getGoals,
   acknowledgeJourneyLevel,
   getGrantedHabits,
   getHygiene,
@@ -66,7 +65,14 @@ import { saveThemePreference } from "@/infra/theme";
 import { confirmAction } from "@/constants/dialogs";
 import { getEnvironmentInfo, isDevSurface } from "@/constants/environment";
 import { useThemeTokens } from "@/constants/themeTokens";
-import { JOURNEY_ORDER, formatGoal, goalFor } from "@/constants/goals";
+import {
+  EDITABLE_GOALS,
+  JOURNEY_ORDER,
+  formatGoal,
+  goalFor,
+} from "@/constants/goals";
+import GoalEditModal from "@/components/GoalEditModal";
+import { useGoals } from "@/infra/useGoals";
 import { habitSignals } from "@/constants/habitSignals";
 import { skipCopy, skipEvidence, skipQualifies } from "@/constants/journeySkip";
 import {
@@ -97,9 +103,8 @@ const DEV_SURFACE = isDevSurface();
 //   - LEMBRETES     = um por dia, só do hábito em foco (#364).
 //   - AVANÇADO      = Limpar todos os dados (destrutivo, confirm modal).
 
-// Rótulos das metas. Os VALORES vêm do store desde a #285. Antes eram texto
-// fixo aqui, e o modelo de níveis não fecha sem meta como dado. Edição pelo
-// usuário é fatia própria; por ora o store guarda os mesmos defaults.
+// Rótulos das metas. Os VALORES vêm do store desde a #285, e a pessoa edita
+// desde a #423 (menos o sono, que tem faixa e não número).
 const METAS_LABEL = {
   water: "Água",
   sleep: "Sono",
@@ -188,9 +193,8 @@ export default function Ajustes() {
   const [nameModalOpen, setNameModalOpen] = useState(false);
   // `useTable` assina a tabela: metas semeadas depois do load do persister
   // chegam sozinhas, sem precisar reabrir a tela.
-  const goalsTable = useTable("goals", store);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  const goals = useMemo(() => getGoals(), [goalsTable]);
+  const goals = useGoals();
+  const [metaEditada, setMetaEditada] = useState(null);
 
   // Pular nível (#295): a pessoa declara que já tem o hábito, o app confere o
   // histórico com o MESMO critério do portão e concede, ou diz que observa.
@@ -298,7 +302,8 @@ export default function Ajustes() {
           </Text>
         </View>
 
-        {/* Metas do dia (display-only por ora) */}
+        {/* Metas do dia. Editáveis desde a #423, menos o sono, cuja
+            referência é a faixa de 7h a 8h. */}
         <Section title="Metas do dia">
           {JOURNEY_ORDER.map((metric) => (
             <Row
@@ -306,10 +311,23 @@ export default function Ajustes() {
               label={METAS_LABEL[metric]}
               value={formatGoal(metric, goalFor(goals, metric))}
               valueMono
-              disabled
+              onPress={
+                EDITABLE_GOALS.includes(metric)
+                  ? () => setMetaEditada(metric)
+                  : undefined
+              }
+              disabled={!EDITABLE_GOALS.includes(metric)}
             />
           ))}
         </Section>
+        {metaEditada ? (
+          <GoalEditModal
+            metric={metaEditada}
+            label={METAS_LABEL[metaEditada]}
+            current={goalFor(goals, metaEditada)}
+            onClose={() => setMetaEditada(null)}
+          />
+        ) : null}
 
         {/* Navegação */}
         {/* Lembretes (#364). Um por dia, só do hábito em foco, e calado se a

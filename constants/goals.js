@@ -7,9 +7,8 @@
 // nível compara comportamento contra um alvo, e "8h pra todo mundo" é mentira
 // (tem gente que precisa de 7). Ver `docs/11-modelo-de-niveis.md` §10.
 //
-// Esta fatia só transforma em dado, com os mesmos valores de hoje. Edição
-// pelo usuário é fatia própria, e o que importa agora é a forma, pra os sinais
-// de automaticidade terem contra o que medir.
+// A fatia 0 só transformou em dado, com os mesmos valores de antes. A edição
+// pelo usuário chegou no #423 (`EDITABLE_GOALS`, no fim deste arquivo).
 
 /** Unidades vêm do `CATEGORY_MAP`; aqui só o alvo diário. */
 export const DEFAULT_GOALS = {
@@ -141,4 +140,94 @@ function formatPoint(metric, target) {
   }
 
   return `${target} min`;
+}
+
+// --- Edição pelo usuário (#423) ---
+
+/**
+ * Metas que a pessoa pode mudar, na ordem da jornada.
+ *
+ * O sono fica de fora: a referência dele é a faixa de 7h a 8h (`GOAL_RANGE`),
+ * e ela é leitura da duração, nunca portão. Não há número do sono pra escolher.
+ */
+export const EDITABLE_GOALS = JOURNEY_ORDER.filter((m) => !GOAL_RANGE[m]);
+
+/**
+ * Limites de cada meta editável, na unidade canônica (ml, refeições, min).
+ *
+ * Servem pra recusar o que só pode ser engano de digitação, e não pra dizer
+ * quanto alguém deve beber ou estudar. Por isso são largos.
+ *
+ * A água anda de 100 em 100 ml porque é a precisão que a tela mostra: o
+ * `formatGoal` escreve uma casa decimal em litros, e 1,25 L apareceria como
+ * 1,3 L.
+ */
+export const GOAL_LIMITS = {
+  water: { min: 500, max: 5000, step: 100 },
+  feeding: { min: 1, max: 8, step: 1 },
+  exercise: { min: 5, max: 240, step: 1 },
+  study: { min: 5, max: 480, step: 1 },
+};
+
+/** Unidade que aparece ao lado do campo de edição. */
+export const GOAL_INPUT_UNIT = {
+  water: "L",
+  feeding: "refeições",
+  exercise: "min",
+  study: "min",
+};
+
+/**
+ * Converte o que a pessoa digitou pra unidade canônica.
+ *
+ * Água é digitada em litros, com vírgula ou ponto ("1,5" vira 1500). As
+ * demais são inteiros. Devolve `null` pra texto que não é número, número fora
+ * dos limites ou água com mais precisão do que a tela mostra.
+ *
+ * @param {string} metric
+ * @param {string} texto
+ * @returns {number | null}
+ */
+export function parseGoalInput(metric, texto) {
+  const limites = GOAL_LIMITS[metric];
+  if (!limites) return null;
+  const limpo = String(texto ?? "")
+    .trim()
+    .replace(",", ".");
+  if (!/^\d+(\.\d+)?$/.test(limpo)) return null;
+
+  const valor =
+    metric === "water" ? Math.round(Number(limpo) * 1000) : Number(limpo);
+  if (!Number.isInteger(valor)) return null;
+  if (valor % limites.step !== 0) return null;
+  if (valor < limites.min || valor > limites.max) return null;
+  return valor;
+}
+
+/**
+ * O valor guardado, escrito do jeito que o campo de edição espera.
+ *
+ * @param {string} metric
+ * @param {number | null | undefined} target
+ * @returns {string}
+ */
+export function goalInputValue(metric, target) {
+  if (!Number.isFinite(target)) return "";
+  if (metric === "water")
+    return (Number(target) / 1000).toLocaleString("pt-BR", {
+      maximumFractionDigits: 1,
+    });
+  return String(target);
+}
+
+/**
+ * Frase com os limites, pra dica do campo.
+ *
+ * @param {string} metric
+ * @returns {string}
+ */
+export function goalLimitsHint(metric) {
+  const l = GOAL_LIMITS[metric];
+  if (!l) return "";
+  return `Entre ${formatPoint(metric, l.min)} e ${formatPoint(metric, l.max)}.`;
 }
