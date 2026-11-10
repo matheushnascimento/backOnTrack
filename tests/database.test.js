@@ -74,6 +74,24 @@ describe("registros", () => {
     expect(getAll("feeding")).toHaveLength(0);
   });
 
+  test("sem data, o registro é de agora e aparece hoje (#421)", () => {
+    // É o caminho do incremento da Home, que não manda `date`. Antes a linha
+    // nascia com `date: ""` e o getToday a descartava.
+    add("water", { quantity: 200, unit: "ml" });
+
+    const [r] = getToday().water;
+    expect(r.quantity).toBe(200);
+    expect(new Date(r.date).getTime()).toBe(r.createdAt);
+  });
+
+  test("data vinda da tela continua valendo", () => {
+    const ontem = new Date();
+    ontem.setDate(ontem.getDate() - 1);
+    add("water", { date: ontem.toISOString(), quantity: 200, unit: "ml" });
+
+    expect(getAll("water")[0].date).toBe(ontem.toISOString());
+  });
+
   test("details específicos do tipo sobrevivem via hidratar", () => {
     add("exercise", {
       date: hoje(),

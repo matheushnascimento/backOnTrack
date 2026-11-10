@@ -156,14 +156,18 @@ function hidratar(id, linha) {
 // (serializados em details).
 function buildRow(type, data) {
   const { date, quantity, unit, note, ...extras } = data;
+  const createdAt = Date.now();
   return {
     type,
-    date: date ?? "",
+    // Sem data vinda da tela, o registro é de agora (#421). Gravar vazio
+    // deixava a linha invisível: o `groupByDate` pula quem não tem data, e o
+    // incremento da Home criava registros que nenhuma tela mostrava.
+    date: date || new Date(createdAt).toISOString(),
     quantity: Number(quantity) || 0,
     unit: unit ?? "",
     note: note ?? "",
     details: JSON.stringify(extras ?? {}),
-    createdAt: Date.now(),
+    createdAt,
   };
 }
 
