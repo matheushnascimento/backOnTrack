@@ -8,6 +8,7 @@
 import {
   achados,
   EXENTOS,
+  TERCEIROS,
   linhasAdicionadas,
   semCelulaVazia,
   temTravessaoDeProsa,
@@ -141,6 +142,35 @@ describe("auto-referência", () => {
     expect([...EXENTOS].sort()).toEqual([
       "scripts/check-em-dash.js",
       "tests/em-dash-barrier.test.js",
+    ]);
+  });
+});
+
+describe("arquivos de terceiros", () => {
+  // O BMad Method vem copiado pro repo, com a prosa dele. Reescrevê-la
+  // quebraria o hash do skills-lock.json na próxima atualização.
+  const d = (file) =>
+    [`+++ b/${file}`, "@@ -1,0 +1,1 @@", "+isto — vem de fora"].join("\n");
+
+  it("isenta as skills e o runtime do BMad", () => {
+    expect(achados(d(".claude/skills/bmad-build/SKILL.md"))).toEqual([]);
+    expect(achados(d(".claude/skills/bmod-method/help/x.md"))).toEqual([]);
+    expect(achados(d("_bmad/scripts/setup.py"))).toEqual([]);
+  });
+
+  it("não isenta as skills do projeto, a saída nem as customizações", () => {
+    // `_bmad-output` e `_bmad/custom/` são texto nosso.
+    expect(achados(d(".claude/skills/safe-push/SKILL.md"))).toHaveLength(1);
+    expect(achados(d("_bmad-output/prd.md"))).toHaveLength(1);
+    expect(achados(d("_bmad/custom/bmad-build.toml"))).toHaveLength(1);
+    expect(achados(d("docs/x.md"))).toHaveLength(1);
+  });
+
+  it("a lista de prefixos é só a do BMad", () => {
+    expect(TERCEIROS).toEqual([
+      ".claude/skills/bmad",
+      ".claude/skills/bmod-",
+      "_bmad/",
     ]);
   });
 });
