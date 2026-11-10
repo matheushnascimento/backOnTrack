@@ -48,7 +48,7 @@ describe("maisRecentesPrimeiro", () => {
   });
 
   it("cai no createdAt quando date não parseia", () => {
-    // buildRow grava `date: ""` quando a tela não manda data.
+    // Registros antigos, de antes do #421, têm `date: ""`.
     const lista = [reg("", 100), reg("", 300), reg("", 200)];
     expect(maisRecentesPrimeiro(lista).map((r) => r.createdAt)).toEqual([
       300, 200, 100,

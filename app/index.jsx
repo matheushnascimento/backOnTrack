@@ -247,7 +247,8 @@ export default function Home() {
     }),
   );
 
-  // Incremento direto da Home. `date` e `createdAt` saem do buildRow.
+  // Incremento direto da Home. Sem `date` aqui, o buildRow usa o instante do
+  // registro (#421).
   function quickAdd(metric, valor) {
     add(metric, { quantity: valor, unit: CATEGORY_MAP[metric]?.unit ?? "" });
   }
