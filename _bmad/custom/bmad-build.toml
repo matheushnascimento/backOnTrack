@@ -1,17 +1,10 @@
 # Customização do bmad-build pro backOnTrack. Mescla com o customize.toml da
 # skill (strings substituem, listas somam). Ver docs/13-fluxo-bmad.md.
+#
+# As regras do projeto vivem no AGENTS.md, que o Build lê como fonte das
+# lentes de revisão e o Claude Code carrega pelo CLAUDE.md. Não repetir aqui.
 
 [workflow]
-
-# Fatos que valem a sessão inteira do Build, até o AGENTS.md existir.
-persistent_facts = [
-  "Branch e subject de commit em inglês, conventional commits. Issue, PR, UI e docs em português. Um hook bloqueia commit com subject em português.",
-  "Sem travessão de prosa e sem a antítese 'não é X, é Y', em código, doc e mensagem. `node scripts/check-em-dash.js` barra o travessão no diff.",
-  "Antes de dar por pronto: `npm run lint:prettier:check`, `npm run lint:eslint:check`, `npm run lint:types:check`, `npm run lint:text:check` e `npx jest`.",
-  "Toda função ou valor novo precisa de consumidor na tela. Procure o callsite por grep antes de dizer que terminou, e deixe um teste que toque a tela.",
-  "Campo novo no `details` de um registro precisa ser repassado em todo `update()`, que reconstrói o details e apaga o que não recebe.",
-  "Roadmap é fonte única: atualizar `docs/04-roadmap-milestones.md` quando a entrega mudar o que ele afirma.",
-]
 
 # O Build termina no commit local. Push, PR, validação no aparelho e merge
 # seguem pelas skills do projeto, cada uma com o OK do usuário.
