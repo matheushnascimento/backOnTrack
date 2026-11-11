@@ -3,3 +3,11 @@
 /dist
 .env
 .env.*
+
+# BMad Method (vendored). Arquivos de terceiros: o skills-lock.json guarda o
+# hash do conteúdo e o `npx skills update` os sobrescreve, então não se
+# reformatam aqui.
+/.claude/skills/bmad*
+/.claude/skills/bmod-*
+/_bmad
+/skills-lock.json

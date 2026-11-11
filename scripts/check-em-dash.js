@@ -35,6 +35,13 @@
 // `EXENTOS`. A lista é curta de propósito: só os arquivos da barreira. Se ela
 // crescer, é sinal de que a regra está errada, não de que faltam exceções.
 //
+// ## Arquivos de terceiros
+//
+// O BMad Method é copiado pra dentro do repo (`.claude/skills/bmad*`,
+// `bmod-*` e `_bmad/`). A regra é sobre o texto que escrevemos, e reescrever
+// prosa de terceiros quebraria o hash do `skills-lock.json` na próxima
+// atualização. Ficam isentos por prefixo, em `TERCEIROS`.
+//
 // Escape: SKIP_EM_DASH_CHECK=1 no ambiente.
 
 const { execFileSync } = require("node:child_process");
@@ -46,6 +53,19 @@ const EXENTOS = new Set([
   "scripts/check-em-dash.js",
   "tests/em-dash-barrier.test.js",
 ]);
+
+/** Prefixos de arquivos vendorizados, que não são texto nosso. */
+const TERCEIROS = [".claude/skills/bmad", ".claude/skills/bmod-", "_bmad/"];
+
+/** Dentro do runtime do BMad, as customizações são escritas por nós. */
+const NOSSO_DENTRO_DE_TERCEIROS = "_bmad/custom/";
+
+/** @param {string} file */
+function isento(file) {
+  if (EXENTOS.has(file)) return true;
+  if (file.startsWith(NOSSO_DENTRO_DE_TERCEIROS)) return false;
+  return TERCEIROS.some((p) => file.startsWith(p));
+}
 
 /**
  * Remove as células vazias de tabela markdown (`| — |`) da linha.
@@ -110,7 +130,7 @@ function linhasAdicionadas(diff) {
  */
 function achados(diff) {
   return linhasAdicionadas(diff).filter(
-    (a) => !EXENTOS.has(a.file) && temTravessaoDeProsa(a.text),
+    (a) => !isento(a.file) && temTravessaoDeProsa(a.text),
   );
 }
 
@@ -165,6 +185,7 @@ module.exports = {
   temTravessaoDeProsa,
   semCelulaVazia,
   EXENTOS,
+  TERCEIROS,
 };
 
 if (require.main === module) process.exit(main(process.argv.slice(2)));
