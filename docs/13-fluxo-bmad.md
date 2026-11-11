@@ -41,6 +41,10 @@ Mudança trivial (typo, ignore, config) dispensa o BMad, como a própria documen
 - **Status:** `bmad status`.
 - **Telemetria:** o Skills CLI manda evento de instalação. Rodar com `DO_NOT_TRACK=1`.
 
-## Pendente
+## Regras do projeto
 
-- **`AGENTS.md`**, pelo `bmad-project-context`. As lentes de revisão do `bmad-build` leem as regras do `AGENTS.md` ou do `CLAUDE.md`, e o projeto não tem nenhum dos dois. Até lá, as regras principais vão como `persistent_facts` na customização do Build.
+As regras que qualquer agente segue aqui estão no bloco gerenciado do [`AGENTS.md`](../AGENTS.md), escrito pelo `bmad-project-context`. O `CLAUDE.md` só importa esse arquivo (`@AGENTS.md`), e as lentes de revisão do `bmad-build` o leem como fonte. Para manter o bloco:
+
+- **Refresh** depois de mudança grande: pedir ao `bmad-project-context` um refresh, que diffa a partir do SHA registrado no bloco.
+- **Record** quando um agente errar algo aqui: o erro vira armadilha no bloco, ou uma checagem quando der pra impor.
+- Texto escrito dentro dos marcadores é substituído no refresh; o que precisar sobreviver vai fora deles.
