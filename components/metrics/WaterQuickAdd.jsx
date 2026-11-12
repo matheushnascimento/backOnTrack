@@ -7,6 +7,8 @@ import { add, getById, groupByDate, store, update } from "@/infra/database";
 import getDate from "@/constants/getDate";
 import { maskMl, parseMl } from "@/constants/waterAmount";
 import { useThemeTokens } from "@/constants/themeTokens";
+import { formatGoal, goalFor } from "@/constants/goals";
+import { useGoals } from "@/infra/useGoals";
 
 // UI bespoke da tela de água (M5-B fatia 2a, mockup 2a·2 do Claude Design).
 // Substitui o card Score/OBS/Top/Bottom da MetricScreen quando o registry
@@ -35,8 +37,6 @@ import { useThemeTokens } from "@/constants/themeTokens";
 // componente troca pra um formulário de edição minimalista (quantidade + OBS),
 // preservando os campos legados do registro (score/min/max/ideal) intactos —
 // eles não fazem parte do fluxo de criação v2 mas existem em registros antigos.
-
-const GOAL_ML = 2000;
 
 const QUICK_ADD = [
   { amount: 200, label: "200 ml", hint: "copo" },
@@ -72,6 +72,9 @@ function WaterQuickLog({ onAfterAdd }) {
     [records],
   );
   const waterToday = today.water ?? [];
+  // A meta da pessoa (#423). Era 2000 fixo aqui, e editar em Ajustes não
+  // mudava nem a barra nem o "de 2 L hoje".
+  const metaMl = goalFor(useGoals(), "water") ?? 2000;
 
   // Campo de valor livre. Fechado por padrão pra não competir com os chips,
   // que continuam sendo o caminho de um toque.
@@ -81,7 +84,7 @@ function WaterQuickLog({ onAfterAdd }) {
 
   const totalMl = waterToday.reduce((s, r) => s + (Number(r.quantity) || 0), 0);
   const totalL = totalMl / 1000;
-  const pct = Math.min(100, Math.round((totalMl / GOAL_ML) * 100));
+  const pct = Math.min(100, Math.round((totalMl / metaMl) * 100));
 
   function handleAdd(amount) {
     add("water", {
@@ -128,7 +131,7 @@ function WaterQuickLog({ onAfterAdd }) {
           className="text-xs text-label dark:text-label-dark"
           style={{ fontFamily: "Inter_400Regular" }}
         >
-          de {GOAL_ML / 1000} L hoje
+          de {formatGoal("water", metaMl)} hoje
         </Text>
         <View className="h-1.5 w-full overflow-hidden rounded-full bg-border-subtle">
           <View
